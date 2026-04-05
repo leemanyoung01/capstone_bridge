@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>맛 취향 찾기</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Noto Sans KR',sans-serif; background:#f2f2f2; min-height:100vh; color:#222; }
+  .page { max-width:820px; margin:24px auto; padding:0 14px 40px; }
+  .header { text-align:center; margin-bottom:14px; }
+  .header h1 { font-size:24px; font-weight:900; color:#222; margin-bottom:4px; }
+  .header p { font-size:13px; color:#999; }
+
+  .steps-bar { display:flex; justify-content:center; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .step-pill {
+    font-size:11px; font-weight:700; padding:4px 14px;
+    border-radius:20px; background:#e8e8e8; color:#aaa; transition:all 0.3s;
+  }
+  .step-pill.active { background:#4a5ae0; color:#fff; }
+  .step-pill.done { background:#c8d0ff; color:#4a5ae0; }
+
+  .card {
+    background:#fff; border-radius:14px; padding:18px 20px; margin-bottom:14px;
+    box-shadow:0 1px 8px rgba(0,0,0,0.06);
+  }
+
+  .cloud-area {
+    position:relative; width:100%; height:440px; overflow:hidden;
+    border-radius:12px; background:linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  }
+  .word {
+    position:absolute; cursor:pointer; font-weight:800; white-space:nowrap; user-select:none;
+    line-height:1.15; transition:opacity 0.12s, transform 0.12s, filter 0.12s;
+    text-shadow:0 1px 0 rgba(255,255,255,0.35);
+  }
+  .word:hover { opacity:0.58; transform:scale(1.08) rotate(var(--rot, 0deg)); filter:saturate(1.05); }
+  .word:active { opacity:0.32; transform:scale(0.95) rotate(var(--rot, 0deg)); }
+  .word small {
+    display:block; font-size:10px; font-weight:700; opacity:0.62; text-align:center; margin-top:2px;
+  }
+  .float-plus {
+    position:absolute; pointer-events:none; font-size:13px; font-weight:900; color:#ff3b3b;
+    animation:floatUp 0.6s ease forwards;
+  }
+  @keyframes floatUp {
+    0% { opacity:1; transform:translateY(0) scale(1); }
+    100% { opacity:0; transform:translateY(-28px) scale(0.5); }
+  }
+
+  .legend-bar {
+    display:flex; justify-content:center; gap:10px; flex-wrap:wrap;
+    padding:10px 0 2px; border-top:1px solid #f0f0f0; margin-top:10px;
+  }
+  .leg { display:flex; align-items:center; gap:6px; font-size:11px; color:#888; }
+  .leg-box { width:12px; height:12px; border-radius:3px; }
+
+  .section-title { font-size:14px; font-weight:800; color:#333; margin-bottom:10px; }
+  .result-title { font-size:14px; font-weight:700; color:#333; margin-bottom:4px; }
+  .helper { font-size:12px; color:#999; margin-top:6px; }
+
+  .group-label {
+    font-size:11px; font-weight:700; color:#aaa; margin:10px 0 4px;
+    text-transform:uppercase; letter-spacing:1px;
+  }
+  .axis-row { display:flex; align-items:center; margin-bottom:6px; min-height:24px; }
+  .axis-name { width:84px; font-size:11px; font-weight:700; text-align:right; padding-right:8px; flex-shrink:0; }
+  .axis-track { flex:1; height:12px; background:#f5f5f5; border-radius:6px; overflow:hidden; }
+  .axis-fill { height:100%; border-radius:6px; transition:width 0.3s ease; }
+  .axis-num { width:32px; font-size:11px; font-weight:900; text-align:center; padding-left:4px; flex-shrink:0; }
+
+  .actions { display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .btn {
+    padding:8px 22px; border-radius:20px; font-size:13px; font-weight:700;
+    cursor:pointer; font-family:'Noto Sans KR',sans-serif; border:none; transition:all 0.2s;
+  }
+  .btn-ghost { background:#f5f5f5; color:#888; }
+  .btn-ghost:hover { background:#eee; }
+  .btn-primary { background:#4a5ae0; color:#fff; }
+  .btn-primary:hover { background:#3a4ad0; }
+  .btn-secondary { background:#f0e6ff; color:#7b68c8; }
+  .btn-secondary:hover { background:#e4d6ff; }
+
+  .image-section { display:none; }
+  .image-section.visible { display:block; }
+  .img-header { text-align:center; margin-bottom:14px; }
+  .img-header h2 { font-size:18px; font-weight:900; color:#222; margin-bottom:4px; }
+  .img-header p { font-size:12px; color:#999; }
+  .img-counter { text-align:center; font-size:12px; color:#999; margin-bottom:12px; }
+  .img-counter span { color:#4a5ae0; font-weight:700; }
+  .img-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
+  .img-card {
+    position:relative; background:#fff; border-radius:12px; overflow:hidden;
+    border:2px solid transparent; cursor:pointer; transition:all 0.2s;
+    box-shadow:0 1px 8px rgba(0,0,0,0.06);
+  }
+  .img-card:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,0.1); }
+  .img-card.selected {
+    border-color:#4a5ae0;
+    box-shadow:0 0 0 2px rgba(74,90,224,0.3), 0 4px 16px rgba(74,90,224,0.15);
+  }
+  .img-card.selected::after {
+    content:'\2713'; position:absolute; top:8px; right:8px;
+    width:24px; height:24px; border-radius:50%; background:#4a5ae0; color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:900;
+  }
+  .img-card img { width:100%; height:160px; object-fit:cover; display:block; background:#eee; }
+  .img-card-info { padding:10px 12px; }
+  .img-card-label { font-size:13px; font-weight:700; color:#333; margin-bottom:2px; }
+  .img-card-axis { font-size:10px; font-weight:600; color:#999; }
+  .img-card-rest { font-size:10px; color:#bbb; margin-top:2px; }
+  .img-placeholder {
+    width:100%; height:160px; background:linear-gradient(135deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    display:flex; align-items:center; justify-content:center; color:#ccc; font-size:32px;
+  }
+
+  #result-area { margin-top:8px; display:none; }
+  .result-header { text-align:center; font-size:18px; font-weight:900; color:#222; margin-bottom:16px; padding:12px 0; }
+  .rec-item {
+    margin-bottom:12px; padding:16px; background:#fafafa; border-radius:12px;
+    border:1px solid #f0f0f0; transition:box-shadow 0.2s;
+  }
+  .rec-item:hover { box-shadow:0 2px 12px rgba(0,0,0,0.08); }
+  .rec-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px; }
+  .rec-name-wrap { flex:1; }
+  .rec-rank { font-size:13px; font-weight:900; color:#4a5ae0; }
+  .rec-name { font-size:16px; font-weight:900; color:#4a5ae0; text-decoration:none; cursor:pointer; }
+  .rec-name:hover { text-decoration:underline; }
+  .rec-match { font-size:11px; color:#888; background:#f0f0f0; padding:2px 8px; border-radius:10px; white-space:nowrap; }
+  .rec-badges { display:flex; gap:4px; margin-top:4px; flex-wrap:wrap; }
+  .badge { font-size:10px; padding:1px 6px; border-radius:8px; font-weight:700; display:inline-block; }
+  .badge-img { background:#e8f5e9; color:#2e7d32; }
+  .badge-cat { background:#f3e5f5; color:#7b1fa2; }
+  .badge-multi { background:#e3f2fd; color:#1565c0; }
+  .rec-info { font-size:12px; color:#666; margin:6px 0; }
+  .rec-info a { color:#4a5ae0; text-decoration:none; }
+  .rec-info a:hover { text-decoration:underline; }
+  .rec-rating { font-size:13px; color:#333; margin:4px 0; }
+  .rec-evidence { font-size:12px; color:#888; font-style:italic; margin:4px 0; }
+  .rec-reasons { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .reason-tag { font-size:10px; background:#eef0ff; color:#4a5ae0; padding:2px 8px; border-radius:8px; font-weight:600; }
+  .reason-pos { background:#e8f5e9; color:#2e7d32; }
+  .reason-neg { background:#fce4ec; color:#c62828; }
+  .fusion-badge {
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:11px; padding:3px 10px; border-radius:10px; font-weight:700; margin-bottom:12px;
+  }
+  .fusion-text { background:#fff3e0; color:#e65100; }
+  .fusion-multi { background:#e8eaf6; color:#283593; }
+
+  .loading, .error-box {
+    text-align:center; padding:32px 18px; color:#777; font-size:14px;
+  }
+  .error-box { color:#c62828; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1 id="page-title">🥓 맛 취향 찾기</h1>
+    <p id="page-subtitle">끌리는 단어를 클릭하세요 · 많이 누를수록 선호도 UP</p>
+  </div>
+
+  <div class="steps-bar">
+    <div class="step-pill active" id="step1-pill">① 맛 키워드</div>
+    <div class="step-pill" id="step2-pill">② 음식 사진</div>
+    <div class="step-pill" id="step3-pill">③ 추천 결과</div>
+  </div>
+
+  <div id="step1-area">
+    <div class="card">
+      <div class="section-title">클릭해서 취향 쌓기</div>
+      <div class="cloud-area" id="cloud">
+        <div class="loading" style="padding-top:180px;">축과 키워드를 불러오는 중입니다...</div>
+      </div>
+      <div class="legend-bar" id="legend"></div>
+    </div>
+
+    <div class="card">
+      <div class="result-title">내 취향 프로필</div>
+      <div id="bars"></div>
+      <div class="helper">막대가 길수록 더 강하게 끌리는 축입니다.</div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="resetAll()">초기화</button>
+        <button class="btn btn-primary" onclick="goToImageStep()">다음: 사진 선택 →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="step2-area" class="image-section">
+    <div class="card">
+      <div class="img-header">
+        <h2 id="image-title">📸 끌리는 음식 사진을 골라주세요</h2>
+        <p>시각적 취향도 함께 반영합니다 · 여러 장 선택 가능</p>
+      </div>
+      <div class="img-counter">선택: <span id="img-count">0</span>장</div>
+      <div class="img-grid" id="img-grid"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="goBackToCloud()">← 이전</button>
+        <button class="btn btn-secondary" onclick="skipImages()">건너뛰기</button>
+        <button class="btn btn-primary" onclick="getRecommendation()">결과 보기 →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="step3-area" style="display:none;">
+    <div class="card">
+      <div id="result-area"></div>
+    </div>
+    <div class="actions" style="margin-top:14px;">
+      <button class="btn btn-ghost" onclick="resetAndRestart()">처음부터 다시</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CURRENT_KEYWORD = '삼겹살';
+const GROUP_COLORS = {
+  '공통': '#7b68c8',
+  '맛': '#4a5ae0',
+  '식감': '#e8a838',
+  '기타': '#d94452',
+};
+const GROUP_PRIORITY = ['공통', '맛', '식감', '기타'];
+
+let CONFIG = null;
+let AXES = [];
+let GROUPS_ORDER = [];
+let ALL_AXES = [];
+let AXIS_META = {};
+let AXIS_COLORS = {};
+let scores = {};
+let repImages = [];
+let selectedImageIdx = [];
+let useImageFusion = false;
+
+function getGroupColor(group) {
+  return GROUP_COLORS[group] || '#5f6c7b';
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function groupOrderFromConfig(groups) {
+  const ordered = [];
+  const used = new Set();
+  GROUP_PRIORITY.forEach(label => {
+    if (groups[label] && groups[label].length) {
+      ordered.push({ label, axes: groups[label] });
+      used.add(label);
+    }
+  });
+  Object.keys(groups).forEach(label => {
+    if (!used.has(label)) ordered.push({ label, axes: groups[label] });
+  });
+  return ordered;
+}
+
+function buildWordsFromConfig(axesConfig, groupsOrder) {
+  const words = [];
+  groupsOrder.forEach(group => {
+    group.axes.forEach(axis => {
+      const meta = axesConfig[axis] || {};
+      const src = meta.positive_keywords || meta.keywords || [];
+      const clean = [...new Set(src.filter(Boolean))].slice(0, 4);
+      if (clean.length === 0) clean.push(axis);
+      clean.forEach(word => {
+        words.push({ text: word, axis, group: group.label, color: getGroupColor(group.label) });
+      });
+    });
+  });
+  return words;
+}
+
+function initializeScores() {
+  scores = {};
+  ALL_AXES.forEach(axis => { scores[axis] = 0; });
+}
+
+function updatePageText() {
+  document.getElementById('page-title').textContent = `🥓 ${CURRENT_KEYWORD} 맛 취향 찾기`;
+  document.getElementById('page-subtitle').textContent = `${CURRENT_KEYWORD}에서 끌리는 단어를 눌러 취향을 쌓아보세요.`;
+  document.getElementById('image-title').textContent = `📸 끌리는 ${CURRENT_KEYWORD} 사진을 골라주세요`;
+}
+
+function renderLegend() {
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+  GROUPS_ORDER.forEach(group => {
+    const item = document.createElement('div');
+    item.className = 'leg';
+    item.innerHTML = `<div class="leg-box" style="background:${getGroupColor(group.label)}"></div>${escapeHtml(group.label)}`;
+    legend.appendChild(item);
+  });
+}
+
+function makeCloudPlacements(words) {
+  const cols = 5;
+  const rows = Math.max(3, Math.ceil(words.length / cols));
+  const xStep = 100 / (cols + 1);
+  const yStep = 100 / (rows + 1);
+
+  return words.map((word, index) => {
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    const baseX = xStep * (col + 1);
+    const baseY = yStep * (row + 1);
+    const offsetX = (((index * 17) % 19) - 9) * 0.9;
+    const offsetY = (((index * 13) % 15) - 7) * 0.8;
+    const size = 13 + ((word.text.length + index * 3) % 11);
+    const rotation = ((index % 7) - 3) * 2;
+    return {
+      ...word,
+      x: Math.max(4, Math.min(90, baseX + offsetX)),
+      y: Math.max(6, Math.min(88, baseY + offsetY)),
+      size,
+      rotation,
+    };
+  });
+}
+
+function renderCloud() {
+  const cloud = document.getElementById('cloud');
+  const words = makeCloudPlacements(buildWordsFromConfig(AXIS_META, GROUPS_ORDER));
+  if (!words.length) {
+    cloud.innerHTML = '<div class="error-box" style="padding-top:180px;">축 키워드를 찾지 못했습니다.</div>';
+    return;
+  }
+
+  cloud.innerHTML = '';
+  words.forEach(word => {
+    const el = document.createElement('span');
+    el.className = 'word';
+    el.style.left = `${word.x}%`;
+    el.style.top = `${word.y}%`;
+    el.style.fontSize = `${word.size}px`;
+    el.style.color = word.color;
+    el.style.setProperty('--rot', `${word.rotation}deg`);
+    el.style.transform = `rotate(${word.rotation}deg)`;
+    el.innerHTML = `${escapeHtml(word.text)}<small>${escapeHtml(word.axis)}</small>`;
+    el.addEventListener('click', () => {
+      scores[word.axis] += 1;
+      renderBars();
+      const plus = document.createElement('span');
+      plus.className = 'float-plus';
+      plus.textContent = '+1';
+      const r = el.getBoundingClientRect();
+      const c = cloud.getBoundingClientRect();
+      plus.style.left = `${r.left - c.left + r.width / 2}px`;
+      plus.style.top = `${r.top - c.top - 5}px`;
+      cloud.appendChild(plus);
+      setTimeout(() => plus.remove(), 600);
+    });
+    cloud.appendChild(el);
+  });
+}
+
+function renderBars() {
+  const container = document.getElementById('bars');
+  container.innerHTML = '';
+  const maxValue = Math.max(1, ...Object.values(scores));
+
+  GROUPS_ORDER.forEach(group => {
+    const label = document.createElement('div');
+    label.className = 'group-label';
+    label.textContent = group.label;
+    container.appendChild(label);
+
+    group.axes.forEach(axis => {
+      const value = scores[axis] || 0;
+      const pct = (value / maxValue) * 100;
+      const color = AXIS_COLORS[axis] || '#999';
+      const row = document.createElement('div');
+      row.className = 'axis-row';
+      row.innerHTML =
+        `<div class="axis-name" style="color:${color}">${escapeHtml(axis)}</div>` +
+        `<div class="axis-track"><div class="axis-fill" style="width:${value ? pct : 0}%;background:${color};opacity:0.55"></div></div>` +
+        `<div class="axis-num" style="color:${value ? color : '#ccc'}">${value}</div>`;
+      container.appendChild(row);
+    });
+  });
+}
+
+function resetAll() {
+  initializeScores();
+  selectedImageIdx = [];
+  useImageFusion = false;
+  document.getElementById('img-count').textContent = '0';
+  renderBars();
+}
+
+function goToImageStep() {
+  const total = Object.values(scores).reduce((a, b) => a + b, 0);
+  if (total === 0) {
+    alert('최소 1개 이상 키워드를 선택해주세요!');
+    return;
+  }
+
+  document.getElementById('step1-pill').className = 'step-pill done';
+  document.getElementById('step2-pill').className = 'step-pill active';
+  document.getElementById('step1-area').style.display = 'none';
+  document.getElementById('step2-area').classList.add('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  loadRepresentativeImages();
+}
+
+function goBackToCloud() {
+  document.getElementById('step2-pill').className = 'step-pill';
+  document.getElementById('step1-pill').className = 'step-pill active';
+  document.getElementById('step2-area').classList.remove('visible');
+  document.getElementById('step1-area').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function loadRepresentativeImages() {
+  const grid = document.getElementById('img-grid');
+  grid.innerHTML = '<div class="loading" style="grid-column:1/-1;">대표 이미지를 불러오는 중입니다...</div>';
+
+  fetch(`/api/representative_images?keyword=${encodeURIComponent(CURRENT_KEYWORD)}`)
+    .then(r => r.json())
+    .then(data => {
+      repImages = data.images || [];
+      selectedImageIdx = [];
+      document.getElementById('img-count').textContent = '0';
+
+      if (repImages.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999;">' +
+          '<p style="font-size:32px;margin-bottom:8px;">📷</p>' +
+          '<p>대표 이미지가 아직 준비되지 않았습니다</p>' +
+          '<p style="font-size:12px;margin-top:4px;">건너뛰기를 눌러 텍스트만으로 추천받을 수 있어요</p></div>';
+        return;
+      }
+
+      grid.innerHTML = '';
+      repImages.forEach((img, idx) => {
+        const card = document.createElement('div');
+        card.className = 'img-card';
+        card.dataset.idx = idx;
+        card.onclick = () => toggleImageSelection(idx);
+
+        let imgSrc = img.image_src || '';
+        if (imgSrc.startsWith('images/')) imgSrc = '/' + imgSrc;
+
+        card.innerHTML =
+          (imgSrc
+            ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(img.label || img.axis || 'image')}" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=img-placeholder>🍽️</div>');">`
+            : '<div class="img-placeholder">🍽️</div>') +
+          '<div class="img-card-info">' +
+            `<div class="img-card-label">${escapeHtml(img.label || img.axis || '대표 이미지')}</div>` +
+            `<div class="img-card-axis">${escapeHtml(img.axis || '')}</div>` +
+            `<div class="img-card-rest">${escapeHtml(img.restaurant || '')}</div>` +
+          '</div>';
+        grid.appendChild(card);
+      });
+    })
+    .catch(err => {
+      console.warn('대표 이미지 로드 실패:', err);
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999;">' +
+        '<p>이미지를 불러올 수 없습니다</p>' +
+        '<p style="font-size:12px;margin-top:4px;">건너뛰기를 눌러 텍스트만으로 추천받으세요</p></div>';
+    });
+}
+
+function toggleImageSelection(idx) {
+  const pos = selectedImageIdx.indexOf(idx);
+  if (pos >= 0) selectedImageIdx.splice(pos, 1);
+  else selectedImageIdx.push(idx);
+
+  document.querySelectorAll('.img-card').forEach(card => {
+    const cardIdx = parseInt(card.dataset.idx, 10);
+    card.classList.toggle('selected', selectedImageIdx.includes(cardIdx));
+  });
+  document.getElementById('img-count').textContent = String(selectedImageIdx.length);
+}
+
+function skipImages() {
+  selectedImageIdx = [];
+  useImageFusion = false;
+  getRecommendation();
+}
+
+function getRecommendation() {
+  const maxValue = Math.max(1, ...Object.values(scores));
+  const userPrefs = {};
+  ALL_AXES.forEach(axis => {
+    userPrefs[axis] = Math.round((scores[axis] / maxValue) * 5 * 10) / 10;
+  });
+
+  const selectedImages = selectedImageIdx.map(idx => ({
+    index: idx,
+    axis: (repImages[idx] || {}).axis || '',
+    clip_vector: (repImages[idx] || {}).clip_vector || {},
+  }));
+  useImageFusion = selectedImages.length > 0;
+
+  fetch('/api/recommend', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      _keyword: CURRENT_KEYWORD,
+      text_preferences: userPrefs,
+      selected_images: selectedImages,
+      use_image_fusion: useImageFusion,
+    })
+  })
+    .then(r => r.json())
+    .then(data => showResults(data))
+    .catch(err => {
+      console.error(err);
+      alert('서버(app.py)가 켜져 있는지 확인하세요!');
+    });
+}
+
+function showResults(data) {
+  document.getElementById('step1-pill').className = 'step-pill done';
+  document.getElementById('step2-pill').className = 'step-pill done';
+  document.getElementById('step3-pill').className = 'step-pill active';
+  document.getElementById('step1-area').style.display = 'none';
+  document.getElementById('step2-area').classList.remove('visible');
+  document.getElementById('step3-area').style.display = 'block';
+
+  const fusionLabel = useImageFusion
+    ? '<span class="fusion-badge fusion-multi">🔀 멀티모달 추천 (텍스트 + 이미지)</span>'
+    : '<span class="fusion-badge fusion-text">📝 텍스트 기반 추천</span>';
+
+  let html = `<div class="result-header">✨ ${escapeHtml(CURRENT_KEYWORD)} 취향 맛집 TOP 5 ✨</div>` +
+    `<div style="text-align:center;margin-bottom:12px;">${fusionLabel}</div>`;
+
+  const items = Array.isArray(data) ? data : (data.recommendations || []);
+  if (!items.length) {
+    html += '<div class="error-box">추천 결과가 없습니다.</div>';
+  }
+
+  items.forEach((item, i) => {
+    const evidence = item.evidence && item.evidence.length > 0 ? item.evidence[0] : '';
+    const nameHtml = item.naver_url
+      ? `<a class="rec-name" href="${escapeHtml(item.naver_url)}" target="_blank" rel="noopener">${escapeHtml(item.name)}</a>`
+      : `<span class="rec-name" style="cursor:default">${escapeHtml(item.name)}</span>`;
+
+    let reasonsHtml = '';
+    if (item.top_reasons && item.top_reasons.length > 0) {
+      reasonsHtml = '<div class="rec-reasons">';
+      item.top_reasons.forEach(r => {
+        const cls = r.score > 0 ? 'reason-pos' : 'reason-neg';
+        const sign = r.score > 0 ? '+' : '';
+        reasonsHtml += `<span class="reason-tag ${cls}">${escapeHtml(r.axis)} ${sign}${escapeHtml(r.score)}</span>`;
+      });
+      reasonsHtml += '</div>';
+    }
+
+    let badgesHtml = '';
+    if (item.has_image) badgesHtml += '<span class="badge badge-img">📷 이미지분석</span>';
+    if (item.category) badgesHtml += `<span class="badge badge-cat">${escapeHtml(item.category)}</span>`;
+    if (useImageFusion) badgesHtml += '<span class="badge badge-multi">🔀 멀티모달</span>';
+
+    html += '<div class="rec-item">' +
+      '<div class="rec-top"><div class="rec-name-wrap">' +
+        `<span class="rec-rank">${i + 1}위.</span> ${nameHtml}` +
+        (badgesHtml ? `<div class="rec-badges">${badgesHtml}</div>` : '') +
+      '</div>' +
+      `<span class="rec-match">취향 ${escapeHtml(item.match_score)}%</span></div>` +
+      (item.address ? `<div class="rec-info">📍 ${escapeHtml(item.address)}${item.naver_url ? ` · <a href="${escapeHtml(item.naver_url)}" target="_blank">지도 보기</a>` : ''}</div>` : '') +
+      (item.phone ? `<div class="rec-info">📞 ${escapeHtml(item.phone)}</div>` : '') +
+      `<div class="rec-rating">⭐ 종합 평점: ${escapeHtml(item.avg_total || '-')}</div>` +
+      (evidence ? `<div class="rec-evidence">💬 "${escapeHtml(evidence)}"</div>` : '') +
+      reasonsHtml +
+    '</div>';
+  });
+
+  const area = document.getElementById('result-area');
+  area.innerHTML = html;
+  area.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetAndRestart() {
+  initializeScores();
+  selectedImageIdx = [];
+  useImageFusion = false;
+  document.getElementById('img-count').textContent = '0';
+  document.getElementById('step1-pill').className = 'step-pill active';
+  document.getElementById('step2-pill').className = 'step-pill';
+  document.getElementById('step3-pill').className = 'step-pill';
+  document.getElementById('step1-area').style.display = 'block';
+  document.getElementById('step2-area').classList.remove('visible');
+  document.getElementById('step3-area').style.display = 'none';
+  document.getElementById('result-area').style.display = 'none';
+  renderBars();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function loadConfig() {
+  updatePageText();
+  fetch(`/api/config?keyword=${encodeURIComponent(CURRENT_KEYWORD)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      CONFIG = data;
+      AXES = data.axes || [];
+      AXIS_META = data.axes_config || {};
+      GROUPS_ORDER = groupOrderFromConfig(data.groups || {});
+      ALL_AXES = GROUPS_ORDER.flatMap(group => group.axes);
+      if (!ALL_AXES.length) ALL_AXES = AXES;
+
+      AXIS_COLORS = {};
+      GROUPS_ORDER.forEach(group => {
+        group.axes.forEach(axis => {
+          AXIS_COLORS[axis] = getGroupColor(group.label);
+        });
+      });
+
+      initializeScores();
+      renderLegend();
+      renderCloud();
+      renderBars();
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('cloud').innerHTML = `<div class="error-box" style="padding-top:180px;">설문 구성을 불러오지 못했습니다. (${escapeHtml(err.message)})</div>`;
+    });
+}
+
+loadConfig();
+</script>
+</body>
+</html>
