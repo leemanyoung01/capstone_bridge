@@ -14,7 +14,7 @@ app = Flask(__name__)
 
 USER_ALPHA = 0.7
 USER_BETA = 0.3
-PREFERRED_DEFAULT_KEYWORD = "삼겹살"
+PREFERRED_DEFAULT_KEYWORD = "삼겹살"#
 
 
 def read_json(path):
