@@ -13,10 +13,17 @@ import random
 
 # ── 크롤링 대상 (place/ 뒤 숫자) ──
 restaurants = {
-    "대한가오 부천점": "2000890492","미삼댁": "1120126275"
+    "김북순큰남비집 신사본점": "11722762","청담골": "11477316","수묵": "1355794902","돌산등대집": "1964934333",
+    "호남식당": "20870591","풍년집 선릉점": "30916873","냉삼식당 신사점": "38276485","고봉당 논현역점": "2007145517",
+    "약수동해물텀벙": "12885813","성수AGU": "1978223431","김영희아구찜&코다리냉면 반포원베일리 직영점": "1619999128","찬란한아구 강남본점": "1506437174",
+    "전주청국장집": "11678577","에덴식당": "36898413","별미볶음점": "32817544","24시서울밥집": "1566032438",
+    "마음은콩밭에": "19927989","시골야채된장": "11709266","다래식당": "13575119","팔도밀방 강남본점": "1281140539",
+    "탐라순대국감자탕 양재역직영점": "1113983640","신동궁 감자탕 뼈숯불구이 선릉직영점": "18468954","탕탕집 논현본점": "37867681","농민백암순대 본점": "13149768",
+    "순리대로 강남도곡본점": "1851351813","기절초풍왕순대": "18709584","청담동순도리 청담점": "1691368632","청담 순두부 본점": "19873395",
+    "김북순큰남비집 신사본점": "11722762","이문설렁탕": "11711983","마포양지설렁탕": "37365482","부대찌개대사관 시청점": "2018894329"
 }
 
-DOWNLOAD_IMAGES = True #False 써서 text만 다운 ㄱ
+DOWNLOAD_IMAGES = False #False 써서 text만 다운 ㄱ
 IMAGE_DIR = "images"
 
 GRAPHQL_QUERY = """query getVisitorReviews($input: VisitorReviewsInput) {
@@ -69,7 +76,7 @@ def get_headers(place_id):
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
         # ★★★ 쿠키: 브라우저 F12 > Network > graphql > Headers > cookie 복사 ★★★
         # ★★★ 반드시 한 줄로! 앞에 줄바꿈 넣지 말 것! ★★★ #쿠키 꼭 넣으세요!!!!!
-        "cookie": "",
+        "cookie": "NAC=YL19BMQKiMhK; NNB=YFLRAYGZENQWM; NFS=2; NID_AUT=8rpJgQ97MpUohDOG1qAhmtuzKrCUYHFp5kLEYoHA3uX9+FBJrymzIMXBk77SUIyj; NID_JKL=WAT/BqDCM+Igdcw6Evi4HqHjD7xBpt2t4inOv7moYss=; tooltipDisplayed=true; cto_bundle=DOpvjF9rT0t6MWxGYXElMkZma2RpajFHM0paUGxFJTJGTDd2TlJVUUdYUnFUJTJGUHpwWUpValJYR3pWOTRGVEtCYTdtSHJhTmt3WHFZcFhmVTViWHExMVlVMjdOJTJCbGUzSXhOSXBnc3ZlaUppb05saEZqaFk3WkhNckxKVWszbjNUZGNOJTJCcTU1TDROdXFQViUyRkwxeG1IUDBzQlJkMDhYeXclM0QlM0Q; bnb_tooltip_shown_finance_v1=true; PLACE_LANGUAGE=ko; NACT=1; SRT30=1773646258; page_uid=jkPx3lqos5yFfqcaLlZ-185615; NID_SES=AAABjQhcHWV4j/ZiqrQklT1tXiHEr9VA7W26UEAPLhR0T2u9h8uGioMSf51M/0ILe9GSkac4LyYD0Q6WxbAZPL7ARv0BwH7iE2CY5qN/WRg0VzLrfbVC0E3URQZt3QHXd4wNlF/rqO2xOiB//uZKVdDl14rkfyI3ArY3w5a+Pl79CSSp14dASWVpQ+jPjz5HzqaVdN8CFzTOT99vzPR0oYAZhzBiG4CPd37o1nR1ZYUMtbtX2/GmWU9Ey8vH9NPreeCOMEeDu0GJwj2LqFP6AUl0E+dUKynTppAf/+4ZSlV56Z5gozTzQZe+Acv42kpA65AoNpgTuyBPJ8kdfvKNV9IrdPNXCBmr/g6O7FjSuvQ3heObxHugLTEcXYIgEG5bLxDOR8iAbnkrzShIRCpvC4UaNLATtrdrUpXKaw5lJelN+Ph4Tzo79YlXLCzcA3VDdT2anBUu73JGPhbYigpm8kuyFF1ePTbPoiWm/iXQYCBblmm7G/YQjfsBEk04zkFobXXnOX97v1Vl4WFiE68D+GctxRY=; ASID=dfc29f200000019cf58edbe60000001d; SRT5=1773647750; BUC=3LVBNvj2gFf6A4XKdexjWtJRIjEKK_mGS97Pdv4SGr4=",
     }
 
 
