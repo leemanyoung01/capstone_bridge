@@ -68,14 +68,30 @@ def compose_axes(keyword):
         taste[name] = build_entry(name, info.get("group", "맛"), lexicon.get("shared", {}))
 
     food_specific = axes_def.get("food_specific_axes", {})
+    alias_to_cat = axes_def.get("alias_to_category", {})
     matched = None
+
+    # 1) 직접 매칭: keyword가 food_specific 카테고리명과 일치
     for category in food_specific:
         if category in keyword or keyword in category:
             matched = category
             break
+
+    # 2) alias_to_category 매핑 사용 (★ 핵심 수정)
+    if not matched:
+        # keyword 자체가 alias_to_category에 있는지
+        if keyword in alias_to_cat and alias_to_cat[keyword] in food_specific:
+            matched = alias_to_cat[keyword]
+
+    # 3) keyword_aliases에서 찾아서 alias_to_category로 연결
     if not matched:
         for food, aliases in axes_def.get("keyword_aliases", {}).items():
             if keyword in aliases or food in keyword or keyword in food:
+                # alias key(food)를 alias_to_category에서 조회
+                if food in alias_to_cat and alias_to_cat[food] in food_specific:
+                    matched = alias_to_cat[food]
+                    break
+                # 폴백: 기존 방식
                 for cat in food_specific:
                     if cat in food or food in cat:
                         matched = cat

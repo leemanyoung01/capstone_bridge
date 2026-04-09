@@ -26,8 +26,16 @@ def path_glob(pattern):
     return sorted(glob.glob(os.path.join(BASE_DIR, pattern)))
 
 
+def normalize_keyword_name(keyword: str) -> str:
+    kw = str(keyword or "").strip()
+    if kw.endswith("_multimodal"):
+        kw = kw[: -len("_multimodal")]
+    return kw
+
+
 def keyword_from_filename(path, suffix):
-    return os.path.basename(path).replace(suffix, "")
+    name = os.path.basename(path).replace(suffix, "")
+    return normalize_keyword_name(name)
 
 
 def merge_restaurants(text_restaurants, multimodal_restaurants):
@@ -36,6 +44,8 @@ def merge_restaurants(text_restaurants, multimodal_restaurants):
         if name not in merged:
             merged[name] = {}
         if isinstance(info, dict):
+            if not isinstance(merged[name], dict):
+                merged[name] = {}
             merged[name].update(info)
         else:
             merged[name] = info
@@ -45,20 +55,39 @@ def merge_restaurants(text_restaurants, multimodal_restaurants):
 def load_keyword_bundles():
     bundles = {}
 
+    # 1) text vectors
     for path in path_glob("*_vectors.json"):
+        # _multimodal_vectors.json는 아래에서 따로 처리
+        if path.endswith("_multimodal_vectors.json"):
+            continue
+
         kw = keyword_from_filename(path, "_vectors.json")
-        data = read_json(path)
+        try:
+            data = read_json(path)
+        except Exception as e:
+            print(f"  ❌ {os.path.basename(path)} 로드 실패: {e}")
+            continue
+
         bundle = bundles.setdefault(kw, {"keyword": kw})
         bundle["text_path"] = path
         bundle["text"] = data
         bundle["axes"] = data.get("axes", bundle.get("axes", []))
         bundle["groups"] = data.get("groups", bundle.get("groups", {}))
         bundle["axes_config"] = data.get("axes_config", bundle.get("axes_config", {}))
-        bundle["restaurants"] = merge_restaurants(data.get("restaurants", {}), bundle.get("restaurants", {}))
+        bundle["restaurants"] = merge_restaurants(
+            bundle.get("restaurants", {}),
+            data.get("restaurants", {}),
+        )
 
+    # 2) multimodal vectors
     for path in path_glob("*_multimodal_vectors.json"):
         kw = keyword_from_filename(path, "_multimodal_vectors.json")
-        data = read_json(path)
+        try:
+            data = read_json(path)
+        except Exception as e:
+            print(f"  ❌ {os.path.basename(path)} 로드 실패: {e}")
+            continue
+
         bundle = bundles.setdefault(kw, {"keyword": kw})
         bundle["multimodal_path"] = path
         bundle["multimodal"] = data
@@ -66,34 +95,56 @@ def load_keyword_bundles():
         bundle["alpha"] = data.get("alpha")
         bundle["beta"] = data.get("beta")
         bundle["image_mode"] = data.get("image_mode")
-        bundle["restaurants"] = merge_restaurants(bundle.get("restaurants", {}), data.get("restaurants", {}))
 
+        if not bundle.get("axes"):
+            sample_restaurants = data.get("restaurants", {})
+            if sample_restaurants:
+                first_info = next(iter(sample_restaurants.values()))
+                if isinstance(first_info, dict):
+                    fused = first_info.get("fused_vector", {})
+                    if isinstance(fused, dict):
+                        bundle["axes"] = list(fused.keys())
+
+        bundle["restaurants"] = merge_restaurants(
+            bundle.get("restaurants", {}),
+            data.get("restaurants", {}),
+        )
+
+    # 3) axes_config only files (optional backup)
     for path in path_glob("*_axes_config.json"):
         kw = keyword_from_filename(path, "_axes_config.json")
-        data = read_json(path)
+        try:
+            data = read_json(path)
+        except Exception:
+            continue
+
         bundle = bundles.setdefault(kw, {"keyword": kw})
-        bundle["axes_config_path"] = path
-        bundle["axes_config"] = data
+        if not bundle.get("axes_config"):
+            bundle["axes_config"] = data
         if not bundle.get("axes"):
             bundle["axes"] = list(data.keys())
-        if not bundle.get("groups"):
-            groups = {}
-            for axis, meta in data.items():
-                group = meta.get("group", "기타")
-                groups.setdefault(group, []).append(axis)
-            bundle["groups"] = groups
 
-    return bundles
+    # 빈 번들 제거
+    cleaned = {}
+    for kw, bundle in bundles.items():
+        if bundle.get("restaurants") or bundle.get("axes_config") or bundle.get("axes"):
+            cleaned[kw] = bundle
+
+    return cleaned
 
 
 def load_restaurant_db():
     path = os.path.join(BASE_DIR, "restaurant_db.json")
-    if os.path.exists(path):
-        db = read_json(path)
-        print(f"  ✅ restaurant_db.json → {len(db)}개 주소")
-        return db
-    print("  ⚠️ restaurant_db.json 없음")
-    return {}
+    if not os.path.exists(path):
+        print("  ⚠️ restaurant_db.json 없음")
+        return {}
+    try:
+        data = read_json(path)
+        print(f"  ✅ restaurant_db.json ({len(data)}개)")
+        return data
+    except Exception as e:
+        print(f"  ❌ restaurant_db.json 로드 실패: {e}")
+        return {}
 
 
 def load_representative_images():
@@ -101,7 +152,10 @@ def load_representative_images():
     for path in path_glob("*_representative_images.json"):
         try:
             data = read_json(path)
-            kw = data.get("keyword") or keyword_from_filename(path, "_representative_images.json")
+            kw = normalize_keyword_name(
+                data.get("keyword") or keyword_from_filename(path, "_representative_images.json")
+            )
+            data["keyword"] = kw
             all_images[kw] = data
             print(f"  ✅ {os.path.basename(path)} → '{kw}' ({len(data.get('images', []))}장)")
         except Exception as e:
@@ -121,13 +175,27 @@ def get_axes(bundle):
     axes = bundle.get("axes") or []
     if axes:
         return axes
+
     axes_config = bundle.get("axes_config") or {}
-    return list(axes_config.keys())
+    if axes_config:
+        return list(axes_config.keys())
+
+    restaurants = bundle.get("restaurants") or {}
+    for _, info in restaurants.items():
+        if not isinstance(info, dict):
+            continue
+        for key in ["fused_vector", "text_only_vector", "normalized"]:
+            vec = info.get(key)
+            if isinstance(vec, dict) and vec:
+                return list(vec.keys())
+
+    return []
 
 
 def get_restaurant_info(name, db):
     if name in db:
         return db[name]
+
     compact = name.replace("-", "").replace(" ", "").lower()
     for key, value in db.items():
         normalized = key.replace("-", "").replace(" ", "").lower()
@@ -142,8 +210,6 @@ def cosine_sim(a, b):
     na = np.linalg.norm(a)
     nb = np.linalg.norm(b)
     return float(np.dot(a, b) / (na * nb)) if na and nb else 0.0
-
-
 
 
 def clean_jsonable(obj):
@@ -161,11 +227,13 @@ def clean_jsonable(obj):
         return obj
     return obj
 
+
 def build_user_image_vector(selected_images, axes):
     if not selected_images:
         return {ax: 0.0 for ax in axes}
 
     axis_scores = {ax: [] for ax in axes}
+
     for img_info in selected_images:
         clip_vec = img_info.get("clip_vector", {}) or {}
         main_axis = img_info.get("axis", "")
@@ -194,6 +262,7 @@ def fuse_user_vectors(text_vec, image_vec, axes, alpha=USER_ALPHA, beta=USER_BET
     for ax in axes:
         t = float(text_vec.get(ax, 0.0))
         i = float(image_vec.get(ax, 0.0))
+
         if abs(i) > 0.001 and abs(t) > 0.001:
             fused[ax] = round(alpha * t + beta * i, 4)
         elif abs(t) > 0.001:
@@ -202,6 +271,7 @@ def fuse_user_vectors(text_vec, image_vec, axes, alpha=USER_ALPHA, beta=USER_BET
             fused[ax] = round(beta * i, 4)
         else:
             fused[ax] = 0.0
+
     return fused, "multimodal"
 
 
@@ -234,6 +304,7 @@ def api_health():
         "ok": True,
         "keywords": sorted(ALL_DATA.keys()),
         "default_keyword": DEFAULT_KW,
+        "representative_keywords": sorted(REP_IMAGES.keys()),
     })
 
 
@@ -244,10 +315,11 @@ def api_keywords():
 
 @app.route("/api/config")
 def api_config():
-    kw = request.args.get("keyword", DEFAULT_KW)
+    kw = normalize_keyword_name(request.args.get("keyword", DEFAULT_KW))
     bundle = ALL_DATA.get(kw)
     if not bundle:
         return jsonify({"error": f"'{kw}' 없음"}), 404
+
     return jsonify({
         "keyword": kw,
         "axes": get_axes(bundle),
@@ -258,17 +330,15 @@ def api_config():
 
 @app.route("/api/representative_images")
 def api_representative_images():
-    kw = request.args.get("keyword", DEFAULT_KW)
+    kw = normalize_keyword_name(request.args.get("keyword", DEFAULT_KW))
 
     if kw in REP_IMAGES:
         return jsonify(REP_IMAGES[kw])
 
+    # 유사 키 매칭
     for key, value in REP_IMAGES.items():
         if kw in key or key in kw:
             return jsonify(value)
-
-    if REP_IMAGES:
-        return jsonify(list(REP_IMAGES.values())[0])
 
     return jsonify({"keyword": kw, "images": []})
 
@@ -280,12 +350,12 @@ def api_recommend():
         return jsonify({"error": "no data"}), 400
 
     if "text_preferences" in body:
-        kw = body.get("_keyword", DEFAULT_KW)
+        kw = normalize_keyword_name(body.get("_keyword", DEFAULT_KW))
         user_prefs = body.get("text_preferences", {})
         selected_images = body.get("selected_images", [])
         use_fusion = body.get("use_image_fusion", False)
     else:
-        kw = body.get("_keyword", DEFAULT_KW)
+        kw = normalize_keyword_name(body.get("_keyword", DEFAULT_KW))
         user_prefs = {k: v for k, v in body.items() if k != "_keyword"}
         selected_images = []
         use_fusion = False
@@ -336,42 +406,46 @@ def api_recommend():
                 evidence.extend(ev_list)
 
         reasons = []
-        for idx, ax in enumerate(axes):
-            u = user_vec[idx]
-            r = restaurant_vec[idx] if idx < len(restaurant_vec) else 0.0
-            if u and r:
-                reasons.append({
-                    "axis": ax,
-                    "contribution": round(u * r, 3),
-                    "score": round(r, 3),
-                })
-        reasons.sort(key=lambda x: abs(x["contribution"]), reverse=True)
+        for ax in axes:
+            uv = float(user_vec_dict.get(ax, 0.0))
+            rv = float(restaurant_vec[axes.index(ax)])
+            if abs(uv) > 0.001 and abs(rv) > 0.001:
+                reasons.append((ax, uv * rv))
 
-        db = get_restaurant_info(name, REST_DB)
+        reasons.sort(key=lambda x: x[1], reverse=True)
+        top_reasons = [ax for ax, _ in reasons[:5]]
+
+        rest_info = get_restaurant_info(name, REST_DB)
+        address = (
+            rest_info.get("road_address")
+            or rest_info.get("address")
+            or ""
+        )
+
         results.append({
             "name": name,
-            "match_score": round(sim * 100, 1),
-            "avg_total": clean_jsonable(info.get("avg_total", 0)),
-            "total_reviews": info.get("total_reviews", 0),
+            "similarity": round(float(sim), 4),
+            "address": address,
+            "phone": rest_info.get("phone", ""),
+            "naver_url": rest_info.get("naver_url", ""),
+            "category": rest_info.get("category", ""),
             "evidence": evidence[:3],
-            "top_reasons": reasons[:3],
-            "has_image": bool(info.get("has_image_data", False)),
-            "address": db.get("road_address") or db.get("address", ""),
-            "phone": db.get("phone", ""),
-            "lat": db.get("lat", 0),
-            "lng": db.get("lng", 0),
-            "naver_url": db.get("naver_url", db.get("link", "")),
-            "category": db.get("category", ""),
+            "reasons": top_reasons,
             "fusion_mode": fusion_mode,
+            "has_image_data": bool(info.get("has_image_data", False)),
         })
 
-    results.sort(key=lambda x: x["match_score"], reverse=True)
-    return jsonify(clean_jsonable(results[:5]))
+    results.sort(key=lambda x: x["similarity"], reverse=True)
+
+    return jsonify(clean_jsonable({
+        "keyword": kw,
+        "fusion_mode": fusion_mode,
+        "count": len(results),
+        "results": results[:10],
+        "user_vector": user_vec_dict,
+    }))
 
 
 if __name__ == "__main__":
-    if ALL_DATA:
-        print(f"🚀 http://127.0.0.1:5000 | 기본 키워드: {DEFAULT_KW}")
-    else:
-        print("❌ 벡터 파일을 찾지 못했습니다.")
-    app.run(debug=True, port=5000)
+    print(f"🚀 http://127.0.0.1:5000 | 기본 키워드: {DEFAULT_KW}")
+    app.run(debug=True, host="127.0.0.1", port=5000)
