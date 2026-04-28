@@ -1,0 +1,70 @@
+# ── Secrets / Env ────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+
+# ── Python ───────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Virtualenv ───────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── IDE / OS ─────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Node / Frontend ──────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.log
+npm-debug.log*
+
+# ── Build artifacts / Caches ─────────────────────────
+dist/
+build/
+*.egg-info/
+clip_cache/
+.cache/
+
+# ── Project data outputs (재생성 가능) ───────────────
+*_vectors.json
+*_multimodal_vectors.json
+*_representative_images.json
+debug_food_profile_*.json
+debug_multimodal_*.json
+debug_recommendation_*.json
+naver_reviews.csv
+images/
+backUp/
+
+# ── Evaluation outputs (생성 산출물) ────────────────
+eval_labels.csv
+evaluation_results.json
+eval_labels_*.csv
+!eval_labels_human.csv
+
+# ── Test / coverage ──────────────────────────────────
+.coverage
+htmlcov/
+.tox/
+
+# ── Misc ─────────────────────────────────────────────
+tempCodeRunnerFile.py

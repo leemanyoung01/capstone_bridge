@@ -4,7 +4,7 @@ db.py — PostgreSQL 전용 연결 레이어
 모든 모듈이 이 파일만 import.
 
 환경변수 DATABASE_URL 우선, 없으면 기본값 사용.
-  로컬 : postgresql://postgres:1234@localhost:5432/tastebridge
+  로컬 : postgresql://postgres:precap@localhost:5432/tastebridge
   AWS  : postgresql://user:pw@<rds-endpoint>:5432/tastebridge
 
 설치: pip install psycopg2-binary python-dotenv
@@ -15,6 +15,7 @@ import os
 import re
 from contextlib import contextmanager
 from datetime import datetime
+from typing import Optional
 
 import psycopg2
 import psycopg2.extras
@@ -28,10 +29,10 @@ except ImportError:
 
 DATABASE_URL: str = os.environ.get(
     "DATABASE_URL",
-    "postgresql://postgres:1234@localhost:5432/tastebridge",
+    "postgresql://postgres:precap@localhost:5432/tastebridge",
 )
 
-_pool: pool.ThreadedConnectionPool | None = None
+_pool: Optional[pool.ThreadedConnectionPool] = None
 
 
 def _get_pool() -> pool.ThreadedConnectionPool:
@@ -72,17 +73,17 @@ def close_pool():
 # 날짜 파싱 유틸
 # ──────────────────────────────────────────────
 
-def _parse_date(raw) -> str | None:
+def _parse_date(raw) -> Optional[str]:
     """
     네이버 날짜 형식 → 'YYYY-MM-DD' 문자열 변환.
     PostgreSQL TIMESTAMP 컬럼에 안전하게 삽입 가능.
 
     처리 가능한 입력 예시:
-      "4.12.일"              → "2025-04-12"
-      "2024.04.12"           → "2024-04-12"
+      "4.12.일"               → "2025-04-12"
+      "2024.04.12"            → "2024-04-12"
       "2024.04.12. 오후 3:20" → "2024-04-12"
-      "1일 전", "방금"       → None  (상대시간 변환 불가)
-      NaN, None, ""          → None
+      "1일 전", "방금"        → None  (상대시간 변환 불가)
+      NaN, None, ""           → None
     """
     if raw is None:
         return None
@@ -103,7 +104,7 @@ def _parse_date(raw) -> str | None:
     if any(k in raw for k in ("전", "방금", "ago", "just")):
         return None
 
-    nums = re.findall(r'\d+', raw)
+    nums = re.findall(r"\d+", raw)
     if not nums:
         return None
 
@@ -172,7 +173,7 @@ def get_all_restaurants(conn) -> list[dict]:
         return [dict(r) for r in cur.fetchall()]
 
 
-def get_restaurant_by_name(conn, name: str) -> dict | None:
+def get_restaurant_by_name(conn, name: str) -> Optional[dict]:
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM restaurants WHERE name = %s", (name,))
         row = cur.fetchone()
@@ -183,7 +184,7 @@ def get_restaurant_by_name(conn, name: str) -> dict | None:
 # reviews
 # ──────────────────────────────────────────────
 
-def insert_review(conn, restaurant_id: int, review: dict) -> int | None:
+def insert_review(conn, restaurant_id: int, review: dict) -> Optional[int]:
     """
     리뷰 INSERT. naver_review_id 중복이면 무시하고 None 반환.
     날짜는 _parse_date()로 안전하게 변환 후 삽입.
@@ -222,7 +223,7 @@ def insert_review(conn, restaurant_id: int, review: dict) -> int | None:
             "hi":      bool(review.get("HasPicture") or review.get("has_image") or False),
             "vk":      review.get("VotedKeywords") or review.get("voted_keywords", ""),
             "reply":   review.get("OwnerReply") or review.get("owner_reply", ""),
-            "date":    parsed_date,    # ← _parse_date() 통과한 값만 삽입
+            "date":    parsed_date,
         })
         row = cur.fetchone()
         if row is None:
@@ -234,7 +235,7 @@ def insert_review(conn, restaurant_id: int, review: dict) -> int | None:
             raw_u = str(review.get(col_url, "") or "")
             raw_p = str(review.get(col_path, "") or "")
             if raw_u and raw_u != "nan":
-                urls  = [u.strip() for u in raw_u.split("|") if u.strip() and u.strip() != "nan"]
+                urls = [u.strip() for u in raw_u.split("|") if u.strip() and u.strip() != "nan"]
                 paths = [p.strip() for p in raw_p.split("|") if p.strip() and p.strip() != "nan"]
                 for i, url in enumerate(urls):
                     path = paths[i] if i < len(paths) else ""
@@ -246,14 +247,14 @@ def insert_review(conn, restaurant_id: int, review: dict) -> int | None:
         return review_id
 
 
-def get_reviews_for_profiler(conn, keyword: str, aliases: list[str] | None = None) -> list[dict]:
+def get_reviews_for_profiler(conn, keyword: str, aliases: Optional[list[str]] = None) -> list[dict]:
     """
     Food_profiler용 리뷰 조회.
     menu 또는 content에 keyword / aliases 포함 리뷰 반환.
     컬럼명은 원본 CSV 컬럼명과 동일하게 맞춤 (Restaurant, Review, Total, Menu…).
     """
     terms = list(dict.fromkeys([keyword] + (aliases or [])))
-    cond  = " OR ".join(["(r.content ILIKE %s OR r.menu ILIKE %s)"] * len(terms))
+    cond = " OR ".join(["(r.content ILIKE %s OR r.menu ILIKE %s)"] * len(terms))
     params: list = []
     for t in terms:
         params += [f"%{t}%", f"%{t}%"]
@@ -308,8 +309,8 @@ def upsert_taste_profile(conn, restaurant_id: int, keyword: str, profile: dict):
         """, {
             "rid": restaurant_id,
             "kw":  keyword,
-            "tv":  json.dumps(profile.get("normalized", {}),   ensure_ascii=False),
-            "ev":  json.dumps(profile.get("evidence", {}),     ensure_ascii=False),
+            "tv":  json.dumps(profile.get("normalized", {}), ensure_ascii=False),
+            "ev":  json.dumps(profile.get("evidence", {}), ensure_ascii=False),
             "ar":  float(profile.get("avg_total", 0)),
             "at":  float(profile.get("avg_taste", 0)),
             "rc":  int(profile.get("total_reviews", 0)),
@@ -336,8 +337,8 @@ def upsert_multimodal_profile(conn, restaurant_id: int, keyword: str, profile: d
             "rid": restaurant_id,
             "kw":  keyword,
             "tv":  json.dumps(profile.get("text_only_vector", {}), ensure_ascii=False),
-            "iv":  json.dumps(profile.get("image_sentiment",  {}), ensure_ascii=False),
-            "fv":  json.dumps(profile.get("fused_vector",     {}), ensure_ascii=False),
+            "iv":  json.dumps(profile.get("image_sentiment", {}), ensure_ascii=False),
+            "fv":  json.dumps(profile.get("fused_vector", {}), ensure_ascii=False),
             "ic":  float(profile.get("fused_vector", {}).get("_img_coverage", 0)),
             "hid": bool(profile.get("has_image_data", False)),
         })
@@ -353,15 +354,16 @@ def get_profiles_by_keyword(conn, keyword: str) -> list[dict]:
             WHERE rv.keyword = %s
         """, (keyword,))
         rows = cur.fetchall()
+
     result = []
     for row in rows:
         d = dict(row)
         for field in ("text_vector", "image_vector", "fused_vector", "evidence_json"):
             raw = d.pop(field, None)
             out_key = {
-                "text_vector":   "text_vector",
-                "image_vector":  "image_vector",
-                "fused_vector":  "fused_vector",
+                "text_vector": "text_vector",
+                "image_vector": "image_vector",
+                "fused_vector": "fused_vector",
                 "evidence_json": "evidence",
             }[field]
             d[out_key] = json.loads(raw) if isinstance(raw, str) else (raw or {})
@@ -410,16 +412,17 @@ def get_axes_config(conn, keyword: str) -> dict:
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM axes_config WHERE keyword = %s", (keyword,))
         rows = cur.fetchall()
+
     result = {}
     for row in rows:
         d = dict(row)
         result[d["axis_name"]] = {
-            "group":             d.get("group_name") or "기타",
+            "group": d.get("group_name") or "기타",
             "positive_keywords": [x for x in (d.get("positive_kws") or "").split(",") if x],
             "negative_keywords": [x for x in (d.get("negative_kws") or "").split(",") if x],
-            "clip_prompt_pos":   [x for x in (d.get("clip_prompt_pos") or "").split(",") if x],
-            "clip_prompt_neg":   [x for x in (d.get("clip_prompt_neg") or "").split(",") if x],
-            "is_meta":           bool(d.get("is_meta", False)),
+            "clip_prompt_pos": [x for x in (d.get("clip_prompt_pos") or "").split(",") if x],
+            "clip_prompt_neg": [x for x in (d.get("clip_prompt_neg") or "").split(",") if x],
+            "is_meta": bool(d.get("is_meta", False)),
         }
     return result
 
@@ -439,14 +442,17 @@ def upsert_representative_images(conn, keyword: str, images: list[dict]):
                 row = cur.fetchone()
                 if row:
                     rest_id = row["restaurant_id"]
+
             cur.execute("""
                 INSERT INTO representative_images
                     (restaurant_id, keyword, axis, label, image_url,
                      clip_vector, review_snippet, score, rank)
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """, (
-                rest_id, keyword,
-                img.get("axis", ""), img.get("label", ""),
+                rest_id,
+                keyword,
+                img.get("axis", ""),
+                img.get("label", ""),
                 img.get("image_src", ""),
                 json.dumps(img.get("clip_vector", {}), ensure_ascii=False),
                 img.get("review_snippet", ""),
@@ -461,9 +467,11 @@ def get_representative_images(conn, keyword: str) -> list[dict]:
             SELECT ri.*, r.name AS restaurant_name
             FROM representative_images ri
             LEFT JOIN restaurants r ON r.restaurant_id = ri.restaurant_id
-            WHERE ri.keyword = %s ORDER BY ri.rank
+            WHERE ri.keyword = %s
+            ORDER BY ri.rank
         """, (keyword,))
         rows = cur.fetchall()
+
     result = []
     for row in rows:
         d = dict(row)

@@ -1,15 +1,19 @@
 """
-app.py — Flask API 서버 (PostgreSQL 전용)
-==========================================
-시작 시 DB에서 전체 데이터를 메모리에 캐시.
-새 데이터 적재 후 POST /api/reload 호출하면 재시작 없이 갱신.
+app.py — Flask API 서버 (PostgreSQL 전용) v2
+==============================================
+v2 개선점:
+  - cosine은 taste_axes 만으로 계산 (메타축은 보조 부스트)
+  - 응답에 axis_scores, axis_contributions, top_axes, fusion_weights,
+    text/image confidence, representative_image, place_url, fallback_search_url 추가
+  - 동적 fusion (텍스트 confidence 높으면 image 가중치 자동 감소)
+  - frontend 호환 fallback (similarity, reasons, evidence 유지)
 
 실행:
-  python app.py                    # 로컬 개발
-  gunicorn app:app -b 0.0.0.0:5000 --workers 3   # 프로덕션
+  python app.py
+  gunicorn app:app -b 0.0.0.0:5000 --workers 3
 """
-
 import json, math, os
+from urllib.parse import quote
 import numpy as np
 from flask import Flask, jsonify, request, send_file, send_from_directory
 
@@ -28,28 +32,23 @@ IMAGES_DIR = os.path.join(BASE_DIR, "images")
 
 app = Flask(__name__)
 
-USER_ALPHA = 0.7
-USER_BETA  = 0.3
+# 동적 fusion 기본 파라미터 (실제 가중은 confidence로 자동 조정)
+USER_ALPHA_BASE = 0.7
+USER_BETA_BASE  = 0.3
+META_BOOST      = 0.05  # 메타축 일치 시 cosine에 더하는 부스트 비율
 DEFAULT_KEYWORD_PREF = os.environ.get("DEFAULT_KEYWORD", "삼겹살")
 
 
-# ── 시작 시 DB 캐시 로드 ─────────────────────────────────────
+# ── DB 캐시 로드 ─────────────────────────────────────────────
 
 def _load_all_data() -> tuple[dict, dict, dict]:
-    """
-    반환: (ALL_DATA, REP_IMAGES, REST_DB)
-    ALL_DATA[keyword] = {axes, axes_config, restaurants}
-    """
     bundles: dict = {}
-
     with get_conn() as conn:
         keywords = get_all_keywords(conn)
-
         for kw in keywords:
             profiles = get_profiles_by_keyword(conn, kw)
             if not profiles:
                 continue
-
             sample    = profiles[0]
             fused     = sample.get("fused_vector") or {}
             text      = sample.get("text_vector")  or {}
@@ -72,8 +71,8 @@ def _load_all_data() -> tuple[dict, dict, dict]:
                     "evidence":         p.get("evidence") or {},
                     "avg_total":        p.get("avg_rating", 0),
                     "keyword_reviews":  p.get("keyword_reviews", 0),
+                    "image_coverage":   float(p.get("image_coverage", 0) or 0),
                 }
-
             bundles[kw] = {
                 "keyword":     kw,
                 "axes":        axes_list,
@@ -81,7 +80,6 @@ def _load_all_data() -> tuple[dict, dict, dict]:
                 "restaurants": restaurants,
             }
 
-        # 대표 이미지
         rep_images: dict = {}
         for kw in get_all_rep_keywords(conn):
             imgs = get_representative_images(conn, kw)
@@ -101,7 +99,6 @@ def _load_all_data() -> tuple[dict, dict, dict]:
                 ],
             }
 
-        # 식당 기본 정보
         rest_db = {r["name"]: r for r in get_all_restaurants(conn)}
 
     return bundles, rep_images, rest_db
@@ -116,7 +113,8 @@ try:
     print(f"  식당: {len(REST_DB)}개 | 기본 키워드: {DEFAULT_KW}\n")
 except Exception as e:
     print(f"  ❌ DB 로드 실패: {e}")
-    print(f"     DATABASE_URL = {os.environ.get('DATABASE_URL','(미설정)')}")
+    db_host = os.environ.get('DATABASE_URL','(env not set)').split('@')[-1]
+    print(f"     DB host = {db_host}")
     ALL_DATA, REP_IMAGES, REST_DB, DEFAULT_KW = {}, {}, {}, None
 
 
@@ -127,7 +125,7 @@ def _norm_kw(kw: str) -> str:
     return kw[:-len("_multimodal")] if kw.endswith("_multimodal") else kw
 
 
-def _get_axes(bundle: dict) -> list[str]:
+def _all_axes(bundle: dict) -> list[str]:
     if bundle.get("axes"): return bundle["axes"]
     if bundle.get("axes_config"): return list(bundle["axes_config"].keys())
     for info in (bundle.get("restaurants") or {}).values():
@@ -137,6 +135,22 @@ def _get_axes(bundle: dict) -> list[str]:
                 if isinstance(vec, dict):
                     return [k for k in vec if not k.startswith("_")]
     return []
+
+
+def _split_axes(bundle: dict) -> tuple[list[str], list[str]]:
+    """axes_config의 is_meta로 taste/meta 분리. 없으면 모두 taste."""
+    cfg = bundle.get("axes_config") or {}
+    if not cfg:
+        axes = _all_axes(bundle)
+        return axes, []
+    taste, meta = [], []
+    for name, info in cfg.items():
+        if name.startswith("_"):
+            continue
+        (meta if info.get("is_meta") else taste).append(name)
+    if not taste:
+        taste = list(cfg.keys())
+    return taste, meta
 
 
 def _rest_info(name: str) -> dict:
@@ -161,6 +175,15 @@ def _clean(obj):
     return obj
 
 
+def _confidence(vec: dict, axes: list[str]) -> float:
+    """벡터의 평균 절댓값을 신뢰도로. 0~1 범위."""
+    if not vec or not axes: return 0.0
+    vals = [abs(float(vec.get(a, 0.0))) for a in axes]
+    if not vals: return 0.0
+    mean_abs = sum(vals) / len(vals)
+    return float(min(mean_abs * 2.0, 1.0))  # 0.5 이상이면 confidence 1.0
+
+
 def _user_img_vec(selected_images, axes):
     scores = {ax:[] for ax in axes}
     for img in selected_images:
@@ -172,16 +195,38 @@ def _user_img_vec(selected_images, axes):
     return {ax: round(float(np.mean(vs)),4) if vs else 0.0 for ax,vs in scores.items()}
 
 
-def _fuse(tv, iv, axes):
-    if not any(abs(v)>0.001 for v in iv.values()): return tv, "text_only"
+def _fuse_dynamic(tv: dict, iv: dict, axes: list[str]) -> tuple[dict, dict, str]:
+    """
+    동적 fusion: text_conf vs image_conf로 가중치 자동 조정.
+    반환: (fused_vec, weights{text, image}, mode)
+    """
+    if not iv or not any(abs(float(v)) > 0.001 for v in iv.values()):
+        return dict(tv), {"text": 1.0, "image": 0.0}, "text_only"
+
+    t_conf = _confidence(tv, axes)
+    i_conf = _confidence(iv, axes)
+    total = t_conf + i_conf
+    if total < 1e-6:
+        alpha = USER_ALPHA_BASE
+    else:
+        # 텍스트 신뢰도 비율을 0.5~0.9 범위로 매핑
+        ratio = t_conf / total
+        alpha = max(0.5, min(0.9, 0.5 + 0.4 * ratio))
+
+    beta = 1.0 - alpha
     fused = {}
     for ax in axes:
-        t, i = float(tv.get(ax,0.0)), float(iv.get(ax,0.0))
-        if   abs(i)>0.001 and abs(t)>0.001: fused[ax] = round(USER_ALPHA*t+USER_BETA*i,4)
-        elif abs(t)>0.001: fused[ax] = t
-        elif abs(i)>0.001: fused[ax] = round(USER_BETA*i,4)
-        else: fused[ax] = 0.0
-    return fused, "multimodal"
+        t = float(tv.get(ax, 0.0))
+        i = float(iv.get(ax, 0.0))
+        if abs(t) > 0.001 and abs(i) > 0.001:
+            fused[ax] = round(alpha * t + beta * i, 4)
+        elif abs(t) > 0.001:
+            fused[ax] = round(t, 4)
+        elif abs(i) > 0.001:
+            fused[ax] = round(beta * i, 4)
+        else:
+            fused[ax] = 0.0
+    return fused, {"text": round(alpha, 3), "image": round(beta, 3)}, "multimodal"
 
 
 # ── 라우트 ───────────────────────────────────────────────────
@@ -201,12 +246,13 @@ def serve_img(fn):
 
 @app.route("/api/health")
 def api_health():
+    db_url = os.environ.get("DATABASE_URL","(env not set)")
     return jsonify({
-        "ok":          True,
-        "keywords":    sorted(ALL_DATA.keys()),
-        "default_keyword":     DEFAULT_KW,
-        "restaurants": len(REST_DB),
-        "db_url":      os.environ.get("DATABASE_URL","(env not set)").split("@")[-1],  # 비밀번호 제외
+        "ok":              True,
+        "keywords":        sorted(ALL_DATA.keys()),
+        "default_keyword": DEFAULT_KW,
+        "restaurants":     len(REST_DB),
+        "db_host":         db_url.split("@")[-1] if "@" in db_url else "(env not set)",
     })
 
 
@@ -221,8 +267,7 @@ def api_config():
     bundle = ALL_DATA.get(kw)
     if not bundle:
         return jsonify({"error": f"'{kw}' 키워드 없음"}), 404
-    
-    # groups가 없으면 axes_config의 group으로 직접 구성
+
     groups = bundle.get("groups", {})
     if not groups:
         from collections import defaultdict
@@ -231,10 +276,13 @@ def api_config():
             groups[info.get("group", "기타")].append(axis_name)
         groups = dict(groups)
 
+    taste, meta = _split_axes(bundle)
     return jsonify({
         "keyword":     kw,
-        "axes":        _get_axes(bundle),
-        "groups":      groups,           # ← 추가
+        "axes":        _all_axes(bundle),
+        "taste_axes":  taste,
+        "meta_axes":   meta,
+        "groups":      groups,
         "axes_config": bundle.get("axes_config", {}),
     })
 
@@ -246,6 +294,28 @@ def api_rep_images():
     for k, v in REP_IMAGES.items():
         if kw in k or k in kw: return jsonify(v)
     return jsonify({"keyword": kw, "images": []})
+
+
+def _build_fallback_url(name: str, keyword: str) -> str:
+    """naver_url 없을 때 검색 URL 생성."""
+    q = f"{name} {keyword}".strip()
+    return f"https://map.naver.com/v5/search/{quote(q)}"
+
+
+def _rep_image_for(kw: str, rest_name: str) -> dict:
+    """해당 식당의 대표 이미지 1장 (없으면 빈 dict)."""
+    bundle = REP_IMAGES.get(kw)
+    if not bundle:
+        return {}
+    for img in bundle.get("images", []):
+        if img.get("restaurant") == rest_name:
+            return {
+                "image_src": img.get("image_src", ""),
+                "axis": img.get("axis", ""),
+                "label": img.get("label", ""),
+                "review_snippet": img.get("review_snippet", ""),
+            }
+    return {}
 
 
 @app.route("/api/recommend", methods=["POST"])
@@ -269,70 +339,172 @@ def api_recommend():
     if not bundle:
         return jsonify({"error": f"'{kw}' 키워드 없음"}), 404
 
-    axes = _get_axes(bundle)
-    if not axes:
+    all_axes = _all_axes(bundle)
+    if not all_axes:
         return jsonify({"error": "축 정보 없음"}), 500
 
-    user_tv = {ax: float(user_prefs.get(ax, 0.0)) for ax in axes}
+    taste_axes, meta_axes = _split_axes(bundle)
 
+    # 사용자 벡터
+    user_tv = {ax: float(user_prefs.get(ax, 0.0)) for ax in all_axes}
     if use_fusion and selected_images:
-        user_iv = _user_img_vec(selected_images, axes)
-        user_vec_dict, fusion_mode = _fuse(user_tv, user_iv, axes)
+        user_iv = _user_img_vec(selected_images, all_axes)
+        user_vec_dict, user_weights, fusion_mode = _fuse_dynamic(user_tv, user_iv, all_axes)
     else:
-        user_vec_dict, fusion_mode = user_tv, "text_only"
+        user_vec_dict, user_weights, fusion_mode = user_tv, {"text": 1.0, "image": 0.0}, "text_only"
 
-    user_vec = [user_vec_dict.get(ax,0.0) for ax in axes]
-    results  = []
+    user_taste = [user_vec_dict.get(ax, 0.0) for ax in taste_axes]
+    user_meta  = [user_vec_dict.get(ax, 0.0) for ax in meta_axes]
 
+    results = []
     for name, info in (bundle.get("restaurants") or {}).items():
-        if not isinstance(info, dict): continue
+        if not isinstance(info, dict):
+            continue
 
+        # 식당 벡터: fused → text → normalized 우선순위
         vec_dict = None
-        for key in ("fused_vector","text_only_vector","normalized"):
+        for key in ("fused_vector", "text_only_vector", "normalized"):
             if isinstance(info.get(key), dict):
-                vec_dict = info[key]; break
-        if vec_dict is None: continue
+                vec_dict = info[key]
+                break
+        if vec_dict is None:
+            continue
 
-        rest_vec = [float(vec_dict.get(ax,0.0)) for ax in axes]
-        sim      = _cosine(user_vec, rest_vec)
+        text_vec = info.get("text_only_vector") or vec_dict
+        img_vec  = info.get("image_sentiment") or {}
 
-        reasons = sorted(
-            [(ax, float(user_vec_dict.get(ax,0.0)) * float(vec_dict.get(ax,0.0)))
-             for ax in axes
-             if abs(user_vec_dict.get(ax,0.0))>0.001 and abs(vec_dict.get(ax,0.0))>0.001],
-            key=lambda x:x[1], reverse=True
-        )
-        evidence = []
-        for _, evl in (info.get("evidence") or {}).items():
-            if isinstance(evl, list): evidence.extend(evl)
+        rest_taste = [float(vec_dict.get(ax, 0.0)) for ax in taste_axes]
+        rest_meta  = [float(vec_dict.get(ax, 0.0)) for ax in meta_axes]
+
+        # taste cosine 본체 + meta 부스트
+        taste_sim = _cosine(user_taste, rest_taste)
+        meta_sim  = _cosine(user_meta, rest_meta) if meta_axes else 0.0
+        sim = taste_sim + META_BOOST * max(meta_sim, 0)
+        sim = max(-1.0, min(1.0, sim))
+
+        # axis 기여도 (taste 축만)
+        contrib = {}
+        for ax in taste_axes:
+            u = float(user_vec_dict.get(ax, 0.0))
+            r = float(vec_dict.get(ax, 0.0))
+            contrib[ax] = u * r
+        contrib_sum = sum(abs(v) for v in contrib.values())
+        if contrib_sum > 1e-6:
+            axis_contributions = {ax: round(abs(v) / contrib_sum, 3)
+                                  for ax, v in contrib.items() if abs(v) > 0.001}
+        else:
+            axis_contributions = {}
+
+        top_axes = sorted(axis_contributions.items(), key=lambda x: -x[1])[:5]
+        top_axes_names = [ax for ax, _ in top_axes]
+
+        # confidence
+        text_conf = _confidence(text_vec, taste_axes)
+        img_conf  = _confidence(img_vec, taste_axes) if info.get("has_image_data") else 0.0
+        total_conf = text_conf + img_conf
+        if total_conf > 1e-6:
+            text_w = round(text_conf / total_conf, 3)
+            img_w  = round(1.0 - text_w, 3)
+        else:
+            text_w, img_w = 1.0, 0.0
+
+        # axis별 evidence
+        evidence_map = info.get("evidence") or {}
+        evidence_sentences = {ax: evidence_map.get(ax, [])[:2]
+                              for ax in top_axes_names if evidence_map.get(ax)}
+
+        # flat evidence (fallback 호환)
+        flat_evidence = []
+        for ax in top_axes_names:
+            for s in evidence_map.get(ax, []):
+                if s and s not in flat_evidence:
+                    flat_evidence.append(s)
+                if len(flat_evidence) >= 3:
+                    break
+            if len(flat_evidence) >= 3:
+                break
+
+        # axis_scores (식당의 taste 축별 점수)
+        axis_scores = {ax: round(float(vec_dict.get(ax, 0.0)), 4) for ax in taste_axes}
 
         ri = _rest_info(name)
+        naver_url = ri.get("naver_url", "") or ""
+        fallback_url = _build_fallback_url(name, kw)
+
+        # 대표 이미지
+        rep_img = _rep_image_for(kw, name)
+
+        # debug_reason
+        if top_axes:
+            top_names = ", ".join([ax for ax, _ in top_axes[:2]])
+            top_pct = sum(v for _, v in top_axes[:2]) * 100
+            debug_reason = f"{top_names} 축에서 일치 (상위 2축 기여도 {top_pct:.0f}%)"
+        else:
+            debug_reason = "유의미한 축 일치 없음"
+
         results.append({
+            # 기존 필드 (frontend fallback 호환)
             "name":           name,
-            "similarity":     round(float(sim),4),
+            "similarity":     round(float(sim), 4),
             "address":        ri.get("road_address") or ri.get("address",""),
             "phone":          ri.get("phone",""),
-            "naver_url":      ri.get("naver_url",""),
+            "naver_url":      naver_url,
             "category":       ri.get("category",""),
-            "evidence":       evidence[:3],
-            "reasons":        [ax for ax,_ in reasons[:5]],
+            "evidence":       flat_evidence[:3],
+            "reasons":        top_axes_names[:5],
             "fusion_mode":    fusion_mode,
-            "has_image_data": bool(info.get("has_image_data",False)),
+            "has_image_data": bool(info.get("has_image_data", False)),
+            # 신규 필드
+            "similarity_score":   round(float(sim), 4),
+            "match_percent":      max(0, min(100, round(float(sim) * 100))),
+            "top_axes":           top_axes_names[:3],
+            "axis_scores":        axis_scores,
+            "axis_contributions": axis_contributions,
+            "text_confidence":    round(text_conf, 3),
+            "image_confidence":   round(img_conf, 3),
+            "fusion_weights":     {"text": text_w, "image": img_w},
+            "evidence_sentences": evidence_sentences,
+            "representative_image": rep_img,
+            "place_url":          naver_url,
+            "fallback_search_url": fallback_url,
+            "debug_reason":       debug_reason,
         })
 
-    results.sort(key=lambda x:x["similarity"], reverse=True)
+    results.sort(key=lambda x: x["similarity"], reverse=True)
     return jsonify(_clean({
-        "keyword":     kw,
-        "fusion_mode": fusion_mode,
-        "count":       len(results),
-        "results":     results[:10],
-        "user_vector": user_vec_dict,
+        "keyword":         kw,
+        "fusion_mode":     fusion_mode,
+        "user_weights":    user_weights,
+        "taste_axes":      taste_axes,
+        "meta_axes":       meta_axes,
+        "count":           len(results),
+        "results":         results[:10],
+        "user_vector":     user_vec_dict,
     }))
+
+
+@app.route("/api/evaluation", methods=["GET"])
+def api_evaluation():
+    """
+    evaluation.py가 만든 evaluation_results.json을 그대로 내려준다.
+    파일이 없으면 ok:false + 안내 메시지 (frontend는 카드 자체를 숨김).
+    """
+    path = os.path.join(BASE_DIR, "evaluation_results.json")
+    if not os.path.exists(path):
+        return jsonify({
+            "ok": False,
+            "message": "evaluation_results.json이 없습니다. evaluation.py를 먼저 실행하세요.",
+        }), 404
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"ok": False, "message": f"읽기 실패: {e}"}), 500
 
 
 @app.route("/api/reload", methods=["POST"])
 def api_reload():
-    """새 데이터를 DB에 올린 후 이 엔드포인트를 호출하면 캐시 갱신."""
     global ALL_DATA, REP_IMAGES, REST_DB, DEFAULT_KW
     try:
         ALL_DATA, REP_IMAGES, REST_DB = _load_all_data()

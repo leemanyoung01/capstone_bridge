@@ -16,15 +16,29 @@ Naver_place_crawler.py — 리뷰 크롤러 (PostgreSQL 직접 저장)
 import requests
 import pandas as pd
 import time, os, random, json
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from db import get_conn, upsert_restaurant, insert_review
 
+# 정상 리뷰 이미지 도메인 화이트리스트 (네이버 리뷰 CDN)
+_NAVER_REVIEW_HOSTS = (
+    "pup-review-phinf.pstatic.net",
+    "ldb-phinf.pstatic.net",
+    "search.pstatic.net",
+)
+
+
+def _is_review_image(url: str) -> bool:
+    if not url:
+        return False
+    lo = url.lower()
+    return any(h in lo for h in _NAVER_REVIEW_HOSTS)
+
 # ── 크롤링 대상 ───────────────────────────────────────────────
 restaurants = {
-    "버거스타": "1243378372",
-    "버거다이브": "2053841865",
-    "쉘터버거 목동": "1444469421"
+    "스터닝버거": "1793528701","버거킹 부천시청역점": "2093976893","크라이치즈버거 신중동점": "2058075950",
+    "우스매쉬 부천점": "2080832942","르버거": "2043097186",
 }
 
 # ── 설정 ─────────────────────────────────────────────────────
@@ -33,7 +47,7 @@ IMAGE_DIR                     = "images"
 SAVE_CSV                      = True
 CSV_PATH                      = "naver_reviews.csv"
 
-MAX_REVIEWS_PER_RESTAURANT    = 100    # 식당당 최대 리뷰 수 (None으로 바꾸면 무제한)
+MAX_REVIEWS_PER_RESTAURANT    = None   # 식당당 최대 리뷰 수 (None으로 바꾸면 무제한)
 
 DELAY_PAGE_MIN                = 3.0
 DELAY_PAGE_MAX                = 4.5
@@ -75,7 +89,7 @@ def get_headers(place_id: str) -> dict:
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                       "(KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
         # ★ 브라우저 DevTools에서 최신 쿠키로 교체하세요 (F12 > Network > graphql > Headers > cookie 복사) ★
-        "cookie": "여기 쿠기 입력",
+        "cookie": '''NAC=YL19BMQKiMhK; NNB=YFLRAYGZENQWM; NFS=2; NID_AUT=8rpJgQ97MpUohDOG1qAhmtuzKrCUYHFp5kLEYoHA3uX9+FBJrymzIMXBk77SUIyj; cto_bundle=DOpvjF9rT0t6MWxGYXElMkZma2RpajFHM0paUGxFJTJGTDd2TlJVUUdYUnFUJTJGUHpwWUpValJYR3pWOTRGVEtCYTdtSHJhTmt3WHFZcFhmVTViWHExMVlVMjdOJTJCbGUzSXhOSXBnc3ZlaUppb05saEZqaFk3WkhNckxKVWszbjNUZGNOJTJCcTU1TDROdXFQViUyRkwxeG1IUDBzQlJkMDhYeXclM0QlM0Q; bnb_tooltip_shown_finance_v1=true; ASID=dfc29f200000019cf58edbe60000001d; NV_WETR_LOCATION_RGN_M="MDkyOTAxMTQ="; NV_WETR_LAST_ACCESS_RGN_M="MDkyOTAxMTQ="; PLACE_LANGUAGE=ko; tooltipDisplayed=true; NACT=1; SRT30=1777304956; SRT5=1777304956; _naver_usersession_=CZHiouVFBPUxebCN4eKHL6Id; page_uid=jP+aQwqpsW7sk9GosUN-072220; NID_SES=AAABoh/WW4HoAcJYpPM/yKl7kBfcGRvyYgA9rZgWCv472b989BoH/CvM2tZ/KBO4GfJNd1HOgcUSfr5e13dwxGPznWi9eK05zRXloyPjNY1LW4BUMV6Vu6gI9qgzA8y9CxG82h3kUwxe2xKqOQAAT8ElRd+NJY7V3nUqPA633ZQ7sF0pmoa2bTc+38V5FHvWVLha7p33njLBeBI3BgxNmO16d0R2ZQ6yN1CnAUelUSK2yfuUcoc1H0YPgURJYVysqddvfVnzd9bdXZwz1ySU9gFqUOUfDftu5d8Wb1q03ZnsAkK28vvVy5y/AEZbwElMeWQFIrIdlIh3nQFVQ1PYvV8QjnWfok93hfGRtJbxYHEo7r+x53sayMClOY9/4pPilEt87aDxpBLQoJsAeI4ty1y5w/MFzg+Iv7s8LNPiOXs2XSQdXzhrNiYVuIwh5ykAT0CDU8H7LtLBAWgfF9h9nKvomvgH9GXxv+4VvpcGFlx2OLAkn2uXU/eb1QigM+FtkmNzYYnTU8/Ghg6+ARU5Q24DM3+kZWiR1vQ7n12O+cTTu/RC4+9FmwQL8vzKMJp8cr1jMg==; BUC=fbLEIlEQKqFtaIVmvuP7k33xu0eAu_ypR7TxwFOP-7Q='''
     }
 
 
@@ -112,23 +126,24 @@ def download_images(image_urls: list[str], place_id: str, idx: int) -> list[str]
 
 # ── 리뷰 파싱 ─────────────────────────────────────────────────
 
-def parse_review(r: dict, place_id: str, name: str, idx: int) -> dict:
+def parse_review(r: dict, place_id: str, name: str, idx: int, crawl_keyword: str = "") -> dict:
     # ★ 중복 이미지 수정: URL의 ? 이전 경로만 비교해서 중복 제거
+    # ★ 화이트리스트 검사로 광고/프로필 이미지 배제
     image_urls = []
     seen_bases = set()
 
-    if r.get("thumbnail"):
-        base = r["thumbnail"].split("?")[0]
-        if base not in seen_bases:
-            seen_bases.add(base)
-            image_urls.append(r["thumbnail"])
+    def _try_add(url: str):
+        if not url or not _is_review_image(url):
+            return
+        base = url.split("?")[0]
+        if base in seen_bases:
+            return
+        seen_bases.add(base)
+        image_urls.append(url)
 
+    _try_add(r.get("thumbnail"))
     for m in r.get("media", []) or []:
-        if m.get("thumbnail"):
-            base = m["thumbnail"].split("?")[0]
-            if base not in seen_bases:
-                seen_bases.add(base)
-                image_urls.append(m["thumbnail"])
+        _try_add(m.get("thumbnail"))
 
     image_paths = download_images(image_urls, place_id, idx)
 
@@ -160,6 +175,10 @@ def parse_review(r: dict, place_id: str, name: str, idx: int) -> dict:
         "VisitCategories": ", ".join(visit_cats),
         "Tags":            ", ".join(tags) if isinstance(tags, list) else str(tags),
         "OwnerReply":      reply.get("body","") if reply else "",
+        # ── 신규 메타 (DB schema에 컬럼이 없으면 insert_review에서 무시됨)
+        "CrawlKeyword":    crawl_keyword,
+        "CrawlTimestamp":  datetime.utcnow().isoformat(),
+        "IsReviewImage":   bool(image_urls),
     }
 
 
@@ -275,8 +294,9 @@ def crawl_reviews(restaurants_dict: dict) -> list[dict]:
                 print(f"  ✅ 완료 (더 이상 리뷰 없음)"); break
 
             img_cnt = 0
+            crawl_kw = os.environ.get("CRAWL_KEYWORD", "")
             for r in reviews:
-                parsed = parse_review(r, place_id, name, idx)
+                parsed = parse_review(r, place_id, name, idx, crawl_keyword=crawl_kw)
                 all_reviews.append(parsed)
                 if parsed["HasPicture"]: img_cnt += 1
                 idx += 1

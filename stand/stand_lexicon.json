@@ -1,122 +1,747 @@
 {
+  "version": "2.0",
+  "description": "축별 키워드 사전 + CLIP 프롬프트. Food_profiler가 positive/negative로 텍스트 점수를 매기고, Multimodal_profiler가 clip_prompt_pos/neg로 CLIP 추론한다.",
   "common": {
     "전반적만족": {
-      "positive": [
-        "맛있",
-        "최고",
-        "굿",
-        "짱",
-        "맛나"
-      ],
-      "negative": [
-        "맛없",
-        "별로",
-        "최악",
-        "실망"
-      ]
+      "positive": ["인생", "맛있", "맛나", "굿", "집밥", "대박", "짱", "미쳤", "존맛", "맛집", "정갈", "꿀맛", "손맛", "맛좋", "최고"],
+      "negative": ["맛없", "별로", "실망", "최악", "다신", "비추", "아쉬", "그저그래"],
+      "clip_prompt_pos": ["a photo of delicious appetizing food"],
+      "clip_prompt_neg": ["a photo of unappetizing bad looking food"]
+    },
+    "양많음": {
+      "positive": ["배부", "곱빼기", "넉넉", "든든", "가득", "양이 많", "푸짐", "양도 많"],
+      "negative": ["양이 적", "부족", "아쉬", "양 적"],
+      "clip_prompt_pos": ["a photo of large generous portion of food"],
+      "clip_prompt_neg": ["a photo of small portion of food"]
+    },
+    "가성비": {
+      "positive": ["가성비", "저렴", "싸고", "착한 가격", "가격대비", "이 가격에"],
+      "negative": ["비싸", "가격이 좀", "비싼"],
+      "clip_prompt_pos": ["good value for money food"],
+      "clip_prompt_neg": ["overpriced food"]
+    },
+    "재주문의사": {
+      "positive": ["또먹", "또 오", "자주", "또 먹", "또 시킬", "강추", "또오", "재주문", "추천", "또시킬", "단골"],
+      "negative": ["비추", "다신", "다시 안"],
+      "clip_prompt_pos": ["highly recommended delicious food"],
+      "clip_prompt_neg": ["food nobody would order again"]
     }
   },
   "shared": {
-    "불맛": {
-      "positive": [
-        "불맛",
-        "숯불",
-        "직화"
-      ],
-      "negative": [
-        "불맛없"
-      ]
+    "짠맛": {
+      "positive": ["짠", "짭짤", "짭쪼름", "소금", "간이 세"],
+      "negative": ["싱거", "밍밍", "간이 약"],
+      "clip_prompt_pos": ["salty well-seasoned food"],
+      "clip_prompt_neg": ["bland unseasoned food"]
     },
-    "담백함": {
-      "positive": [
-        "담백",
-        "깔끔",
-        "슴슴"
-      ],
-      "negative": [
-        "느끼",
-        "기름"
-      ]
+    "단맛": {
+      "positive": ["달달", "달콤", "단맛", "스위트", "꿀"],
+      "negative": ["안 달", "달지 않"],
+      "clip_prompt_pos": ["sweet sugary food"],
+      "clip_prompt_neg": ["food without sweetness"]
+    },
+    "매운맛": {
+      "positive": ["매운", "매콤", "얼큰", "칼칼", "화끈", "불닭"],
+      "negative": ["안 매", "순한", "맵지 않"],
+      "clip_prompt_pos": ["very spicy red food", "food with red chili peppers"],
+      "clip_prompt_neg": ["mild non-spicy food"]
+    },
+    "감칠맛": {
+      "positive": ["진한 맛", "진국", "깊은 맛", "구수", "향", "향긋", "풍미", "감칠", "국물맛", "깊은맛"],
+      "negative": [],
+      "clip_prompt_pos": ["rich deep umami flavor food"],
+      "clip_prompt_neg": ["bland tasteless food"]
     },
     "고소함": {
-      "positive": [
-        "고소",
-        "버터"
-      ],
-      "negative": []
+      "positive": ["견과", "버터맛", "버터", "버터향", "고소", "꼬소", "고솝", "참기름", "너티", "넛티"],
+      "negative": [],
+      "clip_prompt_pos": ["savory nutty flavored food"],
+      "clip_prompt_neg": ["food without savory aroma"]
     },
-    "육즙": {
-      "positive": [
-        "육즙",
-        "촉촉",
-        "부드러"
-      ],
-      "negative": [
-        "퍽퍽",
-        "푸석"
-      ]
+    "담백함": {
+      "positive": ["담백", "깔끔", "깨끗", "무난", "슴슴"],
+      "negative": ["기름진", "느끼"],
+      "clip_prompt_pos": ["clean mild tasting food"],
+      "clip_prompt_neg": ["greasy heavy food"]
     },
     "바삭함": {
-      "positive": [
-        "바삭",
-        "겉바",
-        "크리스피"
-      ],
-      "negative": [
-        "눅눅"
-      ]
+      "positive": ["파삭", "크리스피", "겉바", "겉바속촉", "튀김옷", "바삭", "빠삭", "바사삭", "크런치"],
+      "negative": ["눅눅", "안 바삭", "기름에 절", "흐물"],
+      "clip_prompt_pos": ["crispy golden fried food", "crunchy breaded food"],
+      "clip_prompt_neg": ["soggy soft fried food"]
     },
-    "가성비": {
-      "positive": [
-        "가성비",
-        "저렴",
-        "착한 가격"
-      ],
-      "negative": [
-        "비싸",
-        "돈값"
-      ]
+    "촉촉함": {
+      "positive": ["촉촉", "말랑", "속촉", "육즙", "녹는", "입에서 녹", "녹아", "부드러", "사르륵", "쥬시", "주시", "juicy"],
+      "negative": ["퍽퍽", "푸석", "딱딱", "건조"],
+      "clip_prompt_pos": ["moist juicy tender food"],
+      "clip_prompt_neg": ["dry tough food"]
     },
-    "양많음": {
-      "positive": [
-        "양이 많",
-        "넉넉",
-        "푸짐",
-        "배부"
-      ],
-      "negative": [
-        "양이 적",
-        "부족"
-      ]
+    "쫄깃함": {
+      "positive": ["쫄깃", "탱글", "쫀득", "찰떡", "탱탱"],
+      "negative": ["퍼진", "딱딱", "무른"],
+      "clip_prompt_pos": ["chewy elastic texture food"],
+      "clip_prompt_neg": ["mushy overcooked food"]
     },
-    "두툼함": {
-      "positive": [
-        "두툼",
-        "두꺼"
-      ],
-      "negative": [
-        "얇"
-      ]
+    "느끼함": {
+      "positive": [],
+      "negative": ["기름지", "느끼", "텁텁", "기름진", "헤비", "기름짐", "기름범벅", "느글"],
+      "clip_prompt_pos": ["greasy oily food dripping with oil"],
+      "clip_prompt_neg": ["clean non-greasy food"]
+    },
+    "온도": {
+      "positive": ["뜨거", "뜨끈", "따뜻", "따끈"],
+      "negative": ["식어", "식었", "미지근", "차가"],
+      "clip_prompt_pos": ["hot steaming food"],
+      "clip_prompt_neg": ["cold food without steam"]
     }
   },
   "food_specific": {
-    "삼겹살": {
-      "불맛": {
-        "positive": [
-          "불맛",
-          "숯향",
-          "직화"
-        ],
-        "negative": []
+    "짜장": {
+      "면컨디션": {
+        "positive": ["안불", "안 불", "탱탱"],
+        "negative": ["불어", "퍼진"],
+        "clip_prompt_pos": ["elastic chewy noodles"],
+        "clip_prompt_neg": ["soggy overcooked noodles"]
       },
-      "두툼함": {
-        "positive": [
-          "두툼",
-          "두꺼"
-        ],
-        "negative": [
-          "얇"
-        ]
+      "불맛웍향": {
+        "positive": ["불맛", "불향", "웍향", "센불"],
+        "negative": ["탄맛"],
+        "clip_prompt_pos": ["wok-fired smoky food"],
+        "clip_prompt_neg": ["food without smoky flavor"]
+      },
+      "소스농도": {
+        "positive": ["걸쭉", "되직", "소스 많"],
+        "negative": ["묽", "소스 적"],
+        "clip_prompt_pos": ["thick rich dark sauce"],
+        "clip_prompt_neg": ["watery thin sauce"]
+      },
+      "재료퀄리티": {
+        "positive": ["해물", "오징어", "고기", "건더기", "신선"],
+        "negative": ["비린", "재료가 별"],
+        "clip_prompt_pos": ["food with abundant fresh ingredients"],
+        "clip_prompt_neg": ["food with few ingredients"]
+      }
+    },
+    "떡볶이": {
+      "국물양": {
+        "positive": ["자작", "소스 많", "국물"],
+        "negative": ["국물 적", "소스 적"],
+        "clip_prompt_pos": ["tteokbokki with plenty of red sauce"],
+        "clip_prompt_neg": ["tteokbokki with little sauce"]
+      },
+      "토핑": {
+        "positive": ["오뎅", "치즈", "계란", "만두", "토핑", "어묵", "김말이"],
+        "negative": [],
+        "clip_prompt_pos": ["tteokbokki with cheese egg toppings"],
+        "clip_prompt_neg": ["plain tteokbokki without toppings"]
+      },
+      "떡종류": {
+        "positive": ["쌀떡", "쫄깃", "탱글", "탱탱"],
+        "negative": ["밀떡", "딱딱", "퍼진", "무른"],
+        "clip_prompt_pos": ["chewy elastic rice cake tteokbokki"],
+        "clip_prompt_neg": ["mushy soft rice cake"]
+      },
+      "세트구성": {
+        "positive": ["세트", "순대", "튀김", "김밥", "모듬", "구성"],
+        "negative": ["구성 별로"],
+        "clip_prompt_pos": ["tteokbokki combo set with sundae and fried food"],
+        "clip_prompt_neg": ["single tteokbokki dish alone"]
+      }
+    },
+    "돈까스": {
+      "두께": {
+        "positive": ["두께", "두툼", "통째", "크기", "두꺼"],
+        "negative": ["얇", "작"],
+        "clip_prompt_pos": ["thick pork cutlet generous meat"],
+        "clip_prompt_neg": ["thin flat pork cutlet"]
+      },
+      "소스맛": {
+        "positive": ["소스 맛있", "타르타르", "돈까스소스", "데미글라스", "소스"],
+        "negative": ["소스 적"],
+        "clip_prompt_pos": ["pork cutlet with rich sauce"],
+        "clip_prompt_neg": ["pork cutlet without sauce"]
+      },
+      "겉바속촉": {
+        "positive": ["겉바속촉", "겉바", "속촉", "바삭", "육즙"],
+        "negative": ["눅눅", "기름", "퍽퍽"],
+        "clip_prompt_pos": ["crispy outside juicy inside pork cutlet"],
+        "clip_prompt_neg": ["soggy greasy pork cutlet"]
+      },
+      "부위": {
+        "positive": ["등심", "안심", "히레", "로스"],
+        "negative": [],
+        "clip_prompt_pos": ["premium pork loin cutlet"],
+        "clip_prompt_neg": ["low quality thin pork cutlet"]
+      },
+      "사이드": {
+        "positive": ["우동", "카레", "마제소바", "고로케", "샐러드", "양배추"],
+        "negative": ["사이드 별로"],
+        "clip_prompt_pos": ["tonkatsu set with udon salad and sides"],
+        "clip_prompt_neg": ["tonkatsu without side dishes"]
+      }
+    },
+    "치킨": {
+      "크기": {
+        "positive": ["크기", "큰", "두툼"],
+        "negative": ["작은", "조그"],
+        "clip_prompt_pos": ["large pieces of fried chicken"],
+        "clip_prompt_neg": ["small pieces of fried chicken"]
+      },
+      "소스맛": {
+        "positive": ["맵단", "중독성", "소스", "시즈닝", "양념", "단짠"],
+        "negative": ["짜", "물려", "소스 적", "소스적", "물리는"],
+        "clip_prompt_pos": ["chicken coated with sweet spicy sauce"],
+        "clip_prompt_neg": ["plain chicken without sauce"]
+      },
+      "튀김옷": {
+        "positive": ["바삭", "크리스피", "얇은", "황금빛", "파삭", "튀김옷"],
+        "negative": ["눅눅", "기름범벅", "두꺼운", "딱딱"],
+        "clip_prompt_pos": ["crispy golden brown fried chicken"],
+        "clip_prompt_neg": ["soggy oily fried chicken"]
+      },
+      "육질염지": {
+        "positive": ["촉촉", "부드러", "육즙", "염지", "간간", "속살"],
+        "negative": ["퍽퍽", "질기", "냄새", "싱거"],
+        "clip_prompt_pos": ["moist tender white chicken meat"],
+        "clip_prompt_neg": ["dry stringy chicken breast"]
+      },
+      "사이즈": {
+        "positive": ["큰", "두툼", "조각", "호수"],
+        "negative": ["작은", "조그"],
+        "clip_prompt_pos": ["large pieces of fried chicken"],
+        "clip_prompt_neg": ["very small pieces of chicken"]
+      }
+    },
+    "삼겹살": {
+      "육질": {
+        "positive": ["부드러", "살살", "녹아", "질 좋", "고기 좋"],
+        "negative": ["질기", "딱딱", "냄새"],
+        "clip_prompt_pos": ["tender high quality pork belly"],
+        "clip_prompt_neg": ["tough chewy pork"]
+      },
+      "불맛": {
+        "positive": ["불맛", "숯불", "직화", "석쇠"],
+        "negative": ["불맛 없"],
+        "clip_prompt_pos": ["charcoal grilled meat with grill marks"],
+        "clip_prompt_neg": ["boiled plain meat"]
+      },
+      "기름기": {
+        "positive": ["지방", "기름기 적당", "살코기"],
+        "negative": ["기름", "비계", "지방 많"],
+        "clip_prompt_pos": ["well-marbled pork belly"],
+        "clip_prompt_neg": ["overly fatty greasy meat"]
+      },
+      "반찬": {
+        "positive": ["반찬", "사이드", "밑반찬", "쌈", "야채"],
+        "negative": ["반찬 부실", "반찬 적"],
+        "clip_prompt_pos": ["Korean BBQ with many side dishes"],
+        "clip_prompt_neg": ["meal with few side dishes"]
+      }
+    },
+    "파스타": {
+      "면식감": {
+        "positive": ["생면", "탱탱", "쫄깃", "알단테", "알덴테", "면 식감", "면이 좋", "두툼", "면발", "식감이 좋"],
+        "negative": ["퍼진", "불어", "물컹", "면이 아쉽", "질기"],
+        "clip_prompt_pos": ["al dente pasta noodles with good texture"],
+        "clip_prompt_neg": ["overcooked mushy pasta noodles"]
+      },
+      "소스농도": {
+        "positive": ["소스", "꾸덕", "녹진", "걸쭉", "진한", "크리미", "진하", "크림", "되직"],
+        "negative": ["묽", "싱거", "소스 적", "소스 아쉬"],
+        "clip_prompt_pos": ["pasta coated with rich thick creamy sauce"],
+        "clip_prompt_neg": ["pasta with watery thin sauce"]
+      },
+      "재료풍부": {
+        "positive": ["새우", "관자", "연어", "치마살", "재료 많", "푸짐", "랍스터", "해산물", "트러플", "루꼴라", "바질"],
+        "negative": ["재료 적", "건더기 적", "부실"],
+        "clip_prompt_pos": ["pasta with abundant seafood and toppings"],
+        "clip_prompt_neg": ["plain pasta with very few ingredients"]
+      },
+      "풍미": {
+        "positive": ["트러플", "풍미", "깊은 맛", "고소", "잘 어울", "조화", "감칠", "향", "향긋", "밸런스", "깊은맛"],
+        "negative": ["밋밋", "심심", "비린", "잡내"],
+        "clip_prompt_pos": ["aromatic pasta with deep rich flavor"],
+        "clip_prompt_neg": ["bland pasta lacking flavor"]
+      }
+    },
+    "스테이크": {
+      "굽기정도": {
+        "positive": ["굽기", "미디엄", "미디엄레어", "레어", "웰던", "겉바속촉", "겉바", "잘 구워", "적절"],
+        "negative": ["질겨", "질기", "과하게 익", "덜 익", "텁텁"],
+        "clip_prompt_pos": ["perfectly seared steak with pink center"],
+        "clip_prompt_neg": ["poorly cooked steak overcooked or undercooked"]
+      },
+      "육즙": {
+        "positive": ["육즙", "촉촉", "부드럽", "부드러", "살살", "입에서 녹", "녹아", "녹는", "사르륵", "입안에서"],
+        "negative": ["퍽퍽", "퍼석", "건조", "딱딱"],
+        "clip_prompt_pos": ["juicy tender steak with visible juices"],
+        "clip_prompt_neg": ["dry tough steak without juices"]
+      },
+      "소스맛": {
+        "positive": ["소스", "버섯소스", "곁들", "잘 어울", "조화", "발사믹", "그레이비", "데미글라스"],
+        "negative": ["소스 아쉽", "소스 적"],
+        "clip_prompt_pos": ["steak with rich flavorful sauce"],
+        "clip_prompt_neg": ["steak without sauce"]
+      },
+      "잡내": {
+        "positive": ["잡내 없", "깔끔", "잡내가 적"],
+        "negative": ["잡내", "비린맛", "냄새", "비린", "누린내"],
+        "clip_prompt_pos": ["clean fresh steak"],
+        "clip_prompt_neg": ["steak with unpleasant smell"]
+      },
+      "숙성도": {
+        "positive": ["숙성", "에이징", "드라이에이징", "드라이 에이징", "마블링"],
+        "negative": [],
+        "clip_prompt_pos": ["dry aged steak with deep color and marbling"],
+        "clip_prompt_neg": ["fresh unaged raw meat"]
+      }
+    },
+    "리조또": {
+      "꾸덕함": {
+        "positive": ["꾸덕", "녹진", "되직", "진한", "크리미", "진하"],
+        "negative": ["묽", "질척"],
+        "clip_prompt_pos": ["creamy thick risotto"],
+        "clip_prompt_neg": ["watery runny risotto"]
+      },
+      "재료풍부": {
+        "positive": ["관자", "새우", "연어", "치마살", "버섯", "재료 많", "트러플", "랍스터", "해산물"],
+        "negative": ["재료 적", "부실"],
+        "clip_prompt_pos": ["risotto with abundant ingredients"],
+        "clip_prompt_neg": ["plain risotto with few ingredients"]
+      },
+      "향": {
+        "positive": ["트러플", "향", "향긋", "풍미", "고소"],
+        "negative": ["향이 약", "향이 없"],
+        "clip_prompt_pos": ["aromatic risotto with truffle and herbs"],
+        "clip_prompt_neg": ["risotto without aroma"]
+      },
+      "밸런스": {
+        "positive": ["조화", "밸런스", "잘 어울", "하모니", "감칠"],
+        "negative": ["따로 논"],
+        "clip_prompt_pos": ["well-balanced risotto"],
+        "clip_prompt_neg": ["unbalanced risotto"]
+      }
+    },
+    "피자": {
+      "도우식감": {
+        "positive": ["도우", "쫀득", "바삭", "화덕", "식감 좋", "겉바", "크리스피"],
+        "negative": ["질기", "딱딱", "눅눅"],
+        "clip_prompt_pos": ["pizza with chewy crispy golden crust"],
+        "clip_prompt_neg": ["pizza with soggy tough crust"]
+      },
+      "치즈풍미": {
+        "positive": ["치즈", "고소", "풍미", "치즈가 듬뿍", "모짜렐라"],
+        "negative": ["치즈 적"],
+        "clip_prompt_pos": ["pizza with rich melted stretchy cheese"],
+        "clip_prompt_neg": ["pizza with very little cheese"]
+      },
+      "토핑풍부": {
+        "positive": ["토핑", "푸짐", "가득", "루꼴라", "바질", "재료 많", "프로슈토"],
+        "negative": ["토핑 적", "부실"],
+        "clip_prompt_pos": ["pizza loaded with toppings"],
+        "clip_prompt_neg": ["pizza with sparse toppings"]
+      },
+      "화덕향": {
+        "positive": ["화덕", "불향", "향긋", "숯"],
+        "negative": [],
+        "clip_prompt_pos": ["wood-fired pizza with smoky charred crust"],
+        "clip_prompt_neg": ["pizza without baked aroma"]
+      }
+    },
+    "샐러드": {
+      "채소신선도": {
+        "positive": ["신선", "프레시", "싱싱", "아삭"],
+        "negative": ["시든", "신선하지 않"],
+        "clip_prompt_pos": ["fresh colorful salad with crisp vegetables"],
+        "clip_prompt_neg": ["wilted stale salad"]
+      },
+      "토핑풍부": {
+        "positive": ["리코타", "부라타", "보코치니", "푸짐", "가득", "토핑", "프로슈토"],
+        "negative": ["토핑 적", "부실"],
+        "clip_prompt_pos": ["salad with abundant cheese and toppings"],
+        "clip_prompt_neg": ["plain salad with few toppings"]
+      },
+      "드레싱조화": {
+        "positive": ["드레싱", "상큼", "조화", "잘 어울", "밸런스", "발사믹", "새콤"],
+        "negative": ["드레싱 과", "드레싱 아쉽"],
+        "clip_prompt_pos": ["salad with balanced dressing"],
+        "clip_prompt_neg": ["salad with poorly balanced dressing"]
+      }
+    },
+    "국밥탕": {
+      "국물깊이": {
+        "positive": ["구수", "깊은 맛", "깊은맛", "깊은", "우러나", "우러난", "진한 국물", "사골", "진국", "풍미", "감칠", "뽀얀", "뽀얗"],
+        "negative": ["밍밍", "싱거", "심심", "맛이 없", "밋밋"],
+        "clip_prompt_pos": ["rich deep broth soup with milky white color"],
+        "clip_prompt_neg": ["thin clear tasteless broth"]
+      },
+      "국물농도": {
+        "positive": ["진한", "진하", "걸쭉", "된", "뽀얀", "뽀양", "사골", "곰", "끓인"],
+        "negative": ["묽", "연한", "맑은", "물 같"],
+        "clip_prompt_pos": ["thick concentrated milky soup broth"],
+        "clip_prompt_neg": ["watery thin clear soup"]
+      },
+      "고기질": {
+        "positive": ["고기", "살코기", "살이 많", "부드러", "부드럽", "수육", "푸짐", "양이 많", "넉넉", "가득", "든든"],
+        "negative": ["질기", "질겨", "적", "부족", "뼈만"],
+        "clip_prompt_pos": ["soup with generous tender meat pieces"],
+        "clip_prompt_neg": ["soup with very little tough meat"]
+      },
+      "해장력": {
+        "positive": ["해장", "시원", "얼큰", "개운", "속이 편", "속편", "속풀", "뜨끈", "뜨끈뜨끈", "든든", "몸보신", "보양", "따뜻"],
+        "negative": ["느끼", "텁텁"],
+        "clip_prompt_pos": ["hot steaming Korean hangover soup"],
+        "clip_prompt_neg": ["cold greasy food"]
+      }
+    },
+    "찌개전골": {
+      "국물맛": {
+        "positive": ["국물", "진한", "깊은", "구수", "시원", "얼큰", "칼칼", "보글", "팔팔", "끓여", "감칠"],
+        "negative": ["밍밍", "싱거", "심심", "묽"],
+        "clip_prompt_pos": ["bubbling hot Korean stew jjigae"],
+        "clip_prompt_neg": ["thin bland stew without flavor"]
+      },
+      "재료풍부": {
+        "positive": ["재료", "가득", "푸짐", "넉넉", "햄", "소시지", "스팸", "두부", "치즈", "해물", "고기", "라면사리"],
+        "negative": ["부족", "적", "부실"],
+        "clip_prompt_pos": ["Korean stew packed with ingredients"],
+        "clip_prompt_neg": ["stew with sparse ingredients"]
+      },
+      "매운정도": {
+        "positive": ["매콤", "얼큰", "칼칼", "매운", "화끈"],
+        "negative": ["안 매", "순한"],
+        "clip_prompt_pos": ["spicy red Korean stew"],
+        "clip_prompt_neg": ["mild non-spicy stew"]
+      },
+      "밥궁합": {
+        "positive": ["밥", "볶음밥", "공기밥", "밥이", "밥도둑", "밥 말아", "숟갈이", "든든"],
+        "negative": [],
+        "clip_prompt_pos": ["Korean stew served with white rice"],
+        "clip_prompt_neg": ["stew without rice"]
+      }
+    },
+    "찜류": {
+      "양념맛": {
+        "positive": ["양념", "매콤", "칼칼", "달달", "감칠", "소스", "맛있", "깊은", "풍미"],
+        "negative": ["밍밍", "심심", "싱거"],
+        "clip_prompt_pos": ["spicy Korean braised dish with rich red sauce"],
+        "clip_prompt_neg": ["bland braised dish without seasoning"]
+      },
+      "재료신선도": {
+        "positive": ["신선", "아구", "해물", "살", "탱글", "오징어", "낙지", "새우", "전복", "싱싱", "프레시"],
+        "negative": ["비린", "잡내", "냄새", "질기"],
+        "clip_prompt_pos": ["Korean seafood stew with fresh ingredients"],
+        "clip_prompt_neg": ["stew with stale fishy ingredients"]
+      },
+      "식감": {
+        "positive": ["쫄깃", "탱글", "부드러", "부드럽", "살살", "바삭", "촉촉"],
+        "negative": ["질기", "질겨", "퍽퍽", "딱딱"],
+        "clip_prompt_pos": ["tender chewy braised seafood"],
+        "clip_prompt_neg": ["tough rubbery braised food"]
+      },
+      "마무리볶음밥": {
+        "positive": ["볶음밥", "마무리", "마지막", "마무리 볶음밥", "고소", "바삭"],
+        "negative": [],
+        "clip_prompt_pos": ["Korean fried rice made from leftover stew sauce"],
+        "clip_prompt_neg": ["plain white rice"]
+      }
+    },
+    "순대국밥": {
+      "순대식감": {
+        "positive": ["쫄깃", "탱글", "부드러", "부드럽", "찰", "꽉", "속이 꽉"],
+        "negative": ["질기", "퍽퍽", "딱딱", "물컹"],
+        "clip_prompt_pos": ["Korean blood sausage sundae with firm chewy texture"],
+        "clip_prompt_neg": ["mushy falling apart sundae"]
+      },
+      "내장퀄리티": {
+        "positive": ["내장", "곱창", "깔끔", "잡내 없", "신선", "처리 잘"],
+        "negative": ["잡내", "냄새", "비린", "텁텁", "누린"],
+        "clip_prompt_pos": ["clean well-prepared Korean intestines"],
+        "clip_prompt_neg": ["intestines with bad smell"]
+      },
+      "국물맛": {
+        "positive": ["구수", "진한", "깊은", "시원", "뜨끈", "우러나", "사골", "진국", "감칠", "든든", "해장"],
+        "negative": ["밍밍", "싱거", "묽"],
+        "clip_prompt_pos": ["rich milky Korean sundae soup"],
+        "clip_prompt_neg": ["thin bland soup"]
+      },
+      "수육질": {
+        "positive": ["수육", "머릿고기", "부드러", "부드럽", "살코기", "두툼", "푸짐"],
+        "negative": ["질기", "질겨", "딱딱", "적"],
+        "clip_prompt_pos": ["tender sliced boiled pork served with soup"],
+        "clip_prompt_neg": ["tough chewy boiled meat"]
+      }
+    },
+    "감자탕": {
+      "뼈고기": {
+        "positive": ["뼈", "살", "살이 많", "발라", "부드러", "부드럽", "살코기", "푸짐", "양이 많", "푹", "푹 삶"],
+        "negative": ["질기", "딱딱", "살 없", "뼈만"],
+        "clip_prompt_pos": ["gamjatang with meaty pork spine bones"],
+        "clip_prompt_neg": ["gamjatang with bare bones without meat"]
+      },
+      "국물맛": {
+        "positive": ["국물", "구수", "얼큰", "칼칼", "진한", "깊은", "시원", "감칠", "해장"],
+        "negative": ["밍밍", "싱거", "묽"],
+        "clip_prompt_pos": ["rich spicy gamjatang pork bone soup"],
+        "clip_prompt_neg": ["thin bland gamjatang"]
+      },
+      "우거지들깨": {
+        "positive": ["우거지", "들깨", "깻잎", "고소", "구수"],
+        "negative": [],
+        "clip_prompt_pos": ["gamjatang with perilla and dried cabbage"],
+        "clip_prompt_neg": ["plain gamjatang without vegetables"]
+      }
+    },
+    "족발": {
+      "육질": {
+        "positive": ["녹아", "살살", "녹는", "탱탱", "육질", "말랑", "쫄깃", "쫀득", "육즙"],
+        "negative": ["비계", "퍽퍽", "질기", "딱딱"],
+        "clip_prompt_pos": ["juicy tender braised pork feet with glossy skin"],
+        "clip_prompt_neg": ["dry tough pork meat"]
+      },
+      "불맛": {
+        "positive": ["불맛", "직화", "숯불"],
+        "negative": [],
+        "clip_prompt_pos": ["charcoal grilled jokbal with grill marks"],
+        "clip_prompt_neg": ["boiled plain pork"]
+      },
+      "잡내제거": {
+        "positive": ["깔끔", "담백", "슴슴"],
+        "negative": ["잡내", "냄새", "비린", "누린"],
+        "clip_prompt_pos": ["clean non-greasy jokbal"],
+        "clip_prompt_neg": ["greasy oily pork"]
+      },
+      "기름기": {
+        "positive": [],
+        "negative": ["느끼", "기름지", "기름진"],
+        "clip_prompt_pos": ["chewy elastic collagen pork skin"],
+        "clip_prompt_neg": ["excessively fatty greasy pork"]
+      }
+    },
+    "짬뽕": {
+      "면컨디션": {
+        "positive": ["탱글", "쫄깃", "탱탱"],
+        "negative": ["퍼진", "밀가루맛"],
+        "clip_prompt_pos": ["noodles in red spicy soup"],
+        "clip_prompt_neg": ["overcooked noodles"]
+      },
+      "국물맛": {
+        "positive": ["얼큰", "시원", "칼칼", "진한", "깊은"],
+        "negative": ["싱거", "밍밍"],
+        "clip_prompt_pos": ["steaming red jjamppong soup"],
+        "clip_prompt_neg": ["pale thin soup"]
+      },
+      "해물양": {
+        "positive": ["해물가득", "홍합", "오징어", "해물", "새우", "조개"],
+        "negative": ["부실", "냉동"],
+        "clip_prompt_pos": ["abundant seafood in spicy soup"],
+        "clip_prompt_neg": ["soup with no seafood"]
+      },
+      "불맛": {
+        "positive": ["불향", "그을린", "불맛", "웍향"],
+        "negative": ["조미료맛"],
+        "clip_prompt_pos": ["charred vegetables in jjamppong"],
+        "clip_prompt_neg": ["plain boiled soup"]
+      }
+    },
+    "탕수육": {
+      "튀김상태": {
+        "positive": ["바삭", "찹쌀", "쫀득", "파삭"],
+        "negative": ["눅눅", "딱딱"],
+        "clip_prompt_pos": ["crispy fried pork tangsuyuk"],
+        "clip_prompt_neg": ["soggy fried meat"]
+      },
+      "고기두께": {
+        "positive": ["두툼", "실한", "고기많은"],
+        "negative": ["튀김옷만", "얇은"],
+        "clip_prompt_pos": ["thick meat inside tangsuyuk"],
+        "clip_prompt_neg": ["mostly batter fried meat"]
+      },
+      "소스맛": {
+        "positive": ["새콤달콤", "투명한", "소스"],
+        "negative": ["너무 신", "너무 단"],
+        "clip_prompt_pos": ["tangsuyuk with glossy sweet sour sauce"],
+        "clip_prompt_neg": ["unappetizing sauce"]
+      },
+      "고기질": {
+        "positive": ["등심", "안심", "부드러운"],
+        "negative": ["질긴", "비계"],
+        "clip_prompt_pos": ["tender white pork meat"],
+        "clip_prompt_neg": ["tough dark meat"]
+      }
+    },
+    "볶음밥": {
+      "밥알식감": {
+        "positive": ["고슬고슬", "살아있는"],
+        "negative": ["떡진", "질척"],
+        "clip_prompt_pos": ["well-separated fried rice grains"],
+        "clip_prompt_neg": ["clumped soggy rice"]
+      },
+      "웍향불맛": {
+        "positive": ["웍향", "센불", "고소한", "불맛"],
+        "negative": ["기름냄새"],
+        "clip_prompt_pos": ["charred fried rice with vegetables"],
+        "clip_prompt_neg": ["pale steamed rice"]
+      },
+      "기름기": {
+        "positive": ["담백", "깔끔"],
+        "negative": ["기름진", "느끼"],
+        "clip_prompt_pos": ["non-greasy fried rice"],
+        "clip_prompt_neg": ["oily greasy rice"]
+      },
+      "짜장소스": {
+        "positive": ["소스맛있", "소스조합"],
+        "negative": ["소스짜"],
+        "clip_prompt_pos": ["fried rice with black bean sauce"],
+        "clip_prompt_neg": ["rice without sauce"]
+      }
+    },
+    "버거": {
+      "패티퀄리티": {
+        "positive": ["육즙", "두툼", "불향", "육향", "수제패티", "패티"],
+        "negative": ["퍽퍽", "잡내", "얇은", "냉동", "질긴"],
+        "clip_prompt_pos": ["juicy thick beef patty with grill marks"],
+        "clip_prompt_neg": ["thin processed frozen meat patty"]
+      },
+      "번식감": {
+        "positive": ["폭신", "부드러운", "번", "버터향", "브리오슈", "고소한"],
+        "negative": ["질긴", "퍽퍽한", "눅눅", "푸석"],
+        "clip_prompt_pos": ["glossy golden brioche bun"],
+        "clip_prompt_neg": ["flattened soggy burger bun"]
+      },
+      "야채신선도": {
+        "positive": ["아삭", "싱싱", "신선", "양상추", "프레쉬", "풍성"],
+        "negative": ["시든", "야채부실", "갈변"],
+        "clip_prompt_pos": ["crisp green lettuce and tomato in a burger"],
+        "clip_prompt_neg": ["withered brown lettuce"]
+      },
+      "소스조화": {
+        "positive": ["단짠", "조화", "소스 넉넉", "중독성"],
+        "negative": ["짜", "소스 부족", "느끼"],
+        "clip_prompt_pos": ["creamy sauce and melting cheese dripping from burger"],
+        "clip_prompt_neg": ["dry burger without sauce"]
+      }
+    },
+    "감자튀김": {
+      "바삭함": {
+        "positive": ["바삭", "갓튀긴", "크리스피", "파삭", "노릇"],
+        "negative": ["눅눅", "식은", "말랑", "흐물"],
+        "clip_prompt_pos": ["crispy golden brown french fries"],
+        "clip_prompt_neg": ["soggy limp pale french fries"]
+      },
+      "두께식감": {
+        "positive": ["포슬", "두툼", "통감자", "웨지"],
+        "negative": ["딱딱", "말라비틀어진"],
+        "clip_prompt_pos": ["thick cut potato wedges showing fluffy interior"],
+        "clip_prompt_neg": ["burnt shriveled thin potatoes"]
+      },
+      "염도시즈닝": {
+        "positive": ["짭짤", "시즈닝", "간 적절", "단짠"],
+        "negative": ["싱거", "너무 짜", "소금범벅"],
+        "clip_prompt_pos": ["salted fries with herb sprinkles"],
+        "clip_prompt_neg": ["plain unsalted french fries"]
+      },
+      "기름기": {
+        "positive": ["담백", "깔끔", "안 느끼"],
+        "negative": ["기름진", "느끼", "기름범벅"],
+        "clip_prompt_pos": ["clean non-greasy golden fries"],
+        "clip_prompt_neg": ["greasy fries dripping with oil"]
+      }
+    },
+    "분식": {
+      "튀김상태": {
+        "positive": ["바삭", "겉바", "갓튀긴", "튀김 맛있"],
+        "negative": ["눅눅", "기름진", "기름에 절"],
+        "clip_prompt_pos": ["crispy golden Korean fried snacks"],
+        "clip_prompt_neg": ["soggy oily fried food"]
+      },
+      "순대품질": {
+        "positive": ["순대 맛있", "당면 가득", "찰순대", "속이 꽉"],
+        "negative": ["순대 별로", "속이 비"],
+        "clip_prompt_pos": ["Korean sundae filled with glass noodles"],
+        "clip_prompt_neg": ["empty poorly filled sundae"]
+      },
+      "김밥상태": {
+        "positive": ["김밥 맛있", "신선", "재료 많", "속이 꽉"],
+        "negative": ["김밥 별로", "밥이 딱딱", "재료 적"],
+        "clip_prompt_pos": ["fresh kimbap with abundant fillings"],
+        "clip_prompt_neg": ["dried out kimbap with few fillings"]
+      },
+      "매운맛강도": {
+        "positive": ["매콤달콤", "중독", "자극적", "매운 맛있"],
+        "negative": ["너무 매", "맵기만", "달기만"],
+        "clip_prompt_pos": ["sweet and spicy balanced tteokbokki"],
+        "clip_prompt_neg": ["overly spicy unbalanced food"]
+      }
+    },
+    "구이": {
+      "육질": {
+        "positive": ["부드러", "살살", "녹아", "질 좋", "고기 좋", "신선", "숙성"],
+        "negative": ["질기", "딱딱", "냄새", "잡내", "누린"],
+        "clip_prompt_pos": ["tender juicy high quality grilled meat"],
+        "clip_prompt_neg": ["tough dry low quality meat"]
+      },
+      "불맛": {
+        "positive": ["불맛", "숯불", "직화", "석쇠", "연탄", "그릴"],
+        "negative": ["불맛 없", "탄맛"],
+        "clip_prompt_pos": ["charcoal grilled meat with smoky char marks"],
+        "clip_prompt_neg": ["boiled steamed plain meat"]
+      },
+      "기름비계": {
+        "positive": ["살코기", "기름기 적당", "마블링"],
+        "negative": ["기름", "비계", "기름 많", "지방 많"],
+        "clip_prompt_pos": ["well-marbled lean grilled meat"],
+        "clip_prompt_neg": ["overly fatty meat"]
+      },
+      "반찬쌈": {
+        "positive": ["반찬", "밑반찬", "쌈", "야채", "채소", "쌈장", "된장"],
+        "negative": ["반찬 부실", "반찬 적", "쌈 적"],
+        "clip_prompt_pos": ["Korean grilled meat with lettuce wraps and side dishes"],
+        "clip_prompt_neg": ["grilled meat without sides"]
+      },
+      "고기종류": {
+        "positive": ["삼겹", "목살", "항정", "갈비", "차돌", "불고기"],
+        "negative": [],
+        "clip_prompt_pos": ["variety of Korean BBQ meat cuts"],
+        "clip_prompt_neg": ["single plain meat cut"]
+      }
+    },
+    "도시락": {
+      "반찬구성": {
+        "positive": ["반찬", "밑반찬", "구성", "가짓수", "다양", "종류", "알찬"],
+        "negative": ["반찬 적", "반찬 별로", "구성 별로", "부족"],
+        "clip_prompt_pos": ["Korean lunchbox with many colorful side dishes"],
+        "clip_prompt_neg": ["lunchbox with few empty compartments"]
+      },
+      "집밥느낌": {
+        "positive": ["집밥", "가정식", "정갈", "정성", "한상", "엄마", "손맛"],
+        "negative": ["공장", "인스턴트"],
+        "clip_prompt_pos": ["homestyle Korean meal with care"],
+        "clip_prompt_neg": ["mass-produced factory meal"]
+      },
+      "밥품질": {
+        "positive": ["밥 맛있", "밥이 좋", "갓지은", "찰밥", "윤기"],
+        "negative": ["밥이 딱딱", "밥이 퍽퍽", "밥 별로", "된밥"],
+        "clip_prompt_pos": ["fluffy freshly cooked white rice"],
+        "clip_prompt_neg": ["dry hard old rice"]
+      },
+      "국찌개": {
+        "positive": ["국", "찌개", "된장", "김치찌개", "국물", "미역"],
+        "negative": ["국 별로", "국 없"],
+        "clip_prompt_pos": ["Korean lunchbox with hot soup"],
+        "clip_prompt_neg": ["lunchbox without soup"]
+      },
+      "포장상태": {
+        "positive": ["포장", "깔끔", "밀봉", "청결", "위생"],
+        "negative": ["포장 별로", "흘러", "새", "엎질"],
+        "clip_prompt_pos": ["neatly packed well-organized lunchbox"],
+        "clip_prompt_neg": ["messy spilled food container"]
+      },
+      "신선도": {
+        "positive": ["신선", "건강", "영양", "나물", "야채", "채소"],
+        "negative": ["식어", "차가", "미지근", "눅눅"],
+        "clip_prompt_pos": ["fresh healthy Korean lunchbox with vegetables"],
+        "clip_prompt_neg": ["old stale cold food"]
       }
     }
   }
