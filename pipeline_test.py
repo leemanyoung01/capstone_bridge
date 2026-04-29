@@ -19,7 +19,10 @@ pipeline_test.py — 전체 파이프라인 로컬 테스트
 import sys, os, json, time, random, string
 import requests as http_requests
 
-KEYWORD     = "삼겹살"
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
+KEYWORD = os.environ.get("CRAWL_KEYWORD") or os.environ.get("DEFAULT_KEYWORD", "삼겹살")
 TEST_PREFIX = "_TEST_"        # 테스트 데이터 식별자 (정리용)
 API_BASE    = "http://127.0.0.1:5000"
 

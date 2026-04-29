@@ -1,0 +1,16 @@
+/* App specific styles can go here, but mostly we rely on index.css and inline style for components */
+.App {
+  max-width: 768px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .App {
+    box-shadow: none;
+  }
+}
