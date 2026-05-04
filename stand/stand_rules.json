@@ -60,5 +60,29 @@
   "recommendation": {
     "mode_a": "cosine(taste_user, taste_restaurant) + meta_boost * cosine(meta)",
     "mode_b": "0.4 * cosine(abs) + 0.6 * cosine(delta)"
+  },
+
+  "image_filtering": {
+    "_comment": "대표 이미지 후보 필터링용 CLIP prompt + 점수식 파라미터. 매장 외관/메뉴판/영수증/스크린샷을 컷오프하기 위한 설정.",
+    "food_presence_prompts": [
+      "a clear photo of food on a plate ready to eat",
+      "a close-up photo of a cooked dish",
+      "a photo of an appetizing meal centered in the frame"
+    ],
+    "non_food_penalty_prompts": [
+      "a photo of a restaurant exterior building or signboard",
+      "a photo of an empty restaurant interior with tables and chairs",
+      "a photo of a paper menu filled with text",
+      "a photo of a receipt or screenshot with mostly text",
+      "a photo of people posing without food visible",
+      "a photo of a logo or graphic design without food"
+    ],
+    "thresholds": {
+      "min_food_presence":      0.18,
+      "max_non_food_penalty":   0.22,
+      "food_presence_weight":   0.4,
+      "non_food_penalty_weight": 0.6,
+      "linked_text_weight":     0.15
+    }
   }
 }

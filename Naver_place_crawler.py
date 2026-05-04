@@ -17,13 +17,11 @@ Naver_place_crawler.py — 리뷰 크롤러 (PostgreSQL + S3 저장)
   pip install requests pandas psycopg2-binary boto3 python-dotenv
 """
 
-import mimetypes
 import os
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from urllib.parse import quote
 
 import pandas as pd
 import requests
@@ -34,12 +32,8 @@ try:
 except ImportError:
     pass
 
-try:
-    import boto3
-except ImportError:
-    boto3 = None
-
 from db import get_conn, upsert_restaurant, insert_review
+from s3_uploader import upload_if_enabled, is_enabled as s3_is_enabled, status as s3_status
 
 
 # ── 정상 리뷰 이미지 도메인 화이트리스트 ─────────────────────
@@ -83,14 +77,11 @@ DELAY_REST_MAX = 12.0
 MAX_IMAGE_WORKERS = 10
 
 
-# ── S3 설정 ──────────────────────────────────────────────────
-UPLOAD_S3 = os.environ.get("UPLOAD_S3", "false").lower() in ("1", "true", "yes", "y")
-S3_BUCKET = os.environ.get("S3_BUCKET", "").strip()
-AWS_REGION = os.environ.get("AWS_REGION", "ap-northeast-2").strip()
+# ── S3 설정 (s3_uploader 모듈에서 환경변수 처리) ──────────────
+UPLOAD_S3 = s3_is_enabled()
 CRAWL_KEYWORD = os.environ.get("CRAWL_KEYWORD", "default").strip()
-S3_PREFIX = os.environ.get("S3_PREFIX", f"reviews/{CRAWL_KEYWORD or 'default'}").strip()
-
-_s3_client = None
+S3_BUCKET = os.environ.get("S3_BUCKET", "").strip()  # 표시용만; 실제 처리는 s3_uploader가 함
+S3_PREFIX_BASE = os.environ.get("S3_PREFIX", f"reviews/{CRAWL_KEYWORD or 'default'}").strip().strip("/")
 
 
 # ── GraphQL 쿼리 ──────────────────────────────────────────────
@@ -135,52 +126,20 @@ def get_headers(place_id: str) -> dict:
     }
 
 
-# ── S3 업로드 ─────────────────────────────────────────────────
-
-def get_s3_client():
-    global _s3_client
-
-    if not UPLOAD_S3:
-        return None
-
-    if boto3 is None:
-        print("  ⚠️ boto3 미설치 → S3 업로드 생략")
-        return None
-
-    if not S3_BUCKET:
-        print("  ⚠️ S3_BUCKET 비어 있음 → S3 업로드 생략")
-        return None
-
-    if _s3_client is None:
-        _s3_client = boto3.client("s3", region_name=AWS_REGION)
-
-    return _s3_client
-
+# ── S3 업로드 (s3_uploader.upload_if_enabled 위임) ─────────────
 
 def upload_image_to_s3(local_path: str) -> str:
-    s3 = get_s3_client()
-
-    if s3 is None:
-        return ""
-
+    """
+    s3_uploader.upload_if_enabled의 얇은 래퍼.
+    UPLOAD_S3=false / boto3 미설치 / 업로드 실패 → "" 반환 (호출자가 fallback 사용).
+    크롤러는 prefix를 keyword 단위로 쪼개기 위해 key를 직접 만들어 넘긴다.
+    """
     if not local_path or not os.path.exists(local_path):
         return ""
-
     filename = os.path.basename(local_path)
-    key = f"{S3_PREFIX.strip('/')}/{filename}"
-
-    content_type, _ = mimetypes.guess_type(local_path)
-    extra_args = {
-        "ContentType": content_type or "image/jpeg"
-    }
-
-    try:
-        s3.upload_file(local_path, S3_BUCKET, key, ExtraArgs=extra_args)
-        quoted_key = quote(key, safe="/")
-        return f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{quoted_key}"
-    except Exception as e:
-        print(f"  ⚠️ S3 업로드 실패: {local_path} → {e}")
-        return ""
+    key = f"{S3_PREFIX_BASE}/{filename}" if S3_PREFIX_BASE else filename
+    url = upload_if_enabled(local_path, key=key)
+    return url or ""
 
 
 # ── 이미지 다운로드 ───────────────────────────────────────────
@@ -477,7 +436,8 @@ if __name__ == "__main__":
 
     if UPLOAD_S3:
         print(f"   S3 버킷: {S3_BUCKET or '(없음)'}")
-        print(f"   S3 prefix: {S3_PREFIX}")
+        print(f"   S3 prefix: {S3_PREFIX_BASE}")
+        print(f"   S3 status: {s3_status()}")
 
     if not get_headers("test").get("cookie"):
         print("\n❌ .env에 NAVER_COOKIE가 없습니다.")

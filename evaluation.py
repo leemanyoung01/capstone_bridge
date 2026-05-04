@@ -1,26 +1,31 @@
 """
-evaluation.py — 추천 품질 평가용 스크립트 (콘솔 + JSON 저장)
-==============================================================
-사용자 화면에는 노출되지 않는 별도 평가 도구.
-정답 라벨이 있는 CSV가 있을 때만 의미 있음.
+evaluation.py — 추천 품질 평가 (콘솔 + JSON 저장)
+====================================================
+정답 라벨이 있는 CSV가 있을 때만 의미 있음. 추천 목록 전체에 대한 ranking 평가이며,
+개별 식당 카드에 Precision/Recall을 직접 붙이는 용도가 아님.
 
-평가 데이터 형식 (eval_labels.csv, UTF-8-SIG):
+라벨 종류:
+  - human-label  : 사람이 직접 라벨링한 relevance (ex. eval_labels_human.csv)
+  - pseudo-label : make_eval_labels_from_vectors.py가 만든 모델 벡터 기반
+
+label_type 자동 감지:
+  1) --label-type 인자 우선
+  2) 파일명에 'human' 포함 → human-label
+  3) 그 외 → pseudo-label
+
+평가 데이터 형식 (UTF-8-SIG CSV):
   keyword,user_pref_json,restaurant,relevance
-  버거,"{""촉촉함"":1,""담백함"":1}",버거스타,1
-  버거,"{""촉촉함"":1,""담백함"":1}",버거다이브,0
-
-⚠️  make_eval_labels_from_vectors.py가 만든 CSV는 모델 벡터 기반 pseudo-label입니다.
-    실제 성능 평가는 사람이 직접 라벨링한 relevance 데이터가 필요합니다.
 
 실행:
   python evaluation.py --labels eval_labels.csv --k 5
+  python evaluation.py --labels eval_labels_human.csv --k 5 --label-type human
   python evaluation.py --labels eval_labels.csv --k 5 --output evaluation_results.json
-  python evaluation.py --labels eval_labels.csv --api http://127.0.0.1:5000
 """
 
 import argparse
 import json
 import math
+import os
 import sys
 from collections import defaultdict
 
@@ -28,11 +33,9 @@ import pandas as pd
 
 
 def precision_at_k(predicted: list[str], relevant: set[str], k: int) -> float:
-    if k <= 0:
+    if k <= 0 or not predicted:
         return 0.0
     top = predicted[:k]
-    if not top:
-        return 0.0
     return sum(1 for p in top if p in relevant) / k
 
 
@@ -60,7 +63,7 @@ def ndcg_at_k(predicted: list[str], relevant: set[str], k: int) -> float:
     return dcg / idcg if idcg > 0 else 0.0
 
 
-def fetch_predictions(api_base: str, keyword: str, prefs: dict) -> list[str]:
+def fetch_predictions(api_base: str, keyword: str, prefs: dict) -> list[dict]:
     import requests
     r = requests.post(
         f"{api_base}/api/recommend",
@@ -69,16 +72,37 @@ def fetch_predictions(api_base: str, keyword: str, prefs: dict) -> list[str]:
     )
     r.raise_for_status()
     data = r.json()
-    return [it["name"] for it in data.get("results", [])]
+    return data.get("results", [])
 
 
-def evaluate(labels_path: str, api_base: str, k: int, output_path: str | None) -> dict:
+def _detect_label_type(labels_path: str, override: str | None) -> str:
+    if override:
+        return override
+    base = os.path.basename(labels_path).lower()
+    return "human-label" if "human" in base else "pseudo-label"
+
+
+_DESCRIPTIONS = {
+    "human-label": (
+        "사람이 직접 라벨링한 relevance 데이터 기반 추천 목록 순위 평가입니다."
+    ),
+    "pseudo-label": (
+        "모델 벡터 기반 시연용 pseudo-label 평가입니다. "
+        "최종 성능 평가는 사용자 라벨링 데이터 확보 후 재평가할 예정입니다."
+    ),
+}
+
+
+def evaluate(labels_path: str, api_base: str, k: int,
+             output_path: str | None, label_type_override: str | None) -> dict:
     df = pd.read_csv(labels_path, encoding="utf-8-sig")
     required = {"keyword", "user_pref_json", "restaurant", "relevance"}
     missing = required - set(df.columns)
     if missing:
         print(f"❌ 필수 컬럼 없음: {missing}")
         sys.exit(1)
+
+    label_type = _detect_label_type(labels_path, label_type_override)
 
     # (keyword, user_pref_json) 기준 그룹화
     groups: dict = defaultdict(lambda: {"prefs": None, "relevant": set(), "all": set()})
@@ -91,39 +115,72 @@ def evaluate(labels_path: str, api_base: str, k: int, output_path: str | None) -
 
     metrics: dict[str, list[float]] = defaultdict(list)
     failed_queries = 0
-    for (keyword, _), payload in groups.items():
+    per_query_records: list[dict] = []
+
+    for (keyword, pref_str), payload in groups.items():
         prefs = payload["prefs"]
         relevant = payload["relevant"]
         try:
-            predicted = fetch_predictions(api_base, keyword, prefs)
+            results = fetch_predictions(api_base, keyword, prefs)
         except Exception as e:
-            print(f"  ⚠️ {keyword} 추천 실패: {e}")
+            print(f"  ⚠️ {keyword} 추천 실패: {type(e).__name__}: {e}")
             failed_queries += 1
             continue
-        metrics["precision@k"].append(precision_at_k(predicted, relevant, k))
-        metrics["recall@k"].append(recall_at_k(predicted, relevant, k))
-        metrics["f1@k"].append(f1_at_k(predicted, relevant, k))
-        metrics["ndcg@k"].append(ndcg_at_k(predicted, relevant, k))
 
+        predicted = [it.get("name") for it in results]
+        metrics["precision_at_k"].append(precision_at_k(predicted, relevant, k))
+        metrics["recall_at_k"].append(recall_at_k(predicted, relevant, k))
+        metrics["f1_at_k"].append(f1_at_k(predicted, relevant, k))
+        metrics["ndcg_at_k"].append(ndcg_at_k(predicted, relevant, k))
+
+        # 디버깅용 per-query 기록
+        per_records = []
+        for rank_i, item in enumerate(results, start=1):
+            name = item.get("name")
+            per_records.append({
+                "rank":             rank_i,
+                "restaurant_name":  name,
+                "score":            float(item.get("similarity", 0.0)),
+                "is_relevant":      bool(name in relevant),
+                "relevance_grade":  1 if name in relevant else 0,
+            })
+        per_query_records.append({
+            "keyword":         keyword,
+            "user_pref_json":  pref_str,
+            "relevant_set":    sorted(relevant),
+            "predicted":       per_records,
+        })
+
+    # ── 평균 + 콘솔 출력 ──
     print(f"\n{'━' * 50}")
-    print(f"  Evaluation @ k={k}  (queries={len(metrics['precision@k'])})")
+    print(f"  Evaluation @ k={k}  (queries={len(metrics['precision_at_k'])})  label={label_type}")
     print(f"{'━' * 50}")
-    avg = {}
-    for name, vals in metrics.items():
-        if vals:
-            avg[name] = round(sum(vals) / len(vals), 4)
-            print(f"  {name:15s} = {avg[name]:.4f}")
-        else:
-            avg[name] = 0.0
+    avg: dict[str, float] = {}
+    for name in ("precision_at_k", "recall_at_k", "f1_at_k", "ndcg_at_k"):
+        vals = metrics.get(name) or []
+        avg[name] = round(sum(vals) / len(vals), 4) if vals else 0.0
+        print(f"  {name:15s} = {avg[name]:.4f}")
+
+    # 호환용 별칭 (precision@k 등 기존 키)
+    metrics_compat = dict(avg)
+    metrics_compat.update({
+        "precision@k": avg["precision_at_k"],
+        "recall@k":    avg["recall_at_k"],
+        "f1@k":        avg["f1_at_k"],
+        "ndcg@k":      avg["ndcg_at_k"],
+    })
 
     result = {
-        "ok": True,
-        "k": k,
-        "queries": len(metrics["precision@k"]),
-        "failed_queries": failed_queries,
-        "label_type": "pseudo-label",
-        "note": "모델 벡터 기반 시연용 평가입니다. 실제 성능 평가는 사람이 직접 라벨링한 relevance 데이터가 필요합니다.",
-        "metrics": avg,
+        "ok":              True,
+        "k":               k,
+        "queries":         len(metrics["precision_at_k"]),    # 기존 호환
+        "query_count":     len(metrics["precision_at_k"]),    # 신규 별칭
+        "failed_queries":  failed_queries,
+        "label_type":      label_type,
+        "description":     _DESCRIPTIONS.get(label_type, ""),
+        "note":            _DESCRIPTIONS.get(label_type, ""),
+        "metrics":         metrics_compat,
+        "per_query_records": per_query_records,
     }
 
     if output_path:
@@ -140,5 +197,6 @@ if __name__ == "__main__":
     parser.add_argument("--api", default="http://127.0.0.1:5000")
     parser.add_argument("--k", type=int, default=5)
     parser.add_argument("--output", default="evaluation_results.json")
+    parser.add_argument("--label-type", choices=["pseudo-label", "human-label"], default=None)
     args = parser.parse_args()
-    evaluate(args.labels, args.api, args.k, args.output)
+    evaluate(args.labels, args.api, args.k, args.output, args.label_type)

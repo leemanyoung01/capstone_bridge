@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 import Button from '../ui/Button';
 import AxisMatchBar from '../ui/AxisMatchBar';
 import EvaluationCard from '../ui/EvaluationCard';
-import { Star, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { Star, ExternalLink, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+
+const ordinal = (n) => `${n}위`;
 
 const InferenceStep = ({ results, error, onRestart }) => {
   const [expanded, setExpanded] = useState({});
-
   const toggle = (idx) => setExpanded((p) => ({ ...p, [idx]: !p[idx] }));
 
   if (error) {
@@ -20,7 +21,6 @@ const InferenceStep = ({ results, error, onRestart }) => {
       </div>
     );
   }
-
   if (!results || results.length === 0) {
     return <div style={{ textAlign: 'center', padding: '60px 20px' }}>추천 결과가 없습니다.</div>;
   }
@@ -30,7 +30,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '24px', fontWeight: '800' }}>나만의 맛 스니펫 완성! 🍕</h2>
         <p style={{ color: 'var(--text-gray)', fontSize: '14px', marginTop: '4px' }}>
-          취향 벡터와 가장 가까운 식당을 찾았습니다.
+          취향 벡터와 가장 가까운 식당을 순위로 제시합니다.
         </p>
       </div>
 
@@ -38,13 +38,17 @@ const InferenceStep = ({ results, error, onRestart }) => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
         {results.map((item, idx) => {
+          const rank = item.rank || idx + 1;
           const matchPct = item.match_percent != null
             ? item.match_percent
             : Math.round((item.similarity || 0) * 100);
+          const rankScore = item.rank_score != null
+            ? item.rank_score
+            : (item.similarity_score != null ? item.similarity_score : item.similarity);
           const isExpanded = !!expanded[idx];
-          const placeUrl = item.place_url || item.naver_url || item.fallback_search_url;
+          const placeUrl = item.naver_place_url || item.place_url || item.naver_url || item.fallback_search_url;
 
-          // 축별 매칭 데이터 (top_axes + axis_scores)
+          // 축별 매칭 (top_axes + axis_scores)
           const topAxes = (item.top_axes || item.reasons || []).slice(0, 5);
           const axisScores = item.axis_scores || {};
           const axisContribs = item.axis_contributions || {};
@@ -54,10 +58,15 @@ const InferenceStep = ({ results, error, onRestart }) => {
             contribution: axisContribs[name],
           }));
 
-          // text/image 신뢰도
-          const fw = item.fusion_weights || { text: 1, image: 0 };
-          const textPct = Math.round((fw.text || 1) * 100);
-          const imgPct = Math.round((fw.image || 0) * 100);
+          // 추천 반영 비율 (text/image evidence ratio)
+          const textRatio = item.text_evidence_ratio != null
+            ? item.text_evidence_ratio
+            : (item.fusion_weights?.text ?? 1);
+          const imageRatio = item.image_evidence_ratio != null
+            ? item.image_evidence_ratio
+            : (item.fusion_weights?.image ?? 0);
+          const textPct = Math.round(textRatio * 100);
+          const imgPct = Math.round(imageRatio * 100);
           const hasImageBasis = imgPct > 0 && (item.image_confidence || 0) > 0.05;
 
           // 대표 이미지
@@ -65,10 +74,13 @@ const InferenceStep = ({ results, error, onRestart }) => {
             ? item.representative_image
             : null;
 
-          // evidence (객체 또는 배열 모두 호환)
+          // 축별 evidence
           const evSentences = item.evidence_sentences && typeof item.evidence_sentences === 'object'
             ? item.evidence_sentences
             : null;
+
+          // pseudo-label relevance
+          const pr = item.pseudo_relevance;     // "relevant" | "not_relevant" | null
 
           return (
             <motion.div
@@ -82,23 +94,24 @@ const InferenceStep = ({ results, error, onRestart }) => {
                 border: matchPct >= 80 ? '2px solid var(--primary)' : '1px solid var(--border-color)'
               }}
             >
-              {/* ── 헤더 ─────────────────────────────── */}
+              {/* 헤더 */}
               <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                 {repImg && (
                   <img
                     src={repImg.image_src}
                     alt={repImg.label || item.name}
-                    style={{
-                      width: '72px', height: '72px', borderRadius: 'var(--radius-md)',
-                      objectFit: 'cover', flexShrink: 0
-                    }}
+                    style={{ width: '72px', height: '72px', borderRadius: 'var(--radius-md)', objectFit: 'cover', flexShrink: 0 }}
                     onError={(e) => { e.target.style.display = 'none'; }}
                   />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
                     <h3 style={{ fontSize: '17px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                      {idx + 1}. {item.name}
+                      <span style={{
+                        background: 'var(--primary-light, #FFF1ED)', color: 'var(--primary, #FF7E67)',
+                        padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 700,
+                      }}>{ordinal(rank)}</span>
+                      {item.name}
                       {matchPct >= 80 && <span style={{ fontSize: '11px', background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '10px' }}>강력 추천</span>}
                     </h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#FFF5E5', padding: '5px 10px', borderRadius: '999px', flexShrink: 0 }}>
@@ -109,51 +122,85 @@ const InferenceStep = ({ results, error, onRestart }) => {
                   {item.address && (
                     <p style={{ fontSize: '12px', color: 'var(--text-gray)', marginTop: '4px' }}>{item.address}</p>
                   )}
+                  <div style={{ fontSize: '11px', color: 'var(--text-gray)', marginTop: '4px' }}>
+                    취향 일치도 {matchPct}% · 랭킹 점수 {typeof rankScore === 'number' ? rankScore.toFixed(2) : '—'}
+                  </div>
                 </div>
               </div>
 
-              {/* ── 추천 근거 한 줄 ────────────────── */}
+              {/* 추천 한 줄 설명 */}
               {item.debug_reason && (
                 <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--text-gray)' }}>
                   💡 {item.debug_reason}
                 </div>
               )}
 
-              {/* ── 태그 (top_axes) ───────────────── */}
+              {/* 주요 일치 축 + contribution % */}
               {topAxes.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
-                  {topAxes.slice(0, 3).map((r) => (
-                    <span key={r} style={{ fontSize: '12px', backgroundColor: 'var(--bg-color)', color: 'var(--text-dark)', padding: '4px 10px', borderRadius: '999px', fontWeight: '600' }}>
-                      #{r}
-                    </span>
-                  ))}
+                  {topAxes.slice(0, 3).map((r) => {
+                    const c = axisContribs[r];
+                    const pct = typeof c === 'number' ? Math.round(c * 100) : null;
+                    return (
+                      <span key={r} style={{
+                        fontSize: '12px',
+                        backgroundColor: 'var(--bg-color)',
+                        color: 'var(--text-dark)',
+                        padding: '4px 10px',
+                        borderRadius: '999px',
+                        fontWeight: '600',
+                      }}>
+                        #{r}{pct != null ? <span style={{ color: 'var(--text-gray)', marginLeft: 4 }}>{pct}%</span> : null}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
 
-              {/* ── 근거 비율 배지 ────────────────── */}
-              <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '11px' }}>
+              {/* 추천 반영 비율 */}
+              <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '11px' }}>
+                <span style={{ fontWeight: 700, color: 'var(--text-dark)' }}>추천 반영 비율</span>
                 <span style={{ background: '#EEF2FF', color: '#4338CA', padding: '3px 8px', borderRadius: '6px', fontWeight: '600' }}>
-                  텍스트 근거 {textPct}%
+                  텍스트 {textPct}%
                 </span>
                 {hasImageBasis ? (
                   <span style={{ background: '#FEF3C7', color: '#92400E', padding: '3px 8px', borderRadius: '6px', fontWeight: '600' }}>
-                    이미지 근거 {imgPct}%
+                    이미지 {imgPct}%
                   </span>
                 ) : (
                   <span style={{ background: '#F3F4F6', color: '#6B7280', padding: '3px 8px', borderRadius: '6px', fontWeight: '600' }}>
-                    이미지 근거 부족 — 텍스트 중심
+                    이미지 근거 없음 · 텍스트 기반 추천
                   </span>
                 )}
               </div>
 
-              {/* ── 첫 evidence ──────────────────── */}
+              {/* pseudo-label 배지 */}
+              {pr && (
+                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
+                  <span
+                    title="평가용 pseudo-label에서 이 식당이 관련 있음/없음으로 분류된 표기입니다. 실제 사용자 평가는 아닙니다."
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                      background: pr === 'relevant' ? '#DCFCE7' : '#F3F4F6',
+                      color:       pr === 'relevant' ? '#166534' : '#6B7280',
+                      padding: '3px 8px', borderRadius: '6px', fontWeight: 700,
+                    }}
+                  >
+                    평가 기준: {pr === 'relevant' ? '관련 있음' : '관련 낮음'}
+                    <HelpCircle size={11} />
+                  </span>
+                  <span style={{ color: 'var(--text-gray)' }}>(pseudo-label)</span>
+                </div>
+              )}
+
+              {/* 첫 evidence */}
               {item.evidence && item.evidence.length > 0 && (
                 <div style={{ backgroundColor: 'var(--bg-color)', padding: '10px 12px', borderRadius: 'var(--radius-md)', fontSize: '13px', color: 'var(--text-gray)', fontStyle: 'italic', marginTop: '10px' }}>
                   "{item.evidence[0]}"
                 </div>
               )}
 
-              {/* ── 자세히 보기 토글 ──────────────── */}
+              {/* 자세히 보기 토글 */}
               <button
                 onClick={() => toggle(idx)}
                 style={{
@@ -167,7 +214,6 @@ const InferenceStep = ({ results, error, onRestart }) => {
 
               {isExpanded && (
                 <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {/* 축별 매칭 그래프 */}
                   {matchData.length > 0 && (
                     <div>
                       <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-dark)' }}>
@@ -176,7 +222,6 @@ const InferenceStep = ({ results, error, onRestart }) => {
                       <AxisMatchBar axes={matchData} max={5} />
                     </div>
                   )}
-                  {/* 추천 기여도 */}
                   {Object.keys(axisContribs).length > 0 && (
                     <div>
                       <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-dark)' }}>
@@ -192,7 +237,6 @@ const InferenceStep = ({ results, error, onRestart }) => {
                       />
                     </div>
                   )}
-                  {/* 축별 evidence */}
                   {evSentences && Object.keys(evSentences).length > 0 && (
                     <div>
                       <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-dark)' }}>
@@ -201,7 +245,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         {Object.entries(evSentences).slice(0, 4).map(([ax, sents]) => (
                           <div key={ax} style={{ fontSize: '12px' }}>
-                            <span style={{ fontWeight: 700, color: 'var(--primary)' }}>#{ax}</span>{' '}
+                            <span style={{ fontWeight: 700, color: 'var(--primary)' }}>#{ax} 근거</span>{' '}
                             <span style={{ color: 'var(--text-gray)', fontStyle: 'italic' }}>"{(sents || [])[0]}"</span>
                           </div>
                         ))}
@@ -211,7 +255,6 @@ const InferenceStep = ({ results, error, onRestart }) => {
                 </div>
               )}
 
-              {/* ── 외부 링크 버튼 ────────────────── */}
               {placeUrl && (
                 <div style={{ marginTop: '12px', textAlign: 'right' }}>
                   <a
@@ -225,7 +268,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                       border: '1px solid var(--primary)', borderRadius: 'var(--radius-md)'
                     }}
                   >
-                    {item.naver_url ? '네이버 플레이스 보기' : '네이버에서 검색'} <ExternalLink size={13} />
+                    {(item.naver_place_url || item.naver_url) ? '네이버 플레이스 보기' : '네이버에서 검색'} <ExternalLink size={13} />
                   </a>
                 </div>
               )}

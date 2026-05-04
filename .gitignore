@@ -61,6 +61,9 @@ evaluation_results.json
 eval_labels_*.csv
 !eval_labels_human.csv
 
+# ── 분석용 임시 ──────────────────────────────────────
+_zip_inspect/
+
 # ── Test / coverage ──────────────────────────────────
 .coverage
 htmlcov/

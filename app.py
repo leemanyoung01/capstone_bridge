@@ -12,6 +12,7 @@ v2 개선점:
   python app.py
   gunicorn app:app -b 0.0.0.0:5000 --workers 3
 """
+import csv
 import json, math, os
 from urllib.parse import quote
 import numpy as np
@@ -302,6 +303,63 @@ def _build_fallback_url(name: str, keyword: str) -> str:
     return f"https://map.naver.com/v5/search/{quote(q)}"
 
 
+# ── pseudo_relevance lookup (eval_labels.csv 기반, 캐시) ─────
+_RELEVANCE_CACHE: dict = {"mtime": 0.0, "data": {}, "label_type": "pseudo-label"}
+
+
+def _load_relevance_table():
+    """
+    eval_labels.csv (또는 _human 우선) 을 읽어
+    {(keyword, frozenset(prefs.items()), restaurant): 0|1} 사전을 만든다.
+    파일 mtime이 바뀌면 자동 재로드.
+    """
+    candidates = ["eval_labels_human.csv", "eval_labels.csv"]
+    path = next((os.path.join(BASE_DIR, p) for p in candidates
+                 if os.path.exists(os.path.join(BASE_DIR, p))), None)
+    if not path:
+        _RELEVANCE_CACHE["data"] = {}
+        return
+    try:
+        mt = os.path.getmtime(path)
+    except OSError:
+        return
+    if mt == _RELEVANCE_CACHE["mtime"]:
+        return
+
+    table: dict = {}
+    label_type = "human-label" if "human" in os.path.basename(path).lower() else "pseudo-label"
+    try:
+        with open(path, "r", encoding="utf-8-sig", newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                kw = (row.get("keyword") or "").strip()
+                pref_raw = row.get("user_pref_json") or "{}"
+                rest = (row.get("restaurant") or "").strip()
+                rel = int(row.get("relevance") or 0)
+                try:
+                    prefs = json.loads(pref_raw)
+                except Exception:
+                    continue
+                pref_key = frozenset((k, float(v)) for k, v in prefs.items())
+                table[(kw, pref_key, rest)] = rel
+    except Exception:
+        pass
+
+    _RELEVANCE_CACHE.update({"mtime": mt, "data": table, "label_type": label_type})
+
+
+def _pseudo_relevance(keyword: str, user_prefs: dict, rest_name: str):
+    _load_relevance_table()
+    table = _RELEVANCE_CACHE.get("data") or {}
+    if not table:
+        return None
+    pref_key = frozenset((k, float(v)) for k, v in user_prefs.items() if v)
+    flag = table.get((keyword, pref_key, rest_name))
+    if flag is None:
+        return None
+    return "relevant" if flag == 1 else "not_relevant"
+
+
 def _rep_image_for(kw: str, rest_name: str) -> dict:
     """해당 식당의 대표 이미지 1장 (없으면 빈 dict)."""
     bundle = REP_IMAGES.get(kw)
@@ -442,6 +500,9 @@ def api_recommend():
         else:
             debug_reason = "유의미한 축 일치 없음"
 
+        # pseudo-label lookup (없으면 None)
+        pseudo_rel = _pseudo_relevance(kw, user_prefs, name)
+
         results.append({
             # 기존 필드 (frontend fallback 호환)
             "name":           name,
@@ -456,6 +517,7 @@ def api_recommend():
             "has_image_data": bool(info.get("has_image_data", False)),
             # 신규 필드
             "similarity_score":   round(float(sim), 4),
+            "rank_score":         round(float(sim), 4),
             "match_percent":      max(0, min(100, round(float(sim) * 100))),
             "top_axes":           top_axes_names[:3],
             "axis_scores":        axis_scores,
@@ -463,14 +525,21 @@ def api_recommend():
             "text_confidence":    round(text_conf, 3),
             "image_confidence":   round(img_conf, 3),
             "fusion_weights":     {"text": text_w, "image": img_w},
+            "text_evidence_ratio":  text_w,
+            "image_evidence_ratio": img_w,
             "evidence_sentences": evidence_sentences,
             "representative_image": rep_img,
             "place_url":          naver_url,
+            "naver_place_url":    naver_url,
             "fallback_search_url": fallback_url,
+            "pseudo_relevance":   pseudo_rel,
             "debug_reason":       debug_reason,
         })
 
     results.sort(key=lambda x: x["similarity"], reverse=True)
+    for i, item in enumerate(results, start=1):
+        item["rank"] = i
+
     return jsonify(_clean({
         "keyword":         kw,
         "fusion_mode":     fusion_mode,
@@ -480,6 +549,7 @@ def api_recommend():
         "count":           len(results),
         "results":         results[:10],
         "user_vector":     user_vec_dict,
+        "label_type":      _RELEVANCE_CACHE.get("label_type", "pseudo-label"),
     }))
 
 

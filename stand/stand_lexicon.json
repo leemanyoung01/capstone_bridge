@@ -600,26 +600,104 @@
       "패티퀄리티": {
         "positive": ["육즙", "두툼", "불향", "육향", "수제패티", "패티"],
         "negative": ["퍽퍽", "잡내", "얇은", "냉동", "질긴"],
-        "clip_prompt_pos": ["juicy thick beef patty with grill marks"],
-        "clip_prompt_neg": ["thin processed frozen meat patty"]
+        "clip_prompt_pos": [
+          "close-up photo of a juicy thick beef patty cross section",
+          "photo of a hamburger cut in half showing the patty",
+          "photo of a grilled beef patty with char marks inside a bun"
+        ],
+        "clip_prompt_neg": [
+          "photo of a thin processed frozen meat patty",
+          "photo of a dry crumbled meat patty"
+        ]
       },
       "번식감": {
         "positive": ["폭신", "부드러운", "번", "버터향", "브리오슈", "고소한"],
         "negative": ["질긴", "퍽퍽한", "눅눅", "푸석"],
-        "clip_prompt_pos": ["glossy golden brioche bun"],
-        "clip_prompt_neg": ["flattened soggy burger bun"]
+        "clip_prompt_pos": [
+          "close-up photo of a glossy golden brioche bun on a hamburger",
+          "photo of a soft fluffy burger bun with sesame seeds",
+          "photo of a hamburger showing the bun texture"
+        ],
+        "clip_prompt_neg": [
+          "photo of a flattened soggy burger bun",
+          "photo of a dry pale burger bun"
+        ]
       },
       "야채신선도": {
         "positive": ["아삭", "싱싱", "신선", "양상추", "프레쉬", "풍성"],
         "negative": ["시든", "야채부실", "갈변"],
-        "clip_prompt_pos": ["crisp green lettuce and tomato in a burger"],
-        "clip_prompt_neg": ["withered brown lettuce"]
+        "clip_prompt_pos": [
+          "close-up photo of fresh crisp green lettuce and red tomato inside a burger",
+          "photo of a hamburger with vivid fresh vegetables visible",
+          "photo of bright green lettuce on a beef patty"
+        ],
+        "clip_prompt_neg": [
+          "photo of withered brown lettuce in a burger",
+          "photo of a burger without any visible vegetables"
+        ]
       },
       "소스조화": {
         "positive": ["단짠", "조화", "소스 넉넉", "중독성"],
         "negative": ["짜", "소스 부족", "느끼"],
-        "clip_prompt_pos": ["creamy sauce and melting cheese dripping from burger"],
-        "clip_prompt_neg": ["dry burger without sauce"]
+        "clip_prompt_pos": [
+          "close-up photo of creamy sauce and melted cheese dripping from a hamburger",
+          "photo of a burger with glossy sauce on the patty"
+        ],
+        "clip_prompt_neg": [
+          "photo of a dry hamburger without sauce",
+          "photo of a hamburger with sparse plain bread"
+        ]
+      }
+    },
+    "회": {
+      "신선도": {
+        "positive": ["신선", "살아있", "탱글", "싱싱", "퀄리티", "빛깔", "프레쉬", "갓 잡은", "활어"],
+        "negative": ["비린", "냄새", "푸석", "냉동", "해동"],
+        "clip_prompt_pos": [
+          "close-up photo of glistening fresh raw fish slices on a plate",
+          "photo of bright pink salmon sashimi with shiny surface",
+          "photo of vibrant fresh sliced raw fish arranged neatly"
+        ],
+        "clip_prompt_neg": [
+          "photo of dull old looking raw fish",
+          "photo of dry pale sashimi without sheen"
+        ]
+      },
+      "깔끔함": {
+        "positive": ["깔끔", "담백", "잡내 없", "비린내 안", "냄새 없"],
+        "negative": ["비린", "냄새", "바다냄새", "역한", "잡내"],
+        "clip_prompt_pos": [
+          "photo of cleanly plated raw fish without garnish clutter",
+          "photo of well presented sashimi on a clean white plate"
+        ],
+        "clip_prompt_neg": [
+          "photo of messy raw fish with strong garnish smell",
+          "photo of fishy looking poorly plated sashimi"
+        ]
+      },
+      "구성": {
+        "positive": ["다양", "구성", "세트", "푸짐", "스끼다시", "밑반찬", "종류", "알찬", "모듬", "모둠"],
+        "negative": ["부실", "빈약", "종류 적"],
+        "clip_prompt_pos": [
+          "photo of a large sashimi platter with various fish types",
+          "photo of an assorted Korean raw fish set with side dishes"
+        ],
+        "clip_prompt_neg": [
+          "photo of a single small piece of raw fish",
+          "photo of sashimi with no side dishes"
+        ]
+      },
+      "식감": {
+        "positive": ["쫄깃", "탱글", "쫀득", "녹는", "사르르", "입에서 녹", "부드러", "고소"],
+        "negative": ["질기", "푸석", "딱딱", "물컹"],
+        "clip_prompt_pos": [
+          "close-up photo of marbled tuna sashimi with melt-in-mouth texture",
+          "photo of springy chewy raw fish slices"
+        ],
+        "clip_prompt_neg": [
+          "photo of mushy overcooked seafood",
+          "photo of dried out raw fish"
+        ]
       }
     },
     "감자튀김": {

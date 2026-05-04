@@ -443,6 +443,13 @@ def upsert_representative_images(conn, keyword: str, images: list[dict]):
                 if row:
                     rest_id = row["restaurant_id"]
 
+            # 스키마 변경 없이 부가 점수는 clip_vector JSONB에 메타로 합쳐 저장
+            clip_payload = dict(img.get("clip_vector", {}) or {})
+            for meta_key in ("_axis_match_score", "_food_presence_score",
+                             "_non_food_penalty", "_linked_text_score", "reason"):
+                if meta_key in img and meta_key not in clip_payload:
+                    clip_payload[meta_key] = img[meta_key]
+
             cur.execute("""
                 INSERT INTO representative_images
                     (restaurant_id, keyword, axis, label, image_url,
@@ -454,7 +461,7 @@ def upsert_representative_images(conn, keyword: str, images: list[dict]):
                 img.get("axis", ""),
                 img.get("label", ""),
                 img.get("image_src", ""),
-                json.dumps(img.get("clip_vector", {}), ensure_ascii=False),
+                json.dumps(clip_payload, ensure_ascii=False),
                 img.get("review_snippet", ""),
                 float(img.get("score", 0)),
                 rank,
@@ -485,3 +492,23 @@ def get_all_rep_keywords(conn) -> list[str]:
     with conn.cursor() as cur:
         cur.execute("SELECT DISTINCT keyword FROM representative_images ORDER BY keyword")
         return [r["keyword"] for r in cur.fetchall()]
+
+
+# ──────────────────────────────────────────────
+# 보조 헬퍼 (이미지 마이그레이션 / 대표이미지 갱신)
+# ──────────────────────────────────────────────
+
+def update_review_image_url(conn, image_id: int, new_url: str) -> int:
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE review_images SET image_url = %s WHERE image_id = %s",
+            (new_url, image_id),
+        )
+        return cur.rowcount
+
+
+def delete_representative_images(conn, keyword: str) -> int:
+    """특정 keyword의 대표 이미지를 모두 삭제 (재선정 직전에 사용)."""
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM representative_images WHERE keyword = %s", (keyword,))
+        return cur.rowcount
