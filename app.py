@@ -154,6 +154,20 @@ def _split_axes(bundle: dict) -> tuple[list[str], list[str]]:
     return taste, meta
 
 
+def _axis_label_map(bundle: dict) -> dict:
+    """axes_config의 label 필드에서 {axis_key: display_label} 맵을 만든다."""
+    out = {}
+    for name, info in (bundle.get("axes_config") or {}).items():
+        if name.startswith("_"):
+            continue
+        out[name] = info.get("label") or name
+    return out
+
+
+def _label_of(axis_key: str, label_map: dict) -> str:
+    return label_map.get(axis_key) or axis_key
+
+
 def _rest_info(name: str) -> dict:
     if name in REST_DB: return REST_DB[name]
     compact = name.replace("-","").replace(" ","").lower()
@@ -278,23 +292,40 @@ def api_config():
         groups = dict(groups)
 
     taste, meta = _split_axes(bundle)
+    label_map = _axis_label_map(bundle)
     return jsonify({
-        "keyword":     kw,
-        "axes":        _all_axes(bundle),
-        "taste_axes":  taste,
-        "meta_axes":   meta,
-        "groups":      groups,
-        "axes_config": bundle.get("axes_config", {}),
+        "keyword":         kw,
+        "axes":            _all_axes(bundle),
+        "taste_axes":      taste,
+        "meta_axes":       meta,
+        "groups":          groups,
+        "axes_config":     bundle.get("axes_config", {}),
+        "axis_label_map":  label_map,
+        "taste_axes_labels": [label_map.get(a, a) for a in taste],
+        "meta_axes_labels":  [label_map.get(a, a) for a in meta],
     })
 
 
 @app.route("/api/representative_images")
 def api_rep_images():
     kw = _norm_kw(request.args.get("keyword", DEFAULT_KW))
-    if kw in REP_IMAGES: return jsonify(REP_IMAGES[kw])
+    bundle = ALL_DATA.get(kw) or {}
+    label_map = _axis_label_map(bundle)
+
+    def _augment(payload):
+        imgs = payload.get("images") or []
+        for img in imgs:
+            ax = img.get("axis", "")
+            if ax and "axis_label" not in img:
+                img["axis_label"] = label_map.get(ax) or img.get("label") or ax
+        return {**payload, "axis_label_map": label_map}
+
+    if kw in REP_IMAGES:
+        return jsonify(_augment(dict(REP_IMAGES[kw])))
     for k, v in REP_IMAGES.items():
-        if kw in k or k in kw: return jsonify(v)
-    return jsonify({"keyword": kw, "images": []})
+        if kw in k or k in kw:
+            return jsonify(_augment(dict(v)))
+    return jsonify({"keyword": kw, "images": [], "axis_label_map": label_map})
 
 
 def _build_fallback_url(name: str, keyword: str) -> str:
@@ -402,6 +433,7 @@ def api_recommend():
         return jsonify({"error": "축 정보 없음"}), 500
 
     taste_axes, meta_axes = _split_axes(bundle)
+    label_map = _axis_label_map(bundle)
 
     # 사용자 벡터
     user_tv = {ax: float(user_prefs.get(ax, 0.0)) for ax in all_axes}
@@ -520,14 +552,18 @@ def api_recommend():
             "rank_score":         round(float(sim), 4),
             "match_percent":      max(0, min(100, round(float(sim) * 100))),
             "top_axes":           top_axes_names[:3],
+            "top_axes_labels":    [label_map.get(a, a) for a in top_axes_names[:3]],
             "axis_scores":        axis_scores,
             "axis_contributions": axis_contributions,
+            "axis_contributions_labels": {label_map.get(a, a): v for a, v in axis_contributions.items()},
+            "axis_label_map":     label_map,
             "text_confidence":    round(text_conf, 3),
             "image_confidence":   round(img_conf, 3),
             "fusion_weights":     {"text": text_w, "image": img_w},
             "text_evidence_ratio":  text_w,
             "image_evidence_ratio": img_w,
             "evidence_sentences": evidence_sentences,
+            "evidence_sentences_labels": {label_map.get(a, a): v for a, v in evidence_sentences.items()},
             "representative_image": rep_img,
             "place_url":          naver_url,
             "naver_place_url":    naver_url,
@@ -546,6 +582,7 @@ def api_recommend():
         "user_weights":    user_weights,
         "taste_axes":      taste_axes,
         "meta_axes":       meta_axes,
+        "axis_label_map":  label_map,
         "count":           len(results),
         "results":         results[:10],
         "user_vector":     user_vec_dict,

@@ -2,8 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import RadarChartViz from '../ui/RadarChartViz';
 import Button from '../ui/Button';
+import { axisLabel } from '../../utils/labels';
 
-const TasteStep = ({ keyword, config, scores, onChipClick, onNext, onReset }) => {
+const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext, onReset }) => {
   const { axes_config, groups = {}, axes = [] } = config;
   
   // Create groups in order
@@ -22,7 +23,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onNext, onReset }) =>
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ padding: '20px' }}>
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
         <h2 style={{ fontSize: '24px', fontWeight: '800' }}>{keyword} 맛 취향 탐색</h2>
-        <p style={{ color: 'var(--text-gray)', fontSize: '14px', marginTop: '4px' }}>끌리는 단어를 자유롭게 선택해주세요</p>
+        <p style={{ color: 'var(--text-gray)', fontSize: '14px', marginTop: '4px' }}>끌리는 단어를 자유롭게 선택해주세요 (최대 10점)</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: '30px', alignItems: 'start' }}>
@@ -38,33 +39,86 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onNext, onReset }) =>
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {group.axes.map(axis => {
-                  const clickCount = scores[axis] || 0;
-                  const isSelected = clickCount > 0;
+                  const score = scores[axis];
+                  // Consider selected if score is not exactly 0 (allows empty string while typing)
+                  const isSelected = score !== 0;
+                  
                   return (
-                    <motion.button
+                    <motion.div
                       key={axis}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => onChipClick(axis)}
-                      style={{
-                        padding: '10px 16px',
+                      layout
+                      transition={{ 
+                        layout: { duration: 0.2, ease: "easeOut" } 
+                      }}
+                      style={{ 
+                        display: 'flex', alignItems: 'center',
+                        padding: isSelected ? '6px 6px 6px 16px' : '10px 16px',
                         borderRadius: '999px',
                         fontSize: '14px',
                         fontWeight: '600',
                         backgroundColor: isSelected ? 'var(--primary)' : 'var(--bg-color)',
                         color: isSelected ? 'white' : 'var(--text-dark)',
                         border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border-color)'}`,
-                        transition: 'background-color 0.2s',
-                        display: 'flex', alignItems: 'center', gap: '6px'
+                        boxShadow: isSelected ? '0 4px 12px rgba(255, 126, 103, 0.2)' : 'none',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
                       }}
+                      onClick={() => onChipClick(axis)}
                     >
-                      {axis}
-                      {clickCount > 0 && (
-                        <span style={{ 
-                          fontSize: '11px', background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '10px'
-                        }}>+{clickCount}</span>
+                      <span>{axisLabel(axis, config)}</span>
+                      {isSelected && (
+                        <div 
+                          style={{ 
+                            display: 'flex', alignItems: 'center', gap: '6px', 
+                            background: 'rgba(255,255,255,0.2)', padding: '4px 6px', 
+                            borderRadius: '999px', marginLeft: '12px' 
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button 
+                            onClick={() => onScoreChange(axis, (parseInt(score) || 0) - 1)}
+                            disabled={(parseInt(score) || 0) <= 1}
+                            style={{ 
+                              width: '24px', height: '24px', display: 'flex', alignItems: 'center', 
+                              justifyContent: 'center', borderRadius: '50%', background: 'white', 
+                              color: 'var(--primary)', fontSize: '16px', fontWeight: '800',
+                              opacity: (parseInt(score) || 0) <= 1 ? 0.5 : 1, cursor: (parseInt(score) || 0) <= 1 ? 'not-allowed' : 'pointer'
+                            }}
+                          >
+                            -
+                          </button>
+                          <input 
+                            type="number"
+                            value={score}
+                            autoFocus={score === 1} // Auto focus when first selected
+                            onChange={(e) => onScoreChange(axis, e.target.value)}
+                            onBlur={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (isNaN(val) || val < 1) onScoreChange(axis, 1);
+                              else if (val > 10) onScoreChange(axis, 10);
+                            }}
+                            style={{ 
+                              width: '32px', textAlign: 'center', fontSize: '14px', fontWeight: '800',
+                              background: 'transparent', border: 'none', color: 'white',
+                              appearance: 'none', MozAppearance: 'textfield', padding: 0,
+                              outline: 'none'
+                            }}
+                          />
+                          <button 
+                            onClick={() => onScoreChange(axis, (parseInt(score) || 0) + 1)}
+                            disabled={(parseInt(score) || 0) >= 10}
+                            style={{ 
+                              width: '24px', height: '24px', display: 'flex', alignItems: 'center', 
+                              justifyContent: 'center', borderRadius: '50%', background: 'white', 
+                              color: 'var(--primary)', fontSize: '16px', fontWeight: '800',
+                              opacity: (parseInt(score) || 0) >= 10 ? 0.5 : 1, cursor: (parseInt(score) || 0) >= 10 ? 'not-allowed' : 'pointer'
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
                       )}
-                    </motion.button>
+                    </motion.div>
                   );
                 })}
               </div>

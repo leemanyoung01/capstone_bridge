@@ -63,7 +63,7 @@
   },
 
   "image_filtering": {
-    "_comment": "대표 이미지 후보 필터링용 CLIP prompt + 점수식 파라미터. 매장 외관/메뉴판/영수증/스크린샷을 컷오프하기 위한 설정.",
+    "_comment": "image_id 단위 평가용. food_presence/non_food는 일반 음식 여부, category_presence는 keyword 음식 여부, wrong_food는 다른 음식 사진 패널티.",
     "food_presence_prompts": [
       "a clear photo of food on a plate ready to eat",
       "a close-up photo of a cooked dish",
@@ -77,12 +77,65 @@
       "a photo of people posing without food visible",
       "a photo of a logo or graphic design without food"
     ],
+    "category_presence_prompts": {
+      "_default":   ["a clear photo of food on a plate"],
+      "버거":       ["a photo of a hamburger with a bun and patty",
+                     "a close-up photo of a burger sandwich"],
+      "햄버거":     ["a photo of a hamburger with a bun and patty"],
+      "치킨":       ["a photo of korean fried chicken pieces"],
+      "피자":       ["a photo of a pizza with melted cheese on top"],
+      "파스타":     ["a photo of a plate of pasta with sauce"],
+      "스테이크":   ["a photo of a grilled steak on a plate"],
+      "리조또":     ["a photo of a creamy risotto in a bowl"],
+      "샐러드":     ["a photo of a fresh salad bowl with vegetables"],
+      "삼겹살":     ["a photo of grilled pork belly samgyeopsal"],
+      "구이":       ["a photo of korean grilled meat"],
+      "돈까스":     ["a photo of a breaded pork cutlet tonkatsu"],
+      "탕수육":     ["a photo of korean sweet and sour pork tangsuyuk"],
+      "짜장":       ["a photo of korean black bean noodles jajangmyeon"],
+      "짬뽕":       ["a photo of korean spicy seafood noodle soup jjamppong"],
+      "볶음밥":     ["a photo of korean fried rice"],
+      "떡볶이":     ["a photo of korean spicy rice cakes tteokbokki"],
+      "분식":       ["a photo of korean street food snacks"],
+      "찌개전golf": ["a photo of korean stew jjigae bubbling"],
+      "찌개전골":   ["a photo of korean stew jjigae bubbling"],
+      "찜류":       ["a photo of korean braised dish jjim"],
+      "국밥탕":     ["a photo of korean rice soup gukbap"],
+      "순대국밥":   ["a photo of korean sundae soup"],
+      "감자탕":     ["a photo of korean pork bone soup gamjatang"],
+      "족발":       ["a photo of korean braised pig trotters jokbal"],
+      "감자튀김":   ["a photo of golden french fries"],
+      "도시락":     ["a photo of a korean lunchbox dosirak"],
+      "회":         ["a photo of fresh raw fish sashimi slices"]
+    },
+    "wrong_food_prompts": {
+      "_default": [],
+      "버거":     ["a photo of korean fried chicken pieces only",
+                   "a photo of french fries alone without burger",
+                   "a photo of pizza"],
+      "햄버거":   ["a photo of korean fried chicken pieces only",
+                   "a photo of french fries alone"],
+      "치킨":     ["a photo of a hamburger sandwich"],
+      "피자":     ["a photo of pasta noodles", "a photo of a burger"],
+      "파스타":   ["a photo of pizza", "a photo of a burger"],
+      "스테이크": ["a photo of pasta noodles"],
+      "회":       ["a photo of grilled meat", "a photo of fried chicken"],
+      "삼겹살":   ["a photo of raw fish sashimi", "a photo of a hamburger"]
+    },
     "thresholds": {
-      "min_food_presence":      0.18,
-      "max_non_food_penalty":   0.22,
-      "food_presence_weight":   0.4,
+      "min_food_presence":       0.18,
+      "max_non_food_penalty":    0.22,
+      "min_category_presence":   0.15,
+      "max_wrong_food_penalty":  0.25,
+      "food_presence_weight":    0.0,
       "non_food_penalty_weight": 0.6,
-      "linked_text_weight":     0.15
+      "category_bonus_weight":   0.30,
+      "wrong_food_weight":       0.70,
+      "linked_text_weight":      0.15,
+      "duplicate_threshold":     0.92,
+      "duplicate_penalty_weight":0.30,
+      "max_per_review":          2,
+      "max_per_restaurant_axis": 1
     }
   }
 }

@@ -91,12 +91,13 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
     axes_def = stand["axes"]
     lexicon = stand["lexicon"]
 
-    def build(name, group, lex_sec):
+    def build(name, group, lex_sec, label=None):
         lex = lex_sec.get(name, {})
         return {
             "positive": lex.get("positive", []),
             "negative": lex.get("negative", []),
             "group": group,
+            "label": label or name,
             "clip_prompt_pos": lex.get("clip_prompt_pos", []),
             "clip_prompt_neg": lex.get("clip_prompt_neg", []),
         }
@@ -106,7 +107,8 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
         if name.startswith("_"):
             continue
         meta[name] = {
-            **build(name, info.get("group", "메타"), lexicon.get("common", {})),
+            **build(name, info.get("group", "메타"), lexicon.get("common", {}),
+                    label=info.get("label")),
             "_weight": info.get("weight", 0.3),
         }
 
@@ -114,7 +116,8 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
     for name, info in axes_def.get("taste_axes", {}).items():
         if name.startswith("_"):
             continue
-        taste[name] = build(name, info.get("group", "맛"), lexicon.get("shared", {}))
+        taste[name] = build(name, info.get("group", "맛"), lexicon.get("shared", {}),
+                            label=info.get("label"))
 
     food_specific = axes_def.get("food_specific_axes", {})
     alias_to_cat = axes_def.get("alias_to_category", {})
@@ -150,6 +153,7 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
                 "positive": lex.get("positive", []),
                 "negative": lex.get("negative", []),
                 "group": info.get("group", matched + "특화"),
+                "label": info.get("label", name),
                 "clip_prompt_pos": lex.get("clip_prompt_pos", []),
                 "clip_prompt_neg": lex.get("clip_prompt_neg", []),
             }
@@ -513,6 +517,7 @@ def save_to_db(keyword: str, profiles: dict, all_axes: dict,
     axes_config = {
         name: {
             "group": info.get("group", "기타"),
+            "label": info.get("label", name),
             "positive_keywords": info.get("positive", []),
             "negative_keywords": info.get("negative", []),
             "clip_prompt_pos": info.get("clip_prompt_pos", []),

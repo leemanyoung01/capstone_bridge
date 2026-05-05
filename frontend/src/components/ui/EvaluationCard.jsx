@@ -29,26 +29,47 @@ const METRIC_INFO = [
 
 const EvaluationCard = () => {
   const [data, setData] = useState(null);
-  const [hidden, setHidden] = useState(false);
+  const [missing, setMissing] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     let alive = true;
     fetch('/api/evaluation')
-      .then((res) => {
-        if (!res.ok) throw new Error('no eval');
-        return res.json();
-      })
-      .then((d) => {
+      .then((res) => res.json().then((j) => ({ ok: res.ok, body: j })))
+      .then(({ ok, body }) => {
         if (!alive) return;
-        if (d && d.ok && d.metrics) setData(d);
-        else setHidden(true);
+        if (ok && body && body.ok && body.metrics) {
+          setData(body);
+        } else {
+          setMissing(true);
+        }
       })
-      .catch(() => alive && setHidden(true));
+      .catch(() => alive && setMissing(true));
     return () => { alive = false; };
   }, []);
 
-  if (hidden || !data) return null;
+  if (missing) {
+    return (
+      <div style={{
+        backgroundColor: 'var(--white)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '16px',
+        boxShadow: 'var(--shadow-sm)',
+        border: '1px dashed var(--border-color)',
+        marginTop: '16px',
+        marginBottom: '8px',
+        textAlign: 'center',
+        color: 'var(--text-gray)',
+        fontSize: '12px',
+      }}>
+        <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-dark)' }}>
+          추천 목록 품질 평가
+        </div>
+        평가 데이터 없음 — <code>python evaluation.py --labels eval_labels.csv --k 5</code> 실행 후 표시됩니다.
+      </div>
+    );
+  }
+  if (!data) return null;
 
   const {
     metrics = {},
@@ -59,23 +80,16 @@ const EvaluationCard = () => {
   } = data;
 
   const isPseudo = label_type === 'pseudo-label';
-  const fmt = (m) => {
-    const v = m[METRIC_INFO[0].key]; // dummy
-    return typeof v === 'number' ? v.toFixed(3) : '—';
-  };
-  const get = (info) => {
-    const v = metrics[info.key] ?? metrics[info.alt];
-    return typeof v === 'number' ? v.toFixed(3) : '—';
-  };
 
   return (
     <div style={{
       backgroundColor: 'var(--white)',
       borderRadius: 'var(--radius-lg)',
-      padding: '18px',
+      padding: '24px',
       boxShadow: 'var(--shadow-sm)',
       border: '1px dashed var(--border-color)',
-      marginBottom: '20px',
+      marginTop: '16px',
+      marginBottom: '8px',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '12px' }}>
         <div>
@@ -103,21 +117,41 @@ const EvaluationCard = () => {
         gap: '8px',
         marginBottom: '10px',
       }}>
-        {METRIC_INFO.map((info) => (
-          <div key={info.key} style={{
-            background: 'var(--bg-color)',
-            borderRadius: 'var(--radius-md)',
-            padding: '10px 8px',
-            textAlign: 'center',
-          }} title={info.desc}>
-            <div style={{ fontSize: '10px', color: 'var(--text-gray)', fontWeight: 600 }}>
-              {info.label}@{k}
+        {METRIC_INFO.map((info) => {
+          const raw = metrics[info.key] ?? metrics[info.alt];
+          const num = typeof raw === 'number' ? raw : null;
+          const pct = num != null ? Math.max(0, Math.min(100, Math.round(num * 100))) : 0;
+          return (
+            <div key={info.key} style={{
+              background: '#FAF9F6',
+              borderRadius: 'var(--radius-md)',
+              padding: '14px 10px',
+              textAlign: 'center',
+            }} title={info.desc}>
+              <div style={{ fontSize: '12px', color: 'var(--text-gray)', fontWeight: 600, marginBottom: '4px' }}>
+                {info.label}@{k}
+              </div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text-dark)' }}>
+                {num != null ? num.toFixed(3) : '—'}
+              </div>
+              <div style={{
+                marginTop: '8px',
+                height: '6px',
+                background: '#E5E7EB',
+                borderRadius: '999px',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: `${pct}%`,
+                  height: '100%',
+                  background: 'var(--primary, #FF7E67)',
+                  borderRadius: '999px',
+                  transition: 'width 0.4s',
+                }} />
+              </div>
             </div>
-            <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-dark)', marginTop: '2px' }}>
-              {get(info)}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <button

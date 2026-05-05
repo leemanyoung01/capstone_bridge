@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Button from '../ui/Button';
 import AxisMatchBar from '../ui/AxisMatchBar';
+import RadarChartViz from '../ui/RadarChartViz';
 import EvaluationCard from '../ui/EvaluationCard';
+import { axisLabel } from '../../utils/labels';
 import { Star, ExternalLink, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 
 const ordinal = (n) => `${n}위`;
@@ -34,7 +36,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
         </p>
       </div>
 
-      <EvaluationCard />
+      {/* EvaluationCard moved to individual cards */}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
         {results.map((item, idx) => {
@@ -114,9 +116,9 @@ const InferenceStep = ({ results, error, onRestart }) => {
                       {item.name}
                       {matchPct >= 80 && <span style={{ fontSize: '11px', background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '10px' }}>강력 추천</span>}
                     </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#FFF5E5', padding: '5px 10px', borderRadius: '999px', flexShrink: 0 }}>
-                      <Star size={13} color="#F59E0B" fill="#F59E0B" />
-                      <span style={{ fontSize: '13px', fontWeight: '800', color: '#B45309' }}>{matchPct}%</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#FFF5E5', padding: '8px 16px', borderRadius: '999px', flexShrink: 0, border: '1px solid #FCD34D' }}>
+                      <Star size={18} color="#F59E0B" fill="#F59E0B" />
+                      <span style={{ fontSize: '20px', fontWeight: '900', color: '#B45309' }}>{matchPct}%</span>
                     </div>
                   </div>
                   {item.address && (
@@ -150,7 +152,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                         borderRadius: '999px',
                         fontWeight: '600',
                       }}>
-                        #{r}{pct != null ? <span style={{ color: 'var(--text-gray)', marginLeft: 4 }}>{pct}%</span> : null}
+                        #{axisLabel(r, item)}{pct != null ? <span style={{ color: 'var(--text-gray)', marginLeft: 4 }}>{pct}%</span> : null}
                       </span>
                     );
                   })}
@@ -193,12 +195,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                 </div>
               )}
 
-              {/* 첫 evidence */}
-              {item.evidence && item.evidence.length > 0 && (
-                <div style={{ backgroundColor: 'var(--bg-color)', padding: '10px 12px', borderRadius: 'var(--radius-md)', fontSize: '13px', color: 'var(--text-gray)', fontStyle: 'italic', marginTop: '10px' }}>
-                  "{item.evidence[0]}"
-                </div>
-              )}
+              {/* Evidence Quote Block Removed */}
 
               {/* 자세히 보기 토글 */}
               <button
@@ -214,27 +211,26 @@ const InferenceStep = ({ results, error, onRestart }) => {
 
               {isExpanded && (
                 <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {matchData.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-dark)' }}>
-                        축별 식당 점수
+                  {(matchData.length > 0 || Object.keys(axisContribs).length > 0) && (
+                    <div style={{ 
+                      background: 'var(--bg-color)', 
+                      borderRadius: 'var(--radius-md)', 
+                      padding: '20px 0',
+                      marginTop: '10px'
+                    }}>
+                      <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-dark)' }}>
+                        취향 밸런스 분석
                       </div>
-                      <AxisMatchBar axes={matchData} max={5} />
-                    </div>
-                  )}
-                  {Object.keys(axisContribs).length > 0 && (
-                    <div>
-                      <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-dark)' }}>
-                        축별 추천 기여도
-                      </div>
-                      <AxisMatchBar
-                        axes={Object.entries(axisContribs)
-                          .sort((a, b) => b[1] - a[1])
-                          .slice(0, 5)
-                          .map(([n, c]) => ({ name: n, value: c, contribution: c }))}
-                        max={5}
-                        showContribution
+                      <RadarChartViz 
+                        data={axisScores} 
+                        axes={Array.from(new Set([
+                          ...topAxes, 
+                          ...Object.keys(axisContribs).sort((a, b) => axisContribs[b] - axisContribs[a]).slice(0, 6)
+                        ])).slice(0, 7)} 
                       />
+                      <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-gray)', marginTop: '4px' }}>
+                        식당의 특징 점수와 취향 기여도를 종합한 그래프입니다.
+                      </div>
                     </div>
                   )}
                   {evSentences && Object.keys(evSentences).length > 0 && (
@@ -243,15 +239,30 @@ const InferenceStep = ({ results, error, onRestart }) => {
                         축별 추천 근거 문장
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {Object.entries(evSentences).slice(0, 4).map(([ax, sents]) => (
-                          <div key={ax} style={{ fontSize: '12px' }}>
-                            <span style={{ fontWeight: 700, color: 'var(--primary)' }}>#{ax} 근거</span>{' '}
-                            <span style={{ color: 'var(--text-gray)', fontStyle: 'italic' }}>"{(sents || [])[0]}"</span>
-                          </div>
-                        ))}
+                        {Object.entries(evSentences).slice(0, 4).map(([ax, sents]) => {
+                          const raw = (sents || [])[0] || '';
+                          // 이모티콘/반복 정리 + 80~100자 자르기
+                          const cleaned = String(raw)
+                            .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+                            .replace(/[ㅋㅎ!?.~]{3,}/g, (s) => s.slice(0, 2))
+                            .trim();
+                          if (!cleaned) return null;
+                          const truncated = cleaned.length > 95 ? cleaned.slice(0, 95) + '…' : cleaned;
+                          return (
+                            <div key={ax} style={{ fontSize: '12px' }}>
+                              <span style={{ fontWeight: 700, color: 'var(--primary)' }}>#{axisLabel(ax, item)} 근거</span>{' '}
+                              <span style={{ color: 'var(--text-gray)', fontStyle: 'italic' }}>"{truncated}"</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
+
+                  {/* Evaluation Metrics inserted here */}
+                  <div style={{ marginTop: '10px' }}>
+                     <EvaluationCard />
+                  </div>
                 </div>
               )}
 

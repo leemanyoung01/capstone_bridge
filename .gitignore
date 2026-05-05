@@ -42,6 +42,7 @@ dist/
 build/
 *.egg-info/
 clip_cache/
+image_cache/
 .cache/
 
 # ── Project data outputs (재생성 가능) ───────────────

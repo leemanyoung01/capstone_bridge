@@ -70,7 +70,14 @@ function App() {
   const handleChipClick = (axis) => {
     setScores(prev => ({
       ...prev,
-      [axis]: (prev[axis] || 0) + 1
+      [axis]: (prev[axis] || 0) > 0 ? 0 : 1
+    }));
+  };
+
+  const handleScoreChange = (axis, value) => {
+    setScores(prev => ({
+      ...prev,
+      [axis]: value === '' ? '' : Math.max(0, Math.min(10, parseInt(value) || 0))
     }));
   };
 
@@ -111,10 +118,12 @@ function App() {
     setInferenceResults(null);
     setInferenceError(null);
     
-    const maxValue = Math.max(1, ...Object.values(scores));
+    const maxValue = 10;
     const userPrefs = {};
     Object.keys(scores).forEach(axis => {
-      userPrefs[axis] = Math.round((scores[axis] / maxValue) * 5 * 10) / 10;
+      if (scores[axis] > 0) {
+        userPrefs[axis] = Math.round((scores[axis] / maxValue) * 5 * 10) / 10;
+      }
     });
 
     const selectedImages = useImageFusion 
@@ -171,14 +180,15 @@ function App() {
       )}
       
       {step === 1 && config && (
-         <TasteStep 
+          <TasteStep 
             keyword={currentKeyword}
             config={config}
             scores={scores}
             onChipClick={handleChipClick}
+            onScoreChange={handleScoreChange}
             onReset={resetScores}
             onNext={loadGallery}
-         />
+          />
       )}
       
       {step === 2 && (

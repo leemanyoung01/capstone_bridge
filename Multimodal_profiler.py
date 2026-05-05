@@ -44,6 +44,7 @@ ALPHA_BASE = 0.7
 BETA_BASE  = 0.3
 STAND_DIR  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stand")
 CLIP_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "clip_cache")
+IMAGE_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "image_cache", "s3")
 
 _stand_cache = None
 
@@ -219,6 +220,71 @@ def analyze_clip(image_path, pos_prompts, neg_prompts, use_cache=True):
         return float(np.clip((mp - mn) / d, -1.0, 1.0)) if d > 0.01 else 0.0
     except Exception:
         return 0.0
+
+
+def _ensure_local_image(image_path: str, image_url: str, image_id: int) -> tuple[str, bool, str | None]:
+    """
+    CLIP 입력으로 사용할 로컬 파일 경로를 보장한다.
+
+    반환: (resolved_path, downloaded_from_url, error_reason)
+      - 실제 파일이 있는 경로를 resolved_path로 반환
+      - URL에서 새로 받았으면 downloaded_from_url=True
+      - 실패 시 resolved_path="" 와 error_reason 반환
+    """
+    if image_path and os.path.exists(image_path):
+        return image_path, False, None
+
+    if not image_url:
+        return "", False, "no_image_source"
+
+    try:
+        os.makedirs(IMAGE_CACHE_DIR, exist_ok=True)
+    except Exception:
+        pass
+
+    # 파일명: image_id 우선, 없으면 URL의 sha1
+    suffix = os.path.splitext(image_url.split("?")[0])[1].lower()
+    if suffix not in (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"):
+        suffix = ".jpg"
+    if image_id:
+        fname = f"{int(image_id)}{suffix}"
+    else:
+        h = hashlib.sha1(image_url.encode("utf-8")).hexdigest()
+        fname = f"{h}{suffix}"
+    cached = os.path.join(IMAGE_CACHE_DIR, fname)
+
+    if os.path.exists(cached) and os.path.getsize(cached) > 0:
+        return cached, False, None
+
+    try:
+        import requests
+        resp = requests.get(image_url, timeout=15, stream=True)
+        if resp.status_code != 200:
+            return "", False, f"image_download_failed_http_{resp.status_code}"
+        with open(cached, "wb") as f:
+            for chunk in resp.iter_content(chunk_size=64 * 1024):
+                if chunk:
+                    f.write(chunk)
+        if os.path.getsize(cached) <= 0:
+            try:
+                os.remove(cached)
+            except Exception:
+                pass
+            return "", False, "image_download_failed_empty"
+        return cached, True, None
+    except Exception as e:
+        return "", False, f"image_download_failed_{type(e).__name__}"
+
+
+def image_embedding_np(image_path: str, use_cache: bool = True):
+    """duplicate 검출용 — 이미지 임베딩을 numpy로 반환. 실패 시 None."""
+    try:
+        if not _load_clip():
+            return None
+        ie = _image_emb(image_path, use_cache=use_cache)
+        return ie.cpu().numpy().reshape(-1)
+    except Exception:
+        return None
 
 
 def clip_prompt_score(image_path: str, prompts: list[str], use_cache: bool = True) -> float:
@@ -441,178 +507,319 @@ def late_fusion_dynamic(text_vecs, img_vecs, dynamic=True):
 
 # ── 대표 이미지 선정 ──────────────────────────────────────────
 
+def _expand_images_per_review(df) -> list[dict]:
+    """
+    DataFrame의 각 row(리뷰)를 image_id 단위로 펼친다.
+    DB get_reviews_for_profiler는 'ImageURLs', 'ImagePaths'를 ' | ' join으로 내려줌.
+    같은 review_id의 i번째 path/url을 image_id 식별자로 사용 (review_id*100+i).
+    """
+    out = []
+    for _, row in df[df.get("HasPicture") == 1].iterrows():
+        rest = str(row.get("Restaurant", "") or "")
+        rid_raw = row.get("review_id") if "review_id" in row else None
+        try:
+            rid = int(rid_raw) if rid_raw is not None else 0
+        except Exception:
+            rid = 0
+        text = str(row.get("Review", "") or "")
+
+        urls_str = str(row.get("ImageURLs", "") or "")
+        paths_str = str(row.get("ImagePaths", "") or "")
+        urls = [u.strip() for u in urls_str.split(" | ") if u.strip() and u.strip() != "nan"]
+        paths = [p.strip() for p in paths_str.split(" | ") if p.strip() and p.strip() != "nan"]
+
+        n = max(len(urls), len(paths))
+        for i in range(n):
+            url = urls[i] if i < len(urls) else ""
+            path = paths[i] if i < len(paths) else ""
+            if not url and not path:
+                continue
+            out.append({
+                "image_id":     (rid * 100 + i) if rid else (len(out) + 1),
+                "review_id":    rid,
+                "restaurant":   rest,
+                "review_text":  text,
+                "image_url":    url,
+                "image_path":   path,
+                "source_order": i,
+            })
+    return out
+
+
 def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                         rules: dict, top_n: int = 6, use_cache: bool = True,
                         debug_dump: dict | None = None):
     """
-    대표 이미지 선정 v2:
-      - food_presence_score: 음식이 실제로 보이는 정도 (CLIP)
-      - non_food_penalty   : 매장 외관/메뉴판/영수증 등 비음식 패널티 (CLIP)
-      - axis_match_score   : 해당 축과의 매칭도 (CLIP, 기존 img_vecs)
-      - linked_text_score  : 연결 리뷰 evidence
+    대표 이미지 선정 v3 — image_id 단위 평가 + category/wrong_food/duplicate.
 
-    final = axis_match + w_food * food_presence - w_non * non_food_penalty + w_link * |linked_text|
-    threshold 미달 후보는 제외. 음식 후보가 0개면 해당 축 대표 이미지 생략.
+    각 image_id에 대해 keyword 단위 점수(food_presence/non_food/category/wrong_food)는 1회만 계산.
+    각 image × axis 조합으로 image_axis_clip_score 계산 후 최종 점수로 선정.
     """
-    img_reviews = df[df["HasPicture"] == 1].copy()
-    if len(img_reviews) == 0:
-        return []
-
     image_filtering = (rules or {}).get("image_filtering", {})
     food_prompts = image_filtering.get("food_presence_prompts") or []
     non_food_prompts = image_filtering.get("non_food_penalty_prompts") or []
+    cat_map = image_filtering.get("category_presence_prompts") or {}
+    wrong_map = image_filtering.get("wrong_food_prompts") or {}
+    cat_prompts = cat_map.get(keyword) or cat_map.get("_default") or []
+    wrong_prompts = wrong_map.get(keyword) or wrong_map.get("_default") or []
+
     th = image_filtering.get("thresholds", {}) or {}
-    min_food = float(th.get("min_food_presence", 0.18))
-    max_non = float(th.get("max_non_food_penalty", 0.22))
-    w_food = float(th.get("food_presence_weight", 0.4))
-    w_non = float(th.get("non_food_penalty_weight", 0.6))
-    w_link = float(th.get("linked_text_weight", 0.15))
+    min_food   = float(th.get("min_food_presence", 0.18))
+    max_non    = float(th.get("max_non_food_penalty", 0.22))
+    min_cat    = float(th.get("min_category_presence", 0.15))
+    max_wrong  = float(th.get("max_wrong_food_penalty", 0.25))
+    w_food     = float(th.get("food_presence_weight", 0.0))
+    w_non      = float(th.get("non_food_penalty_weight", 0.6))
+    w_cat      = float(th.get("category_bonus_weight", 0.30))
+    w_wrong    = float(th.get("wrong_food_weight", 0.70))
+    w_link     = float(th.get("linked_text_weight", 0.15))
+    dup_thresh = float(th.get("duplicate_threshold", 0.92))
+    w_dup      = float(th.get("duplicate_penalty_weight", 0.30))
+    max_per_review = int(th.get("max_per_review", 2))
+    max_per_rest_axis = int(th.get("max_per_restaurant_axis", 1))
 
-    def get_url_and_path(row) -> tuple[str, str]:
-        """대표이미지에 노출할 url과 CLIP 처리할 local path를 분리해서 반환."""
-        url = ""
-        for col in ["ImageURLs", "Image_Links", "review_images", "image_url"]:
-            v = str(row.get(col, "") or "")
-            if v and v not in ("", "nan", "[]"):
-                url = v.split(" | ")[0].split("|")[0].strip().strip("[]'\"")
-                break
-        path = ""
-        v = str(row.get("ImagePaths", "") or "")
-        if v and v not in ("", "nan"):
-            for p in v.split(" | "):
-                p = p.strip()
-                if p and os.path.exists(p):
-                    path = p
-                    break
-        return url, path
+    # image_id 단위로 펼치기
+    images = _expand_images_per_review(df)
+    if not images:
+        return []
 
-    # ── 후보 풀 빌드 (이미지별 1회만 food_presence/non_food 계산) ──
-    image_meta: dict[str, dict] = {}
-    debug_records = []
+    # ── (1) image_id 단위로 keyword-level CLIP 점수 1회 캐시 ──
+    print(f"  🔍 후보 이미지 {len(images)}장 (image_id 단위 평가)")
+    img_keyword_meta: dict[int, dict] = {}
+    img_embeddings: dict[int, "np.ndarray"] = {}
+    download_count = 0
 
-    def _ensure_meta(local_path: str) -> dict:
-        if local_path in image_meta:
-            return image_meta[local_path]
-        food_score = clip_prompt_score(local_path, food_prompts, use_cache=use_cache) if food_prompts else 0.0
-        non_food = clip_prompt_score(local_path, non_food_prompts, use_cache=use_cache) if non_food_prompts else 0.0
-        image_meta[local_path] = {
-            "food_presence_score": float(round(food_score, 4)),
-            "non_food_penalty":    float(round(non_food, 4)),
-            "passes_threshold":    bool(food_score >= min_food and non_food <= max_non),
+    for im in images:
+        # 로컬 파일 보장 — image_path → 없으면 image_url에서 다운로드
+        resolved_path, downloaded, err = _ensure_local_image(
+            im.get("image_path", ""), im.get("image_url", ""), im.get("image_id", 0)
+        )
+        im["resolved_image_path"] = resolved_path
+        im["downloaded_from_url"] = downloaded
+        if downloaded:
+            download_count += 1
+
+        if not resolved_path:
+            img_keyword_meta[im["image_id"]] = {
+                "food": 0.0, "non_food": 0.0, "category": 0.0, "wrong": 0.0,
+                "ok": False, "excluded_reason": err or "no_image_source",
+            }
+            continue
+
+        food = clip_prompt_score(resolved_path, food_prompts, use_cache=use_cache) if food_prompts else 0.0
+        non_food = clip_prompt_score(resolved_path, non_food_prompts, use_cache=use_cache) if non_food_prompts else 0.0
+        category = clip_prompt_score(resolved_path, cat_prompts, use_cache=use_cache) if cat_prompts else 1.0
+        wrong = clip_prompt_score(resolved_path, wrong_prompts, use_cache=use_cache) if wrong_prompts else 0.0
+
+        ok, excluded = True, None
+        if food < min_food:
+            ok, excluded = False, "food_presence_too_low"
+        elif non_food > max_non:
+            ok, excluded = False, "non_food_image"
+        elif category < min_cat:
+            ok, excluded = False, "wrong_category_for_keyword"
+        elif wrong > max_wrong:
+            ok, excluded = False, "shows_wrong_food"
+
+        img_keyword_meta[im["image_id"]] = {
+            "food": food, "non_food": non_food, "category": category, "wrong": wrong,
+            "ok": ok, "excluded_reason": excluded,
         }
-        return image_meta[local_path]
+        if ok:
+            emb = image_embedding_np(resolved_path, use_cache=use_cache)
+            if emb is not None:
+                img_embeddings[im["image_id"]] = emb
 
+    if download_count:
+        print(f"  ⬇️  S3/URL 다운로드: {download_count}장 (cache={IMAGE_CACHE_DIR})")
+
+    # ── (2) image × axis 평가 ──
     candidates_per_axis: dict[str, list[dict]] = defaultdict(list)
-    skipped_non_food = 0
+    all_records: list[dict] = []   # debug 풀 기록
 
-    for ax_name, ax_info in axes_config.items():
-        if ax_info.get("is_meta"):
-            continue
-        pos_kws = ax_info.get("positive_keywords", ax_info.get("positive", []))
-        if not pos_kws:
-            continue
+    taste_axes_only = [(n, info) for n, info in axes_config.items() if not info.get("is_meta")]
+    print(f"  ⚙️  축 {len(taste_axes_only)}개 × 이미지 {sum(1 for m in img_keyword_meta.values() if m['ok'])}장 평가")
 
-        for _, row in img_reviews.iterrows():
-            rt = str(row.get("Review", "") or "")
-            rest = str(row.get("Restaurant", "") or "")
-            url, local = get_url_and_path(row)
-            if not url or not rest:
-                continue
-            mc = sum(1 for kw in pos_kws if kw in rt)
-            if mc == 0:
-                continue
+    for ax_name, ax_info in taste_axes_only:
+        ax_pos = ax_info.get("clip_prompt_pos") or []
+        ax_neg = ax_info.get("clip_prompt_neg") or []
+        ax_label = ax_info.get("label") or ax_name
 
-            # 음식 존재 / 비음식 패널티 (로컬 파일이 있을 때만 CLIP 평가)
-            if local:
-                meta = _ensure_meta(local)
-                food = meta["food_presence_score"]
-                non_food = meta["non_food_penalty"]
-                passes = meta["passes_threshold"]
-            else:
-                food, non_food, passes = 0.0, 0.0, False
-
-            if not passes:
-                skipped_non_food += 1
-                if debug_dump is not None and len(debug_records) < 50:
-                    debug_records.append({
-                        "axis": ax_name, "restaurant": rest, "image_src": url,
-                        "food_presence_score": food, "non_food_penalty": non_food,
-                        "result": "skipped_threshold",
+        for im in images:
+            meta = img_keyword_meta[im["image_id"]]
+            if not meta["ok"]:
+                # 컷오프된 이미지도 1번만 디버그에 기록 (axis 무관)
+                if not any(r["image_id"] == im["image_id"] and r["axis"] == "_excluded_"
+                           for r in all_records):
+                    all_records.append({
+                        "image_id": im["image_id"], "review_id": im["review_id"],
+                        "restaurant_name": im["restaurant"], "source_order": im["source_order"],
+                        "axis": "_excluded_", "axis_label": "(컷오프)",
+                        "image_url": im["image_url"],
+                        "original_image_path": im.get("image_path", ""),
+                        "resolved_image_path": im.get("resolved_image_path", ""),
+                        "downloaded_from_url": bool(im.get("downloaded_from_url", False)),
+                        "food_presence_score": round(meta["food"], 4),
+                        "category_presence_score": round(meta["category"], 4),
+                        "image_axis_clip_score": 0.0,
+                        "axis_match_score": 0.0,
+                        "linked_review_axis_score": 0.0,
+                        "non_food_penalty": round(meta["non_food"], 4),
+                        "wrong_food_penalty": round(meta["wrong"], 4),
+                        "duplicate_penalty": 0.0,
+                        "final_score": None,
+                        "selected": False,
+                        "excluded_reason": meta["excluded_reason"],
                     })
                 continue
 
-            axis_match = float(img_vecs.get(rest, {}).get(ax_name, 0.0))
-            linked = rest_linked.get(rest, {}).get(ax_name, [])
-            linked_avg = float(np.mean(linked)) if linked else 0.0
+            # 이미지×축 CLIP — resolved_image_path 사용
+            local = im.get("resolved_image_path", "")
+            if ax_pos or ax_neg:
+                axis_clip = analyze_clip(local, ax_pos[:3], ax_neg[:3], use_cache=use_cache)
+            else:
+                axis_clip = 0.0
+
+            # linked review (해당 리뷰 텍스트만)
+            linked_dict = _compute_linked_text(im["review_text"], axes_config, rules)
+            linked_score = float(linked_dict.get(ax_name, 0.0))
 
             final_score = (
-                axis_match
-                + w_food * food
-                - w_non  * non_food
-                + w_link * abs(linked_avg)
+                axis_clip
+                + w_cat   * meta["category"]
+                + w_link  * abs(linked_score)
+                - w_non   * meta["non_food"]
+                - w_wrong * meta["wrong"]
             )
 
             cand = {
-                "image_src":           url,
-                "axis":                ax_name,
-                "label":               ax_name,
-                "restaurant":          rest,
-                "score":               round(float(final_score), 4),
-                "review_snippet":      rt[:120],
-                "_axis_match_score":   round(axis_match, 4),
-                "_food_presence_score": round(food, 4),
-                "_non_food_penalty":   round(non_food, 4),
-                "_linked_text_score":  round(linked_avg, 4),
-                "reason": (f"axis_match={axis_match:+.2f} "
-                           f"food={food:.2f} non_food={non_food:.2f} "
-                           f"linked={linked_avg:+.2f}"),
+                "image_id":      im["image_id"],
+                "review_id":     im["review_id"],
+                "restaurant":    im["restaurant"],
+                "source_order":  im["source_order"],
+                "image_src":     im["image_url"],
+                "image_path":    im.get("image_path", ""),
+                "resolved_image_path": local,
+                "downloaded_from_url": bool(im.get("downloaded_from_url", False)),
+                "axis":          ax_name,
+                "label":         ax_label,
+                "score":         round(float(final_score), 4),
+                "review_snippet": (im["review_text"] or "")[:120],
+                "_axis_clip":    round(axis_clip, 4),
+                "_category":     round(meta["category"], 4),
+                "_food":         round(meta["food"], 4),
+                "_non_food":     round(meta["non_food"], 4),
+                "_wrong":        round(meta["wrong"], 4),
+                "_linked":       round(linked_score, 4),
             }
             candidates_per_axis[ax_name].append(cand)
-            if debug_dump is not None and len(debug_records) < 50:
-                debug_records.append({**cand, "result": "candidate"})
 
-    # ── 축별 1장 선정, (식당, 축) 중복 방지 ──
+            all_records.append({
+                "image_id": im["image_id"], "review_id": im["review_id"],
+                "restaurant_name": im["restaurant"], "source_order": im["source_order"],
+                "axis": ax_name, "axis_label": ax_label,
+                "image_url": im["image_url"],
+                "original_image_path": im.get("image_path", ""),
+                "resolved_image_path": local,
+                "downloaded_from_url": bool(im.get("downloaded_from_url", False)),
+                "food_presence_score": round(meta["food"], 4),
+                "category_presence_score": round(meta["category"], 4),
+                "image_axis_clip_score": round(axis_clip, 4),
+                "axis_match_score": round(axis_clip, 4),
+                "linked_review_axis_score": round(linked_score, 4),
+                "non_food_penalty": round(meta["non_food"], 4),
+                "wrong_food_penalty": round(meta["wrong"], 4),
+                "duplicate_penalty": 0.0,
+                "final_score": round(float(final_score), 4),
+                "selected": False,
+                "excluded_reason": None,
+            })
+
+    # ── (3) 같은 review_id 내 max_per_review 제한 ──
+    for ax_name, cands in candidates_per_axis.items():
+        cands.sort(key=lambda c: -c["score"])
+        per_review_count: dict[int, int] = defaultdict(int)
+        kept = []
+        for c in cands:
+            rid = c["review_id"] or 0
+            if rid and per_review_count[rid] >= max_per_review:
+                continue
+            per_review_count[rid] += 1
+            kept.append(c)
+        candidates_per_axis[ax_name] = kept
+
+    # ── (4) 축별 선정: 같은 (restaurant, axis) 1장, duplicate penalty ──
     rep: list[dict] = []
     seen_pairs: set[tuple[str, str]] = set()
-    seen_image_src: set[str] = set()
+    seen_image_ids: set[int] = set()
+    selected_embs: list["np.ndarray"] = []
 
-    # 점수 합 큰 축부터 채움 (다양한 식당이 골고루 들어가도록)
     axis_order = sorted(candidates_per_axis.keys(),
                         key=lambda a: -sum(c["score"] for c in candidates_per_axis[a][:3]))
 
     for ax_name in axis_order:
-        cands = sorted(candidates_per_axis[ax_name], key=lambda x: -x["score"])
+        cands = candidates_per_axis[ax_name]
         for cand in cands:
             pair = (cand["restaurant"], cand["axis"])
             if pair in seen_pairs:
                 continue
-            if cand["image_src"] in seen_image_src:
+            if cand["image_id"] in seen_image_ids:
                 continue
+
+            # duplicate_penalty 적용
+            dup_pen = 0.0
+            emb = img_embeddings.get(cand["image_id"])
+            if emb is not None and selected_embs:
+                sims = [float(np.dot(emb, e)) for e in selected_embs]
+                if sims and max(sims) >= dup_thresh:
+                    dup_pen = w_dup
+                    cand["score"] = round(cand["score"] - dup_pen, 4)
+                    # 갱신된 점수로 재정렬 안 하므로 그대로 통과
             seen_pairs.add(pair)
-            seen_image_src.add(cand["image_src"])
+            seen_image_ids.add(cand["image_id"])
+            cand["_duplicate_penalty"] = dup_pen
+            cand["clip_vector"] = img_vecs.get(cand["restaurant"], {})
+            cand["reason"] = (f"axis={cand['_axis_clip']:+.2f} cat={cand['_category']:.2f} "
+                              f"non_food={cand['_non_food']:.2f} wrong={cand['_wrong']:.2f} "
+                              f"linked={cand['_linked']:+.2f} dup={dup_pen:.2f}")
             rep.append(cand)
+            if emb is not None:
+                selected_embs.append(emb)
+
+            # debug_records 동기화
+            for r in all_records:
+                if r["image_id"] == cand["image_id"] and r["axis"] == ax_name:
+                    r["selected"] = True
+                    r["duplicate_penalty"] = dup_pen
+                    r["final_score"] = cand["score"]
+                    break
             break
         if len(rep) >= top_n:
             break
 
     rep.sort(key=lambda x: -x["score"])
-    for item in rep:
-        item["clip_vector"] = img_vecs.get(item["restaurant"], {})
 
-    print(f"  🖼️  대표 이미지 {len(rep)}장  (threshold 컷오프 {skipped_non_food}건)")
+    cutoff_count = sum(1 for r in all_records if r.get("excluded_reason"))
+    print(f"  🖼️  대표 이미지 {len(rep)}장  (컷오프 {cutoff_count}건)")
     if not rep:
-        print(f"  ⚠️ 음식이 보이는 후보가 부족합니다. 매장 외관/메뉴판은 의도적으로 제외됨.")
+        print(f"  ⚠️ 현재 keyword({keyword})로 음식이 보이는 후보가 부족 → 대표 이미지 생략")
 
     safe = keyword.replace(" ", "_")
+    _drop_keys = {"image_path", "resolved_image_path", "downloaded_from_url"}
+    rep_for_json = [{k: v for k, v in r.items() if k not in _drop_keys} for r in rep]
     with open(f"{safe}_representative_images.json", "w", encoding="utf-8") as f:
-        json.dump({"keyword": keyword, "images": rep}, f, ensure_ascii=False, indent=2)
+        json.dump({"keyword": keyword, "images": rep_for_json}, f, ensure_ascii=False, indent=2)
 
     if debug_dump is not None:
-        debug_dump["rep_image_records"] = debug_records
-        debug_dump["rep_image_threshold"] = {
+        debug_dump["image_axis_evaluations"] = all_records
+        debug_dump["image_filtering_thresholds"] = {
             "min_food_presence": min_food, "max_non_food_penalty": max_non,
-            "food_presence_weight": w_food, "non_food_penalty_weight": w_non,
-            "linked_text_weight": w_link,
+            "min_category_presence": min_cat, "max_wrong_food_penalty": max_wrong,
+            "category_bonus_weight": w_cat, "wrong_food_weight": w_wrong,
+            "non_food_penalty_weight": w_non, "linked_text_weight": w_link,
+            "duplicate_threshold": dup_thresh, "duplicate_penalty_weight": w_dup,
+            "max_per_review": max_per_review,
+            "max_per_restaurant_axis": max_per_rest_axis,
         }
 
     return rep
@@ -621,7 +828,11 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
 # ── DB 저장 ───────────────────────────────────────────────────
 
 def save_to_db(keyword, fused_vecs, text_vecs, img_vecs, rep_images,
-               weights_used, mode):
+               weights_used, mode, update_rep_images: bool = True):
+    """
+    update_rep_images=False면 representative_images 테이블은 건드리지 않는다.
+    (새 후보가 0장일 때 기존 대표 이미지를 유지하기 위함)
+    """
     with get_conn() as conn:
         for rest_name, fv in fused_vecs.items():
             rest_id = upsert_restaurant(conn, {"name": rest_name, "source": "multimodal"})
@@ -634,7 +845,10 @@ def save_to_db(keyword, fused_vecs, text_vecs, img_vecs, rep_images,
                 "fusion_weights":   weights_used.get(rest_name, {}),
                 "image_mode":       mode,
             })
-        upsert_representative_images(conn, keyword, rep_images)
+        if update_rep_images:
+            upsert_representative_images(conn, keyword, rep_images)
+        else:
+            print("  ↪️  representative_images 갱신 skip (새 후보 0장 — 기존 유지)")
     print(f"  ✅ DB 저장: {len(fused_vecs)}개 식당 | 대표이미지 {len(rep_images)}장")
 
 
@@ -722,19 +936,26 @@ def main():
     print(f"  {len(fused_vecs)}개 식당 (이미지보정: {sum(1 for r in fused_vecs if r in img_vecs and img_vecs[r])}개)")
 
     print(f"\n🖼️  대표 이미지...")
-    if args.purge_rep:
-        try:
-            with get_conn() as conn:
-                deleted = delete_representative_images(conn, keyword)
-            print(f"  🧹 기존 대표 이미지 {deleted}개 삭제됨 (--purge-rep)")
-        except Exception as e:
-            print(f"  ⚠️ purge 실패: {type(e).__name__}: {e}")
     rep = extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                              rules=rules, top_n=6, use_cache=use_cache,
                              debug_dump=debug_dump)
 
+    # --purge-rep는 새 후보가 1장 이상일 때만 적용 (0장이면 기존 유지)
+    if args.purge_rep:
+        if rep:
+            try:
+                with get_conn() as conn:
+                    deleted = delete_representative_images(conn, keyword)
+                print(f"  🧹 기존 대표 이미지 {deleted}개 삭제됨 (--purge-rep, 새 후보 {len(rep)}장)")
+            except Exception as e:
+                print(f"  ⚠️ purge 실패: {type(e).__name__}: {e}")
+        else:
+            print(f"  ⚠️ 새 대표 이미지 후보 0장 → 기존 representative_images 유지 (--purge-rep 무시)")
+
     print(f"\n💾 DB 저장...")
-    save_to_db(keyword, fused_vecs, text_vecs, img_vecs, rep, weights_used, args.mode)
+    # 새 rep이 0장이면 representative_images 갱신 자체를 skip (기존 유지)
+    save_to_db(keyword, fused_vecs, text_vecs, img_vecs, rep, weights_used, args.mode,
+               update_rep_images=bool(rep))
 
     # JSON 백업
     with open(f"{safe}_multimodal_vectors.json", "w", encoding="utf-8") as f:

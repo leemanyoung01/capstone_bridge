@@ -58,7 +58,9 @@ const GalleryStep = ({ images, selectedImageIdx, onImageToggle, onPrev, onSkip, 
                   }}>✓</div>
                 )}
                 <div style={{ padding: '12px' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>{img.label || img.axis || '대표 이미지'}</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>
+                    {img.axis_label || img.label || img.axis || '대표 이미지'}
+                  </div>
                   {img.restaurant && <div style={{ fontSize: '12px', color: 'var(--text-gray)' }}>{img.restaurant}</div>}
                 </div>
               </motion.div>

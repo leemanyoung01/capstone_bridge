@@ -41,26 +41,26 @@
       "clip_prompt_neg": ["food without sweetness"]
     },
     "매운맛": {
-      "positive": ["매운", "매콤", "얼큰", "칼칼", "화끈", "불닭"],
-      "negative": ["안 매", "순한", "맵지 않"],
+      "positive": ["매운", "매콤", "얼큰", "칼칼", "화끈", "불닭", "맵싹", "매운 소스", "맵당", "매워요"],
+      "negative": ["안 매", "순한", "맵지 않", "매운맛 부족", "안매워", "맵기만 함"],
       "clip_prompt_pos": ["very spicy red food", "food with red chili peppers"],
       "clip_prompt_neg": ["mild non-spicy food"]
     },
     "감칠맛": {
-      "positive": ["진한 맛", "진국", "깊은 맛", "구수", "향", "향긋", "풍미", "감칠", "국물맛", "깊은맛"],
-      "negative": [],
+      "positive": ["진한 맛", "진국", "깊은 맛", "구수", "향", "향긋", "풍미", "감칠", "국물맛", "깊은맛", "감칠맛", "감칠난다", "감칠쓰", "맛이 진"],
+      "negative": ["밍밍", "감칠맛 없", "심심한 맛", "맛이 약"],
       "clip_prompt_pos": ["rich deep umami flavor food"],
       "clip_prompt_neg": ["bland tasteless food"]
     },
     "고소함": {
-      "positive": ["견과", "버터맛", "버터", "버터향", "고소", "꼬소", "고솝", "참기름", "너티", "넛티"],
-      "negative": [],
+      "positive": ["견과", "버터맛", "버터", "버터향", "고소", "꼬소", "고솝", "참기름", "너티", "넛티", "참기름향", "견과류향", "풍미"],
+      "negative": ["풍미 없", "고소함 부족", "밍밍", "고소한 맛 없"],
       "clip_prompt_pos": ["savory nutty flavored food"],
       "clip_prompt_neg": ["food without savory aroma"]
     },
     "담백함": {
-      "positive": ["담백", "깔끔", "깨끗", "무난", "슴슴"],
-      "negative": ["기름진", "느끼"],
+      "positive": ["담백", "깔끔", "깨끗", "무난", "슴슴", "느끼하지 않", "부담 없", "산뜻"],
+      "negative": ["기름진", "느끼", "헤비", "느끼함"],
       "clip_prompt_pos": ["clean mild tasting food"],
       "clip_prompt_neg": ["greasy heavy food"]
     },
@@ -77,8 +77,8 @@
       "clip_prompt_neg": ["dry tough food"]
     },
     "쫄깃함": {
-      "positive": ["쫄깃", "탱글", "쫀득", "찰떡", "탱탱"],
-      "negative": ["퍼진", "딱딱", "무른"],
+      "positive": ["쫄깃", "탱글", "쫀득", "찰떡", "탱탱", "찰진", "차진"],
+      "negative": ["퍼진", "딱딱", "무른", "물러"],
       "clip_prompt_pos": ["chewy elastic texture food"],
       "clip_prompt_neg": ["mushy overcooked food"]
     },
