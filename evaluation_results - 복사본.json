@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "k": 5,
+  "queries": 4,
+  "query_count": 4,
+  "failed_queries": 0,
+  "label_type": "pseudo-label",
+  "description": "모델 벡터 기반 시연용 평가입니다. 실제 성능 평가는 사람이 직접 라벨링한 relevance 데이터가 필요합니다.",
+  "note": "모델 벡터 기반 시연용 평가입니다. 실제 성능 평가는 사람이 직접 라벨링한 relevance 데이터가 필요합니다.",
+  "metrics": {
+    "precision_at_k": 0.400,
+    "recall_at_k": 1.000,
+    "f1_at_k": 0.571,
+    "ndcg_at_k": 0.903,
+    "precision@k": 0.400,
+    "recall@k": 1.000,
+    "f1@k": 0.571,
+    "ndcg@k": 0.903
+  },
+  "per_query_records": []
+}

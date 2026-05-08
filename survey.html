@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>맛 취향 찾기</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;800;900&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f3f3f5;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 24px auto 60px;
+      padding: 0 14px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 6px;
+      color: #222;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: #888;
+    }
+
+    .steps-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .step-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: #e7e7eb;
+      color: #999;
+      transition: 0.2s;
+    }
+
+    .step-pill.active {
+      background: #4a5ae0;
+      color: #fff;
+    }
+
+    .step-pill.done {
+      background: #cfd5ff;
+      color: #4a5ae0;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.05);
+      padding: 18px 18px 16px;
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: #222;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-row input {
+      flex: 1;
+      min-width: 220px;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+
+    .search-row input:focus {
+      border-color: #4a5ae0;
+      box-shadow: 0 0 0 3px rgba(74,90,224,0.08);
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: #4a5ae0;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #efeff4;
+      color: #444;
+    }
+
+    .btn-ghost {
+      background: #f8f8fb;
+      color: #666;
+      border: 1px solid #ececf1;
+    }
+
+    .keyword-chip-wrap {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .keyword-chip {
+      display: inline-block;
+      margin-left: 4px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eef1ff;
+      color: #4a5ae0;
+      font-weight: 800;
+    }
+
+    .cloud-area {
+      position: relative;
+      width: 100%;
+      min-height: 430px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+      border: 1px solid #f0f0f0;
+    }
+
+    .word {
+      position: absolute;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      font-weight: 800;
+      line-height: 1.15;
+      transition: opacity 0.12s, transform 0.12s, filter 0.12s;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+    }
+
+    .word:hover {
+      opacity: 0.6;
+      transform: scale(1.08) rotate(var(--rot, 0deg));
+      filter: saturate(1.05);
+    }
+
+    .word:active {
+      opacity: 0.35;
+      transform: scale(0.95) rotate(var(--rot, 0deg));
+    }
+
+    .word small {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      opacity: 0.64;
+      text-align: center;
+      margin-top: 2px;
+    }
+
+    .float-plus {
+      position: absolute;
+      pointer-events: none;
+      font-size: 13px;
+      font-weight: 900;
+      color: #ff4b4b;
+      animation: floatUp 0.6s ease forwards;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-26px) scale(0.55); }
+    }
+
+    .legend-bar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-top: 12px;
+      margin-top: 12px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .leg {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #888;
+      font-weight: 700;
+    }
+
+    .leg-box {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .bars {
+      margin-top: 10px;
+    }
+
+    .group-label {
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #666;
+    }
+
+    .axis-row {
+      display: grid;
+      grid-template-columns: 92px 1fr 34px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .axis-name {
+      font-size: 12px;
+      font-weight: 800;
+      word-break: keep-all;
+    }
+
+    .axis-track {
+      width: 100%;
+      height: 10px;
+      background: #f1f1f5;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .axis-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.15s ease;
+    }
+
+    .axis-num {
+      text-align: right;
+      font-size: 12px;
+      font-weight: 900;
+      color: #bbb;
+    }
+
+    .step-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    #step2-area, #step3-area {
+      display: none;
+    }
+
+    #step2-area.visible,
+    #step3-area.visible {
+      display: block;
+    }
+
+    .img-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .img-card {
+      position: relative;
+      border: 2px solid transparent;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fafafa;
+      cursor: pointer;
+      transition: 0.15s;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    }
+
+    .img-card:hover {
+      transform: translateY(-1px);
+    }
+
+    .img-card.selected {
+      border-color: #4a5ae0;
+      box-shadow: 0 0 0 4px rgba(74,90,224,0.12);
+    }
+
+    .img-card img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      display: block;
+      background: #eee;
+    }
+
+    .img-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #f0f0f0;
+      font-size: 42px;
+      color: #999;
+    }
+
+    .img-card-info {
+      padding: 10px 10px 11px;
+    }
+
+    .img-card-label {
+      font-size: 13px;
+      font-weight: 900;
+      color: #222;
+      margin-bottom: 2px;
+    }
+
+    .img-card-axis {
+      font-size: 11px;
+      color: #4a5ae0;
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .img-card-rest {
+      font-size: 11px;
+      color: #777;
+      line-height: 1.4;
+    }
+
+    .img-meta {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #777;
+    }
+
+    .loading {
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+      padding: 40px 0;
+    }
+
+    .error-box {
+      text-align: center;
+      color: #d94452;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 40px 0;
+    }
+
+    #result-area {
+      display: none;
+    }
+
+    .rec-card {
+      border: 1px solid #efeff4;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      background: #fff;
+    }
+
+    .rec-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .rec-name {
+      font-size: 17px;
+      font-weight: 900;
+      color: #222;
+    }
+
+    .rec-score {
+      font-size: 14px;
+      font-weight: 900;
+      color: #4a5ae0;
+      white-space: nowrap;
+    }
+
+    .rec-sub {
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 10px;
+    }
+
+    .rec-evidence {
+      background: #f8f8fc;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #555;
+      line-height: 1.55;
+      margin-bottom: 10px;
+    }
+
+    .reason-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .reason-chip {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef1ff;
+      color: #4a5ae0;
+    }
+
+    .muted {
+      color: #888;
+      font-size: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .page { margin-top: 16px; }
+      .cloud-area { min-height: 390px; }
+      .axis-row { grid-template-columns: 78px 1fr 30px; }
+      .rec-top { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <h1 id="page-title">🍽️ 맛 취향 찾기</h1>
+      <p id="page-subtitle">음식을 검색하고 끌리는 단어를 눌러 취향을 쌓아보세요.</p>
+    </div>
+
+    <div class="steps-bar">
+      <div id="step1-pill" class="step-pill active">① 맛 키워드</div>
+      <div id="step2-pill" class="step-pill">② 음식 사진</div>
+      <div id="step3-pill" class="step-pill">③ 추천 결과</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">음식 검색</div>
+      <div class="search-row">
+        <input id="keyword-input" list="keyword-list" type="text" placeholder="예: 아구찜, 스시, 삼겹살" />
+        <datalist id="keyword-list"></datalist>
+        <button class="btn btn-primary" type="button" onclick="submitKeyword()">불러오기</button>
+      </div>
+      <div class="keyword-chip-wrap">
+        현재 음식: <span class="keyword-chip" id="keyword-chip">-</span>
+      </div>
+    </div>
+
+    <div id="step1-area" class="card">
+      <div class="card-title">클릭해서 취향 쌓기</div>
+      <div id="cloud" class="cloud-area"></div>
+      <div id="legend" class="legend-bar"></div>
+
+      <div style="margin-top:18px;" class="card-title">내 취향 프로필</div>
+      <div class="muted" style="margin-bottom:10px;">막대가 클수록 더 강하게 끌리는 축입니다.</div>
+      <div id="bars" class="bars"></div>
+
+      <div class="step-actions">
+        <button class="btn btn-ghost" type="button" onclick="resetAll()">초기화</button>
+        <button class="btn btn-primary" type="button" onclick="goToImageStep()">다음: 사진 선택 →</button>
+      </div>
+    </div>
+
+    <div id="step2-area" class="card">
+      <div class="card-title" id="image-title">📸 대표 음식 사진 고르기</div>
+      <div class="muted">마음에 드는 사진을 고르면 이미지 정보도 추천에 반영합니다.</div>
+      <div class="img-meta">선택한 이미지 수: <strong id="img-count">0</strong></div>
+      <div id="img-grid" class="img-grid"></div>
+
+      <div class="step-actions">
+        <button class="btn btn-secondary" type="button" onclick="goBackToCloud()">← 이전</button>
+        <button class="btn btn-ghost" type="button" onclick="skipImages()">이미지 없이 추천</button>
+        <button class="btn btn-primary" type="button" onclick="getRecommendation()">추천 받기</button>
+      </div>
+    </div>
+
+    <div id="step3-area" class="card">
+      <div class="card-title">추천 결과</div>
+      <div id="result-area"></div>
+      <div class="step-actions">
+        <button class="btn btn-secondary" type="button" onclick="goBackToCloud()">← 다시 고르기</button>
+        <button class="btn btn-ghost" type="button" onclick="resetAndRestart()">처음부터</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let CURRENT_KEYWORD = '';
+    let AVAILABLE_KEYWORDS = [];
+
+    const GROUP_COLORS = {
+      '공통': '#7b68c8',
+      '맛': '#4a5ae0',
+      '식감': '#e8a838',
+      '기타': '#d94452',
+      '메타': '#5e6ad2'
+    };
+    // 음식 특화 그룹 색상 (food_specific axes용)
+    const SPECIFIC_COLORS = [
+      '#16a34a', '#0d9488', '#0891b2', '#7c3aed',
+      '#c026d3', '#e11d48', '#ea580c', '#ca8a04'
+    ];
+    let _specificIdx = 0;
+    const GROUP_PRIORITY = ['공통', '맛', '식감', '기타', '메타'];
+
+    let CONFIG = null;
+    let AXES = [];
+    let GROUPS_ORDER = [];
+    let ALL_AXES = [];
+    let AXIS_META = {};
+    let AXIS_COLORS = {};
+    let scores = {};
+    let repImages = [];
+    let selectedImageIdx = [];
+    let useImageFusion = false;
+
+    function getGroupColor(group) {
+      if (GROUP_COLORS[group]) return GROUP_COLORS[group];
+      // 음식 특화 그룹 → 초록 계열로 자동 배정
+      if (group && group.endsWith('특화')) {
+        if (!GROUP_COLORS[group]) {
+          GROUP_COLORS[group] = SPECIFIC_COLORS[_specificIdx % SPECIFIC_COLORS.length];
+          _specificIdx++;
+        }
+        return GROUP_COLORS[group];
+      }
+      return '#5f6c7b';
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function normalizeKeywordInput(value) {
+      return String(value || '').trim();
+    }
+
+    function groupOrderFromConfig(groups) {
+      const ordered = [];
+      const used = new Set();
+      GROUP_PRIORITY.forEach(label => {
+        if (groups[label] && groups[label].length) {
+          ordered.push({ label, axes: groups[label] });
+          used.add(label);
+        }
+      });
+      Object.keys(groups || {}).forEach(label => {
+        if (!used.has(label)) ordered.push({ label, axes: groups[label] });
+      });
+      return ordered;
+    }
+
+    function buildWordsFromConfig(axesConfig, groupsOrder) {
+      const words = [];
+      groupsOrder.forEach(group => {
+        group.axes.forEach(axis => {
+          const meta = axesConfig[axis] || {};
+          const src = meta.positive_keywords || meta.keywords || [];
+          const clean = [...new Set((src || []).filter(Boolean))].slice(0, 4);
+          const finalWords = clean.length ? clean : [axis];
+          finalWords.forEach(word => {
+            words.push({
+              text: word,
+              axis,
+              group: group.label,
+              color: getGroupColor(group.label)
+            });
+          });
+        });
+      });
+      return words;
+    }
+
+    function initializeScores() {
+      scores = {};
+      ALL_AXES.forEach(axis => { scores[axis] = 0; });
+    }
+
+    function updatePageText() {
+      const titleKeyword = CURRENT_KEYWORD || '음식';
+      document.getElementById('page-title').textContent = `🍽️ ${titleKeyword} 맛 취향 찾기`;
+      document.getElementById('page-subtitle').textContent = `${titleKeyword}에서 끌리는 단어를 눌러 취향을 쌓아보세요.`;
+      document.getElementById('image-title').textContent = `📸 끌리는 ${titleKeyword} 사진을 골라주세요`;
+      document.getElementById('keyword-chip').textContent = titleKeyword;
+    }
+
+    function renderLegend() {
+      const legend = document.getElementById('legend');
+      legend.innerHTML = '';
+      GROUPS_ORDER.forEach(group => {
+        const item = document.createElement('div');
+        item.className = 'leg';
+        item.innerHTML = `<div class="leg-box" style="background:${getGroupColor(group.label)}"></div>${escapeHtml(group.label)}`;
+        legend.appendChild(item);
+      });
+    }
+
+    function makeCloudPlacements(words) {
+      const cols = 5;
+      const rows = Math.max(3, Math.ceil(words.length / cols));
+      const xStep = 100 / (cols + 1);
+      const yStep = 100 / (rows + 1);
+
+      return words.map((word, idx) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const jitterX = ((idx * 17) % 13) - 6;
+        const jitterY = ((idx * 19) % 13) - 6;
+        const sizes = [18, 24, 28, 22, 20, 26];
+        const rots = [-8, 0, 6, -4, 4, 0];
+        return {
+          ...word,
+          x: (col + 1) * xStep + jitterX,
+          y: (row + 1) * yStep + jitterY,
+          size: sizes[idx % sizes.length],
+          rot: rots[idx % rots.length]
+        };
+      });
+    }
+
+    function renderCloud() {
+      const cloud = document.getElementById('cloud');
+      cloud.innerHTML = '';
+
+      const words = makeCloudPlacements(buildWordsFromConfig(AXIS_META, GROUPS_ORDER));
+      if (!words.length) {
+        cloud.innerHTML = '<div class="error-box" style="padding-top:170px;">표시할 키워드가 없습니다.</div>';
+        return;
+      }
+
+      words.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'word';
+        el.style.left = `${item.x}%`;
+        el.style.top = `${item.y}%`;
+        el.style.fontSize = `${item.size}px`;
+        el.style.color = item.color;
+        el.style.setProperty('--rot', `${item.rot}deg`);
+        el.style.transform = `translate(-50%, -50%) rotate(${item.rot}deg)`;
+        el.innerHTML = `${escapeHtml(item.text)}<small>${escapeHtml(item.axis)}</small>`;
+
+        el.addEventListener('click', (e) => {
+          scores[item.axis] = (scores[item.axis] || 0) + 1;
+          renderBars();
+
+          const plus = document.createElement('div');
+          plus.className = 'float-plus';
+          plus.textContent = '+1';
+          const c = cloud.getBoundingClientRect();
+          const r = el.getBoundingClientRect();
+          plus.style.left = `${r.left - c.left + r.width / 2}px`;
+          plus.style.top = `${r.top - c.top - 4}px`;
+          cloud.appendChild(plus);
+          setTimeout(() => plus.remove(), 600);
+        });
+
+        cloud.appendChild(el);
+      });
+    }
+
+    function renderBars() {
+      const container = document.getElementById('bars');
+      container.innerHTML = '';
+      const maxValue = Math.max(1, ...Object.values(scores));
+
+      GROUPS_ORDER.forEach(group => {
+        const label = document.createElement('div');
+        label.className = 'group-label';
+        label.textContent = group.label;
+        container.appendChild(label);
+
+        group.axes.forEach(axis => {
+          const value = scores[axis] || 0;
+          const pct = (value / maxValue) * 100;
+          const color = AXIS_COLORS[axis] || '#999';
+
+          const row = document.createElement('div');
+          row.className = 'axis-row';
+          row.innerHTML =
+            `<div class="axis-name" style="color:${color}">${escapeHtml(axis)}</div>` +
+            `<div class="axis-track"><div class="axis-fill" style="width:${value ? pct : 0}%;background:${color};opacity:0.55"></div></div>` +
+            `<div class="axis-num" style="color:${value ? color : '#ccc'}">${value}</div>`;
+          container.appendChild(row);
+        });
+      });
+    }
+
+    function resetAll() {
+      initializeScores();
+      selectedImageIdx = [];
+      useImageFusion = false;
+      document.getElementById('img-count').textContent = '0';
+      renderBars();
+    }
+
+    function resetStepsForNewKeyword() {
+      initializeScores();
+      selectedImageIdx = [];
+      useImageFusion = false;
+      repImages = [];
+      document.getElementById('img-count').textContent = '0';
+      document.getElementById('img-grid').innerHTML = '';
+      document.getElementById('result-area').innerHTML = '';
+      document.getElementById('result-area').style.display = 'none';
+
+      document.getElementById('step1-pill').className = 'step-pill active';
+      document.getElementById('step2-pill').className = 'step-pill';
+      document.getElementById('step3-pill').className = 'step-pill';
+
+      document.getElementById('step1-area').style.display = 'block';
+      document.getElementById('step2-area').classList.remove('visible');
+      document.getElementById('step3-area').classList.remove('visible');
+    }
+
+    function goToImageStep() {
+      const total = Object.values(scores).reduce((a, b) => a + b, 0);
+      if (total === 0) {
+        alert('최소 1개 이상 키워드를 선택해주세요!');
+        return;
+      }
+
+      document.getElementById('step1-pill').className = 'step-pill done';
+      document.getElementById('step2-pill').className = 'step-pill active';
+      document.getElementById('step3-pill').className = 'step-pill';
+
+      document.getElementById('step1-area').style.display = 'none';
+      document.getElementById('step2-area').classList.add('visible');
+      document.getElementById('step3-area').classList.remove('visible');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      loadRepresentativeImages();
+    }
+
+    function goBackToCloud() {
+      document.getElementById('step1-pill').className = 'step-pill active';
+      document.getElementById('step2-pill').className = 'step-pill';
+      document.getElementById('step3-pill').className = 'step-pill';
+
+      document.getElementById('step1-area').style.display = 'block';
+      document.getElementById('step2-area').classList.remove('visible');
+      document.getElementById('step3-area').classList.remove('visible');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goToResultStep() {
+      document.getElementById('step1-pill').className = 'step-pill done';
+      document.getElementById('step2-pill').className = 'step-pill done';
+      document.getElementById('step3-pill').className = 'step-pill active';
+
+      document.getElementById('step1-area').style.display = 'none';
+      document.getElementById('step2-area').classList.remove('visible');
+      document.getElementById('step3-area').classList.add('visible');
+    }
+
+    function loadRepresentativeImages() {
+      const grid = document.getElementById('img-grid');
+      grid.innerHTML = '<div class="loading" style="grid-column:1/-1;">대표 이미지를 불러오는 중입니다...</div>';
+
+      fetch(`/api/representative_images?keyword=${encodeURIComponent(CURRENT_KEYWORD)}`)
+        .then(r => r.json())
+        .then(data => {
+          repImages = data.images || [];
+          selectedImageIdx = [];
+          document.getElementById('img-count').textContent = '0';
+
+          if (repImages.length === 0) {
+            grid.innerHTML =
+              '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999;">' +
+              '<p style="font-size:32px;margin-bottom:8px;">📷</p>' +
+              '<p>대표 이미지가 아직 준비되지 않았습니다</p>' +
+              '<p style="font-size:12px;margin-top:4px;">건너뛰기를 눌러 텍스트만으로 추천받을 수 있어요</p>' +
+              '</div>';
+            return;
+          }
+
+          grid.innerHTML = '';
+          repImages.forEach((img, idx) => {
+            const card = document.createElement('div');
+            card.className = 'img-card';
+            card.dataset.idx = idx;
+            card.onclick = () => toggleImageSelection(idx);
+
+            let imgSrc = img.image_src || '';
+            if (imgSrc.startsWith('images/')) imgSrc = '/' + imgSrc;
+
+            card.innerHTML =
+              (imgSrc
+                ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(img.label || img.axis || 'image')}" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=img-placeholder>🍽️</div>');">`
+                : '<div class="img-placeholder">🍽️</div>') +
+              '<div class="img-card-info">' +
+                `<div class="img-card-label">${escapeHtml(img.label || img.axis || '대표 이미지')}</div>` +
+                `<div class="img-card-axis">${escapeHtml(img.axis || '')}</div>` +
+                `<div class="img-card-rest">${escapeHtml(img.restaurant || '')}</div>` +
+              '</div>';
+
+            grid.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.warn('대표 이미지 로드 실패:', err);
+          grid.innerHTML =
+            '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999;">' +
+            '<p>이미지를 불러올 수 없습니다</p>' +
+            '<p style="font-size:12px;margin-top:4px;">건너뛰기를 눌러 텍스트만으로 추천받으세요</p>' +
+            '</div>';
+        });
+    }
+
+    function toggleImageSelection(idx) {
+      const pos = selectedImageIdx.indexOf(idx);
+      if (pos >= 0) selectedImageIdx.splice(pos, 1);
+      else selectedImageIdx.push(idx);
+
+      document.querySelectorAll('.img-card').forEach(card => {
+        const cardIdx = parseInt(card.dataset.idx, 10);
+        card.classList.toggle('selected', selectedImageIdx.includes(cardIdx));
+      });
+
+      document.getElementById('img-count').textContent = String(selectedImageIdx.length);
+    }
+
+    function skipImages() {
+      selectedImageIdx = [];
+      useImageFusion = false;
+      getRecommendation();
+    }
+
+    function showResults(data) {
+      const area = document.getElementById('result-area');
+
+      if (data.error) {
+        area.innerHTML = `<div class="error-box">${escapeHtml(data.error)}</div>`;
+        area.style.display = 'block';
+        goToResultStep();
+        return;
+      }
+
+      const results = data.results || [];
+      if (!results.length) {
+        area.innerHTML = '<div class="error-box">추천 결과가 없습니다.</div>';
+        area.style.display = 'block';
+        goToResultStep();
+        return;
+      }
+
+      let html = '';
+      results.forEach((item, idx) => {
+        const reasons = Array.isArray(item.reasons) ? item.reasons.slice(0, 5) : [];
+        const reasonsHtml = reasons.length
+          ? `<div class="reason-wrap">${reasons.map(r => `<div class="reason-chip">${escapeHtml(r)}</div>`).join('')}</div>`
+          : '';
+
+        const evidence = Array.isArray(item.evidence) && item.evidence.length ? item.evidence[0] : '';
+        const address = item.address || '';
+        const sim = Number(item.similarity || 0);
+        const scorePct = Math.round(sim * 1000) / 10;
+
+        html +=
+          `<div class="rec-card">` +
+            `<div class="rec-top">` +
+              `<div>` +
+                `<div class="rec-name">${idx + 1}. ${escapeHtml(item.name || '이름 없음')}</div>` +
+                `<div class="rec-sub">${escapeHtml(address || '주소 정보 없음')}</div>` +
+              `</div>` +
+              `<div class="rec-score">취향 일치도 ${scorePct}%</div>` +
+            `</div>` +
+            (evidence ? `<div class="rec-evidence">💬 "${escapeHtml(evidence)}"</div>` : '') +
+            reasonsHtml +
+          `</div>`;
+      });
+
+      area.innerHTML = html;
+      area.style.display = 'block';
+      goToResultStep();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function getRecommendation() {
+      const maxValue = Math.max(1, ...Object.values(scores));
+      const userPrefs = {};
+
+      ALL_AXES.forEach(axis => {
+        userPrefs[axis] = Math.round((scores[axis] / maxValue) * 5 * 10) / 10;
+      });
+
+      const selectedImages = selectedImageIdx.map(idx => ({
+        index: idx,
+        axis: (repImages[idx] || {}).axis || '',
+        clip_vector: (repImages[idx] || {}).clip_vector || {},
+      }));
+
+      useImageFusion = selectedImages.length > 0;
+
+      fetch('/api/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          _keyword: CURRENT_KEYWORD,
+          text_preferences: userPrefs,
+          selected_images: selectedImages,
+          use_image_fusion: useImageFusion,
+        })
+      })
+        .then(r => r.json())
+        .then(data => showResults(data))
+        .catch(err => {
+          console.error(err);
+          alert('서버(app.py)가 켜져 있는지 확인하세요!');
+        });
+    }
+
+    function resetAndRestart() {
+      resetStepsForNewKeyword();
+      renderBars();
+      renderCloud();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setKeywordList(keywords) {
+      AVAILABLE_KEYWORDS = (Array.isArray(keywords) ? keywords : []).filter(k => !String(k).endsWith('_multimodal'));
+      const list = document.getElementById('keyword-list');
+      list.innerHTML = '';
+
+      AVAILABLE_KEYWORDS.forEach(kw => {
+        const option = document.createElement('option');
+        option.value = kw;
+        list.appendChild(option);
+      });
+    }
+
+    function applyKeyword(keyword) {
+      const nextKeyword = normalizeKeywordInput(keyword);
+      if (!nextKeyword) {
+        alert('음식명을 입력해주세요!');
+        return;
+      }
+
+      if (AVAILABLE_KEYWORDS.length && !AVAILABLE_KEYWORDS.includes(nextKeyword)) {
+        alert(`'${nextKeyword}' 데이터가 아직 없습니다.\n먼저 Food_profiler.py / Multimodal_profiler.py로 파일을 만들어주세요.`);
+        return;
+      }
+
+      CURRENT_KEYWORD = nextKeyword;
+      document.getElementById('keyword-input').value = CURRENT_KEYWORD;
+      updatePageText();
+      resetStepsForNewKeyword();
+      loadConfig();
+    }
+
+    function submitKeyword() {
+      const value = document.getElementById('keyword-input').value;
+      applyKeyword(value);
+    }
+
+    function loadConfig() {
+      updatePageText();
+
+      fetch(`/api/config?keyword=${encodeURIComponent(CURRENT_KEYWORD)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) throw new Error(data.error);
+
+          CONFIG = data;
+          AXES = data.axes || [];
+          AXIS_META = data.axes_config || {};
+          // 음식 특화 색상 초기화
+          _specificIdx = 0;
+          Object.keys(GROUP_COLORS).forEach(k => { if (k.endsWith('특화')) delete GROUP_COLORS[k]; });
+          GROUPS_ORDER = groupOrderFromConfig(data.groups || {});
+          ALL_AXES = GROUPS_ORDER.flatMap(group => group.axes);
+          if (!ALL_AXES.length) ALL_AXES = AXES;
+
+          AXIS_COLORS = {};
+          GROUPS_ORDER.forEach(group => {
+            group.axes.forEach(axis => {
+              AXIS_COLORS[axis] = getGroupColor(group.label);
+            });
+          });
+
+          initializeScores();
+          renderLegend();
+          renderCloud();
+          renderBars();
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('cloud').innerHTML =
+            `<div class="error-box" style="padding-top:170px;">설문 구성을 불러오지 못했습니다. (${escapeHtml(err.message)})</div>`;
+        });
+    }
+
+    async function boot() {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+
+        const rawKeywords = Array.isArray(data.keywords) ? data.keywords : [];
+        const filteredKeywords = rawKeywords.filter(k => !String(k).endsWith('_multimodal'));
+        const defaultKeyword =
+          filteredKeywords.includes(data.default_keyword) ? data.default_keyword : (filteredKeywords[0] || '');
+
+        setKeywordList(filteredKeywords);
+
+        if (!defaultKeyword) {
+          document.getElementById('cloud').innerHTML =
+            '<div class="error-box" style="padding-top:170px;">불러올 음식 데이터가 없습니다.</div>';
+          return;
+        }
+
+        applyKeyword(defaultKeyword);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('cloud').innerHTML =
+          '<div class="error-box" style="padding-top:170px;">초기 데이터를 불러오지 못했습니다.</div>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('keyword-input');
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitKeyword();
+        }
+      });
+      boot();
+    });
+  </script>
+</body>
+</html>

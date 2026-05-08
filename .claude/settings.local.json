@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"c:\\\\Users\\\\육태정\\\\Desktop\\\\capstone_final\\\\frontend\"; npx vite build --config vite.config.js 2>&1; $ec = $LASTEXITCODE; Write-Host \"Exit: $ec\")",
+      "PowerShell(cd \"c:\\\\Users\\\\육태정\\\\Desktop\\\\capstone_final\\\\frontend\"; npm run build 2>&1; Write-Host \"Exit: $LASTEXITCODE\")"
+    ]
+  }
+}

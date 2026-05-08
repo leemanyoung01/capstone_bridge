@@ -1,0 +1,24 @@
+/* Full-bleed warm-sand canvas for ALL steps — each step manages its own content width */
+.App {
+  min-height: 100vh;
+  background: var(--bg-color);
+  position: relative;
+}
+
+/* Hide floating bento cards on very small screens */
+@media (max-width: 600px) {
+  .bento-card {
+    display: none !important;
+  }
+}
+
+/* Hide number input spinners */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
