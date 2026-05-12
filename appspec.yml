@@ -1,0 +1,33 @@
+version: 0.0
+os: linux
+
+files:
+  - source: /
+    destination: /opt/tastebridge
+    overwrite: true
+
+permissions:
+  - object: /opt/tastebridge
+    pattern: "scripts/*.sh"
+    mode: 755
+
+hooks:
+  ApplicationStop:
+    - location: scripts/deploy_stop.sh
+      timeout: 120
+      runas: root
+
+  BeforeInstall:
+    - location: scripts/deploy_before_install.sh
+      timeout: 60
+      runas: root
+
+  ApplicationStart:
+    - location: scripts/deploy_start.sh
+      timeout: 600
+      runas: root
+
+  ValidateService:
+    - location: scripts/deploy_validate.sh
+      timeout: 60
+      runas: root

@@ -35,6 +35,10 @@ from db import (
 
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
+FRONTEND_DIST = os.environ.get(
+    "FRONTEND_DIST",
+    os.path.join(BASE_DIR, "frontend", "dist"),
+)
 
 app = Flask(__name__)
 
@@ -141,6 +145,117 @@ def _all_axes(bundle: dict) -> list[str]:
                 if isinstance(vec, dict):
                     return [k for k in vec if not k.startswith("_")]
     return []
+
+
+# ── stand_axes.json axis_policy 응답 필터 ─────────────────────────────
+# /api/config 응답 시 stand_axes.json의 axis_policy를 1차로 적용해
+# 커피/라떼류 같은 음료 keyword에서 공용 taste 축이 UI로 새지 않게 한다.
+# DB axes_config는 건드리지 않고, 응답 view 단계에서만 좁힌다.
+
+_STAND_AXES_CACHE: dict = {"mtime": 0.0, "data": None}
+
+
+def _load_stand_axes() -> dict:
+    """stand/stand_axes.json을 mtime 기반으로 캐시 로드."""
+    path = os.path.join(BASE_DIR, "stand", "stand_axes.json")
+    if not os.path.exists(path):
+        return {}
+    try:
+        mt = os.path.getmtime(path)
+    except OSError:
+        return _STAND_AXES_CACHE.get("data") or {}
+    if mt == _STAND_AXES_CACHE.get("mtime") and _STAND_AXES_CACHE.get("data"):
+        return _STAND_AXES_CACHE["data"]
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        return _STAND_AXES_CACHE.get("data") or {}
+    _STAND_AXES_CACHE["mtime"] = mt
+    _STAND_AXES_CACHE["data"] = data
+    return data
+
+
+def _resolve_keyword_category(kw: str) -> str | None:
+    """alias_to_category 기반으로 keyword의 food_specific category 결정."""
+    stand = _load_stand_axes()
+    if not stand:
+        return None
+    food_specific = stand.get("food_specific_axes", {}) or {}
+    alias_to_cat = stand.get("alias_to_category", {}) or {}
+    if kw in food_specific:
+        return kw
+    if kw in alias_to_cat and alias_to_cat[kw] in food_specific:
+        return alias_to_cat[kw]
+    for food, aliases in (stand.get("keyword_aliases", {}) or {}).items():
+        if kw in aliases or kw == food:
+            if food in alias_to_cat and alias_to_cat[food] in food_specific:
+                return alias_to_cat[food]
+            for cat in food_specific:
+                if cat in food or food in cat:
+                    return cat
+    return None
+
+
+def _resolve_axis_policy(kw: str) -> dict:
+    """
+    keyword에 적용할 axis_policy. 우선순위:
+      1) matched category가 axis_policy에 있으면 그것
+      2) keyword 자체가 axis_policy 키이면 그것
+      3) _default
+    """
+    stand = _load_stand_axes()
+    policy_block = stand.get("axis_policy", {}) or {}
+    default = dict(policy_block.get("_default") or {})
+    default.setdefault("include_shared_taste_axes", True)
+    default.setdefault("include_meta_axes",         True)
+    default.setdefault("use_food_specific_axes",    True)
+    default.setdefault("shared_taste_allowlist",    [])
+
+    cat = _resolve_keyword_category(kw)
+    chosen = None
+    if cat and cat in policy_block:
+        chosen = policy_block[cat]
+    elif kw in policy_block:
+        chosen = policy_block[kw]
+    if not chosen:
+        return default
+    merged = dict(default)
+    merged.update({k: v for k, v in chosen.items() if not str(k).startswith("_")})
+    return merged
+
+
+def _filter_axes_config_by_policy(axes_config_raw: dict, policy: dict) -> dict:
+    """
+    axes_config (DB 캐시) 를 axis_policy로 필터링한 view dict 반환.
+    그룹명 기준 판단:
+      - 메타 그룹("메타") 또는 is_meta=True → include_meta_axes 따름
+      - 공용 taste 그룹("맛"/"식감"/"기타"/"공용") → allow_shared 또는 allowlist 통과 시 유지
+      - 그 외(*특화 같은 food_specific) → 항상 유지
+    """
+    allow_shared = bool(policy.get("include_shared_taste_axes", True))
+    allow_meta = bool(policy.get("include_meta_axes", True))
+    allowlist = set(policy.get("shared_taste_allowlist") or [])
+    SHARED_GROUPS = {"맛", "식감", "기타", "공용", "공통"}
+    META_GROUPS = {"메타"}
+
+    out: dict = {}
+    for name, info in (axes_config_raw or {}).items():
+        if not isinstance(info, dict) or name.startswith("_"):
+            continue
+        group = info.get("group", "기타")
+        is_meta = bool(info.get("is_meta")) or group in META_GROUPS
+        if is_meta:
+            if allow_meta:
+                out[name] = info
+            continue
+        if group in SHARED_GROUPS:
+            if allow_shared or (name in allowlist):
+                out[name] = info
+            continue
+        # 특화 그룹 — 항상 유지
+        out[name] = info
+    return out
 
 
 def _split_axes(bundle: dict) -> tuple[list[str], list[str]]:
@@ -253,10 +368,37 @@ def _fuse_dynamic(tv: dict, iv: dict, axes: list[str]) -> tuple[dict, dict, str]
 
 @app.route("/")
 def index():
-    for fn in ("survey.html","index.html"):
+    dist_index = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(dist_index):
+        return send_file(dist_index)
+
+    for fn in ("survey.html", "index.html"):
         p = os.path.join(BASE_DIR, fn)
-        if os.path.exists(p): return send_file(p)
-    return "<h1>survey.html을 같은 폴더에 놓아주세요</h1>", 404
+        if os.path.exists(p):
+            return send_file(p)
+
+    return "<h1>frontend/dist 빌드가 없습니다 (npm run build)</h1>", 404
+
+
+@app.route("/assets/<path:fn>")
+def serve_assets(fn):
+    return send_from_directory(os.path.join(FRONTEND_DIST, "assets"), fn)
+
+
+@app.route("/<path:fn>")
+def serve_static(fn):
+    if fn.startswith(("api/", "images/", "assets/")):
+        return "Not Found", 404
+
+    full = os.path.join(FRONTEND_DIST, fn)
+    if os.path.isfile(full):
+        return send_from_directory(FRONTEND_DIST, fn)
+
+    dist_index = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(dist_index):
+        return send_file(dist_index)
+
+    return "Not Found", 404
 
 
 @app.route("/images/<path:fn>")
@@ -288,26 +430,48 @@ def api_config():
     if not bundle:
         return jsonify({"error": f"'{kw}' 키워드 없음"}), 404
 
-    groups = bundle.get("groups", {})
-    if not groups:
-        from collections import defaultdict
-        groups = defaultdict(list)
-        for axis_name, info in bundle.get("axes_config", {}).items():
-            groups[info.get("group", "기타")].append(axis_name)
-        groups = dict(groups)
+    # ── stand_axes.json의 axis_policy를 응답 단계에서 1차 적용 ──
+    # 커피/라떼류처럼 음료 keyword는 공용 taste 축을 UI에서 빼고
+    # allowlist + 메타 + 특화 축만 노출. DB axes_config는 손대지 않음.
+    policy = _resolve_axis_policy(kw)
+    raw_axes_config = bundle.get("axes_config") or {}
+    filtered_axes_config = _filter_axes_config_by_policy(raw_axes_config, policy)
 
-    taste, meta = _split_axes(bundle)
-    label_map = _axis_label_map(bundle)
+    # 필터링 결과가 비면 (특화 축이 DB에 아직 없는 경우 등) 원본 사용 — 화면이 비어버리는 것 방지.
+    if not filtered_axes_config:
+        filtered_axes_config = raw_axes_config
+
+    from collections import defaultdict
+    groups = defaultdict(list)
+    for name, info in filtered_axes_config.items():
+        groups[info.get("group", "기타")].append(name)
+    groups = dict(groups)
+
+    # taste / meta 분리 (필터링된 axes_config 기준)
+    taste = [n for n, info in filtered_axes_config.items() if not info.get("is_meta")]
+    meta  = [n for n, info in filtered_axes_config.items() if info.get("is_meta")]
+    if not taste and filtered_axes_config:
+        taste = list(filtered_axes_config.keys())
+
+    label_map = _axis_label_map({"axes_config": filtered_axes_config})
+    axes_list = list(filtered_axes_config.keys()) or _all_axes(bundle)
+
     return jsonify({
         "keyword":         kw,
-        "axes":            _all_axes(bundle),
+        "axes":            axes_list,
         "taste_axes":      taste,
         "meta_axes":       meta,
         "groups":          groups,
-        "axes_config":     bundle.get("axes_config", {}),
+        "axes_config":     filtered_axes_config,
         "axis_label_map":  label_map,
         "taste_axes_labels": [label_map.get(a, a) for a in taste],
         "meta_axes_labels":  [label_map.get(a, a) for a in meta],
+        "_axis_policy": {
+            "include_shared_taste_axes": bool(policy.get("include_shared_taste_axes", True)),
+            "include_meta_axes":         bool(policy.get("include_meta_axes", True)),
+            "shared_taste_allowlist":    sorted(policy.get("shared_taste_allowlist") or []),
+            "matched_category":          _resolve_keyword_category(kw),
+        },
     })
 
 

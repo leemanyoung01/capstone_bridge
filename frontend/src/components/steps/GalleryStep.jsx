@@ -41,10 +41,21 @@ const StampBadge = () => (
   </svg>
 );
 
-const GalleryStep = ({ keyword, images, selectedImageIdx, onImageToggle, onPrev, onSkip, onNext }) => {
-  // keyword prop preserved for compatibility, but we use the filtered images from parent
-  void keyword;
+// 내부 key는 유지하고, 이미지 카드에 보이는 이름만 변경
+const IMAGE_AXIS_DISPLAY_LABELS = {
+  커피: {
+    온도: '따뜻함',
+  },
+  김밥: {
+    밥과양: '밥과 양',
+  },
+};
 
+const getImageAxisDisplayName = (keyword, axis) => {
+  return IMAGE_AXIS_DISPLAY_LABELS?.[keyword]?.[axis] || axis;
+};
+
+const GalleryStep = ({ keyword, images, selectedImageIdx, onImageToggle, onPrev, onSkip, onNext }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -122,6 +133,7 @@ const GalleryStep = ({ keyword, images, selectedImageIdx, onImageToggle, onPrev,
               const imgSrc = img.image_src
                 ? (img.image_src.startsWith('images/') ? `/${img.image_src}` : img.image_src)
                 : '';
+              const caption = getImageAxisDisplayName(keyword, img.label || img.axis || '대표 이미지');
 
               return (
                 <motion.div
@@ -156,7 +168,7 @@ const GalleryStep = ({ keyword, images, selectedImageIdx, onImageToggle, onPrev,
                   {imgSrc ? (
                     <img
                       src={imgSrc}
-                      alt={img.label || '음식 사진'}
+                      alt={caption}
                       style={{
                         width: '100%',
                         aspectRatio: '1/1',
@@ -185,7 +197,7 @@ const GalleryStep = ({ keyword, images, selectedImageIdx, onImageToggle, onPrev,
                       color: 'var(--text-dark)',
                       lineHeight: 1.3,
                     }}>
-                      {img.label || img.axis || '대표 이미지'}
+                      {caption}
                     </div>
                   </div>
 

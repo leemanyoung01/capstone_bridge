@@ -44,17 +44,63 @@ const PlusDoodle = ({ style = {} }) => (
   </svg>
 );
 
+// '*특화'로 끝나는 그룹(예: 커피특화, 버거특화)은 GROUP_PRIORITY보다 항상 먼저 노출.
+const isSpecialtyGroup = (label) =>
+  typeof label === 'string' && label.endsWith('특화');
+
+// 내부 key는 유지하고, 화면에 보이는 이름만 변경
+const AXIS_DISPLAY_LABELS = {
+  커피: {
+    온도: '따뜻함',
+  },
+  김밥: {
+    밥의간과양: '밥의 간과 양',
+  },
+};
+
+const GROUP_DISPLAY_LABELS = {
+  김밥특화: '김밥 특화',
+  커피특화: '커피 특화',
+};
+
+const getAxisDisplayName = (keyword, axis) => {
+  return AXIS_DISPLAY_LABELS?.[keyword]?.[axis] || axis;
+};
+
+const getGroupDisplayName = (groupLabel) => {
+  return GROUP_DISPLAY_LABELS[groupLabel] || groupLabel;
+};
+
 const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext, onReset }) => {
   const { groups = {} } = config;
 
+  // 1) 특화 그룹 우선 (입력 순서 보존)
+  // 2) GROUP_PRIORITY 순서
+  // 3) 나머지
   const used = new Set();
   const groupOrder = [];
+  Object.keys(groups).forEach(label => {
+    if (isSpecialtyGroup(label) && !used.has(label)) {
+      groupOrder.push({ label, axes: groups[label] });
+      used.add(label);
+    }
+  });
   GROUP_PRIORITY.forEach(label => {
-    if (groups[label]) { groupOrder.push({ label, axes: groups[label] }); used.add(label); }
+    if (groups[label] && !used.has(label)) {
+      groupOrder.push({ label, axes: groups[label] });
+      used.add(label);
+    }
   });
   Object.keys(groups).forEach(label => {
-    if (!used.has(label)) groupOrder.push({ label, axes: groups[label] });
+    if (!used.has(label)) {
+      groupOrder.push({ label, axes: groups[label] });
+      used.add(label);
+    }
   });
+
+  // 음료/카페류처럼 공용 taste 그룹이 백엔드에서 빠진 경우 → 헤딩 "맛 취향" 대신 "취향"
+  const hasGenericTaste = Boolean(groups['맛'] || groups['식감']);
+  const headingSuffix = hasGenericTaste ? '맛 취향 탐색' : '취향 탐색';
 
   const radarData = groupOrder.reduce((acc, group) => {
     const selectedAxes = group.axes.filter(ax => (scores[ax] || 0) > 0);
@@ -96,7 +142,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
             marginBottom: '10px',
           }}>
             <span style={{ color: 'var(--primary)' }}>{keyword}</span>{' '}
-            <span style={{ color: 'var(--text-gray)', fontWeight: 500 }}>맛 취향 탐색</span>
+            <span style={{ color: 'var(--text-gray)', fontWeight: 500 }}>{headingSuffix}</span>
           </h2>
           <p style={{ fontSize: '15px', color: 'var(--text-gray)', display: 'flex', alignItems: 'center', gap: '10px' }}>
             끌리는 단어를 자유롭게 선택해주세요
@@ -147,7 +193,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                   }}>
-                    {group.label}
+                    {getGroupDisplayName(group.label)}
                   </h3>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                     {group.axes.map(axis => {
@@ -181,7 +227,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
                             transition: 'background 0.18s, color 0.18s, box-shadow 0.22s, border 0.18s',
                           }}
                         >
-                          <span>{axis}</span>
+                          <span>{getAxisDisplayName(keyword, axis)}</span>
 
                           {isSelected && (
                             <div
