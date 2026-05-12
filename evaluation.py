@@ -92,6 +92,32 @@ def fetch_predictions(api_base: str, keyword: str, prefs: dict) -> list[dict]:
     return data.get("results", [])
 
 
+def axis_match_rate(predicted: list[dict], prefs: dict, k: int) -> float:
+    """
+    Axis Match Rate (TasteBridge 고유 지표).
+    Top-K 추천 식당의 top_axes union이 사용자가 선택한 축과 얼마나 겹치는지.
+
+    수식:
+      user_axes = {ax : prefs[ax] > 0 인 축들}
+      pred_axes = union of (predicted[:k] 의 top_axes)
+      rate = |user_axes ∩ pred_axes| / |user_axes|
+
+    user_axes가 비어 있으면 0.0.
+    """
+    user_axes = {ax for ax, v in (prefs or {}).items()
+                 if isinstance(v, (int, float)) and float(v) > 0}
+    if not user_axes:
+        return 0.0
+    pred_axes: set[str] = set()
+    for item in (predicted or [])[:k]:
+        for ax in (item.get("top_axes") or item.get("reasons") or [])[:5]:
+            if ax:
+                pred_axes.add(ax)
+    if not pred_axes:
+        return 0.0
+    return len(user_axes & pred_axes) / len(user_axes)
+
+
 def _detect_label_type(labels_path: str, override: str | None) -> str:
     if override:
         # 'human' 또는 'human-label' 모두 허용
@@ -162,6 +188,8 @@ def evaluate(labels_path: str, api_base: str, k: int,
         metrics["recall_at_k"].append(recall_at_k(predicted, relevant, k))
         metrics["f1_at_k"].append(f1_at_k(predicted, relevant, k))
         metrics["ndcg_at_k"].append(ndcg_at_k(predicted, relevant, k))
+        # TasteBridge 고유 지표: 사용자 선택 축 ↔ 추천 식당 top_axes 일치도
+        metrics["axis_match_rate"].append(axis_match_rate(results, prefs, k))
         if has_graded and grade_map:
             metrics["ndcg_graded_at_k"].append(ndcg_at_k_graded(predicted, grade_map, k))
 
@@ -188,7 +216,8 @@ def evaluate(labels_path: str, api_base: str, k: int,
     print(f"  Evaluation @ k={k}  (queries={len(metrics['precision_at_k'])})  label={label_type}")
     print(f"{'━' * 50}")
     avg: dict[str, float] = {}
-    metric_keys = ["precision_at_k", "recall_at_k", "f1_at_k", "ndcg_at_k"]
+    metric_keys = ["precision_at_k", "recall_at_k", "f1_at_k", "ndcg_at_k",
+                   "axis_match_rate"]
     if metrics.get("ndcg_graded_at_k"):
         metric_keys.append("ndcg_graded_at_k")
     for name in metric_keys:
@@ -199,10 +228,11 @@ def evaluate(labels_path: str, api_base: str, k: int,
     # 호환용 별칭 (precision@k 등 기존 키)
     metrics_compat = dict(avg)
     metrics_compat.update({
-        "precision@k": avg["precision_at_k"],
-        "recall@k":    avg["recall_at_k"],
-        "f1@k":        avg["f1_at_k"],
-        "ndcg@k":      avg["ndcg_at_k"],
+        "precision@k":   avg["precision_at_k"],
+        "recall@k":      avg["recall_at_k"],
+        "f1@k":          avg["f1_at_k"],
+        "ndcg@k":        avg["ndcg_at_k"],
+        "axis_match@k":  avg["axis_match_rate"],
     })
 
     result = {

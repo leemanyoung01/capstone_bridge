@@ -4,7 +4,7 @@ Naver_place_crawler.py — 리뷰 크롤러 (PostgreSQL + S3 저장)
 
 기능:
   - 네이버 플레이스 리뷰 크롤링
-  - 리뷰/식당 정보 PostgreSQL 저장
+  - 리뷰/식당 정보 PostgreSQL 저장 (reviews.crawl_keyword 함께 저장)
   - CSV 백업 저장
   - 이미지 로컬 images/ 저장
   - UPLOAD_S3=true이면 이미지 S3 업로드
@@ -12,11 +12,17 @@ Naver_place_crawler.py — 리뷰 크롤러 (PostgreSQL + S3 저장)
 
 실행:
   python Naver_place_crawler.py
+  python Naver_place_crawler.py --keyword 김밥
+  python Naver_place_crawler.py --keyword 회
+
+  --keyword가 주어지면 .env의 CRAWL_KEYWORD보다 우선 사용되고,
+  S3_PREFIX가 명시되지 않은 경우 자동으로 reviews/<keyword>가 사용된다.
 
 필요 패키지:
   pip install requests pandas psycopg2-binary boto3 python-dotenv
 """
 
+import argparse
 import os
 import random
 import time
@@ -53,11 +59,9 @@ def _is_review_image(url: str) -> bool:
 
 # ── 크롤링 대상 ───────────────────────────────────────────────
 restaurants = {
-    "스터닝버거": "1793528701",
-    "버거킹 부천시청역점": "2093976893",
-    "크라이치즈버거 신중동점": "2058075950",
-    "우스매쉬 부천점": "2080832942",
-    "르버거": "2043097186",
+    "돈카와치 미아사거리점": "1835926545","동동 냉면 돈까스": "1625855671","도쿄커틀릿 성신여대점": "130074875",
+    "상미규카츠": "37261519","온달왕돈까스치킨호프": "1566182638","정돈 현대백화점 미아점": "1261268513","금왕돈까스 본점": "11591181","엘리카츠": "1382545547",
+    "이세돈가스 고려대점": "118302079","오박사네왕돈까스 본점": "11710935","소바의온도 고대점": "2087403289","밀튼가츠멘": "1175689621","토라카츠": "1777684468",
 }
 
 
@@ -68,20 +72,63 @@ SAVE_CSV = True
 CSV_PATH = "naver_reviews.csv"
 
 # 테스트할 때는 50 또는 100 추천. 전체 수집하려면 None.
-MAX_REVIEWS_PER_RESTAURANT = None
+MAX_REVIEWS_PER_RESTAURANT = 350
 
-DELAY_PAGE_MIN = 3.0
-DELAY_PAGE_MAX = 4.5
-DELAY_REST_MIN = 8.0
-DELAY_REST_MAX = 12.0
+DELAY_PAGE_MIN = 1.8
+DELAY_PAGE_MAX = 3.0
+DELAY_REST_MIN = 5.0
+DELAY_REST_MAX = 8.0
 MAX_IMAGE_WORKERS = 10
 
 
 # ── S3 설정 (s3_uploader 모듈에서 환경변수 처리) ──────────────
+# CRAWL_KEYWORD / S3_PREFIX_BASE는 parse_cli_and_env()가 --keyword 인자 처리 후 갱신.
 UPLOAD_S3 = s3_is_enabled()
 CRAWL_KEYWORD = os.environ.get("CRAWL_KEYWORD", "default").strip()
 S3_BUCKET = os.environ.get("S3_BUCKET", "").strip()  # 표시용만; 실제 처리는 s3_uploader가 함
 S3_PREFIX_BASE = os.environ.get("S3_PREFIX", f"reviews/{CRAWL_KEYWORD or 'default'}").strip().strip("/")
+
+
+def parse_cli_and_env() -> argparse.Namespace:
+    """
+    --keyword가 주어지면 다음을 모두 동기화한다:
+      - 모듈 전역 CRAWL_KEYWORD
+      - 환경변수 CRAWL_KEYWORD (parse_review가 os.environ.get로 읽기 때문)
+      - S3_PREFIX 환경변수가 명시되지 않았다면 reviews/<keyword>로 자동 설정
+
+    .env / AWS 키 / DB 비밀번호는 출력하지 않는다.
+    """
+    global CRAWL_KEYWORD, S3_PREFIX_BASE
+
+    parser = argparse.ArgumentParser(description="네이버 플레이스 리뷰 크롤러")
+    # positional 또는 --keyword 둘 다 허용: 둘 다 주어지면 --keyword 우선.
+    #   python Naver_place_crawler.py 김밥
+    #   python Naver_place_crawler.py --keyword 김밥
+    parser.add_argument("keyword_positional", nargs="?", default=None,
+                        help="크롤 keyword (positional). 예: python Naver_place_crawler.py 김밥")
+    parser.add_argument("--keyword", default=None,
+                        help="크롤 keyword. .env의 CRAWL_KEYWORD보다 우선.")
+    parser.add_argument("--limit", type=int, default=None,
+                        help="식당당 최대 리뷰 수 (None=무제한)")
+    args = parser.parse_args()
+
+    kw_arg = args.keyword or args.keyword_positional
+    if kw_arg:
+        kw = kw_arg.strip()
+        CRAWL_KEYWORD = kw
+        os.environ["CRAWL_KEYWORD"] = kw  # parse_review의 os.environ.get(...)와 동기
+        # S3_PREFIX가 환경변수로 명시되지 않은 경우만 자동 설정
+        if not os.environ.get("S3_PREFIX"):
+            S3_PREFIX_BASE = f"reviews/{kw}"
+            print(f"   ↪️  S3_PREFIX 자동 설정: {S3_PREFIX_BASE}")
+        else:
+            S3_PREFIX_BASE = os.environ["S3_PREFIX"].strip().strip("/")
+
+    if args.limit is not None:
+        global MAX_REVIEWS_PER_RESTAURANT
+        MAX_REVIEWS_PER_RESTAURANT = args.limit
+
+    return args
 
 
 # ── GraphQL 쿼리 ──────────────────────────────────────────────
@@ -428,7 +475,10 @@ def crawl_reviews(restaurants_dict: dict) -> list[dict]:
 # ── 진입점 ────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    parse_cli_and_env()
+
     print("🔍 네이버 플레이스 크롤러 (PostgreSQL + S3 연동)")
+    print(f"   crawl_keyword: {CRAWL_KEYWORD or '(없음)'}")
     print(f"   대상: {len(restaurants)}개 식당")
     print(f"   식당당 최대: {MAX_REVIEWS_PER_RESTAURANT if MAX_REVIEWS_PER_RESTAURANT else '무제한'}건")
     print(f"   이미지 다운로드: {'ON' if DOWNLOAD_IMAGES else 'OFF'}")

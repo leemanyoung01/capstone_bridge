@@ -34,8 +34,12 @@ CREATE TABLE IF NOT EXISTS reviews (
     voted_keywords      TEXT,
     owner_reply         TEXT,
     reviewed_at         TIMESTAMP,
+    crawl_keyword       VARCHAR(64),
     crawled_at          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 기존 DB가 이미 있는 환경에서도 컬럼만 안전하게 추가 (원본 데이터 보존).
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS crawl_keyword VARCHAR(64);
 
 -- ── 리뷰 이미지 ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS review_images (
@@ -95,17 +99,30 @@ CREATE TABLE IF NOT EXISTS representative_images (
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ── 리뷰-키워드 N:M 매핑 ─────────────────────────────────────
+-- 한 리뷰가 여러 keyword에 속할 수 있게 한다(예: 같은 카페가 커피·라떼류 양쪽에 들어감).
+-- reviews 원본은 중복 저장하지 않는다 — 관계만 별도 보관.
+CREATE TABLE IF NOT EXISTS review_keywords (
+    review_id  INTEGER REFERENCES reviews(review_id) ON DELETE CASCADE,
+    keyword    VARCHAR(64) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (review_id, keyword)
+);
+
 -- ── 인덱스 ────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_restaurant_name    ON restaurants(name);
 CREATE INDEX IF NOT EXISTS idx_restaurant_place   ON restaurants(place_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_restaurant ON reviews(restaurant_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_naver_id   ON reviews(naver_review_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_menu       ON reviews(menu);
+CREATE INDEX IF NOT EXISTS idx_reviews_crawl_kw    ON reviews(crawl_keyword);
 CREATE INDEX IF NOT EXISTS idx_vectors_keyword    ON restaurant_vectors(keyword);
 CREATE INDEX IF NOT EXISTS idx_vectors_fused      ON restaurant_vectors USING GIN (fused_vector);
 CREATE INDEX IF NOT EXISTS idx_vectors_text       ON restaurant_vectors USING GIN (text_vector);
 CREATE INDEX IF NOT EXISTS idx_rep_keyword        ON representative_images(keyword);
 CREATE INDEX IF NOT EXISTS idx_axes_keyword       ON axes_config(keyword);
+CREATE INDEX IF NOT EXISTS idx_review_keywords_keyword ON review_keywords(keyword);
+CREATE INDEX IF NOT EXISTS idx_review_keywords_review  ON review_keywords(review_id);
 
 -- ── updated_at 자동 갱신 ──────────────────────────────────────
 CREATE OR REPLACE FUNCTION _set_updated_at()

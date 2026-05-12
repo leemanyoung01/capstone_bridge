@@ -1,17 +1,14 @@
-/* App specific styles can go here, but mostly we rely on index.css and inline style for components */
+/* Full-bleed warm-sand canvas for ALL steps — each step manages its own content width */
 .App {
-  max-width: 768px;
-  margin: 0 auto;
   min-height: 100vh;
-  background: var(--white);
-  box-shadow: var(--shadow-sm);
+  background: var(--bg-color);
   position: relative;
-  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .App {
-    box-shadow: none;
+/* Hide floating bento cards on very small screens */
+@media (max-width: 600px) {
+  .bento-card {
+    display: none !important;
   }
 }
 
@@ -24,4 +21,6 @@ input::-webkit-inner-spin-button {
 
 input[type=number] {
   -moz-appearance: textfield;
+  appearance: textfield;
+  /* 표준 속성 추가 */
 }

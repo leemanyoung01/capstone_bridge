@@ -1,51 +1,60 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+
+const STEPS = [
+  { num: 1, label: '맛 탐색' },
+  { num: 2, label: '이미지 매칭' },
+  { num: 3, label: '상세 추천' },
+];
 
 const StepProgress = ({ currentStep }) => {
-  const steps = [
-    { num: 1, label: '맛 탐색' },
-    { num: 2, label: '이미지 매칭' },
-    { num: 3, label: '상세 추천' }
-  ];
-
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '20px 0', borderBottom: '1px solid var(--border-color)' }}>
-      {steps.map((step, idx) => {
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '6px',
+      padding: '18px 24px',
+      borderBottom: '1px solid rgba(0,0,0,0.07)',
+      background: 'transparent',
+    }}>
+      {STEPS.map((step, idx) => {
         const isActive = currentStep === step.num;
         const isPast = currentStep > step.num;
-        
-        let bgColor = 'var(--bg-color)';
-        let color = 'var(--text-gray)';
-        let borderColor = 'var(--border-color)';
-        let fontWeight = '500';
-
-        if (isActive) {
-          bgColor = 'var(--primary)';
-          color = 'white';
-          borderColor = 'var(--primary)';
-          fontWeight = '700';
-        } else if (isPast) {
-          bgColor = 'var(--primary-light)';
-          color = 'var(--primary)';
-          borderColor = 'var(--primary-light)';
-        }
-
         return (
           <React.Fragment key={step.num}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{
-                width: '28px', height: '28px', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backgroundColor: bgColor, color, border: `1px solid ${borderColor}`,
-                fontSize: '14px', fontWeight: 'bold'
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <motion.div
+                animate={{
+                  background: isActive ? '#1A1A1A' : isPast ? '#D4EDD4' : 'rgba(0,0,0,0.08)',
+                  scale: isActive ? 1.1 : 1,
+                }}
+                transition={{ duration: 0.25 }}
+                style={{
+                  width: '28px', height: '28px', borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '13px', fontWeight: 900, flexShrink: 0,
+                  color: isActive ? 'white' : isPast ? '#2E7D32' : '#888',
+                }}
+              >
+                {isPast ? '✓' : step.num}
+              </motion.div>
+              <span style={{
+                fontSize: '13px',
+                fontWeight: isActive ? 800 : 500,
+                color: isActive ? '#1A1A1A' : isPast ? '#555' : '#AAA',
+                whiteSpace: 'nowrap',
               }}>
-                {step.num}
-              </div>
-              <span style={{ fontSize: '14px', fontWeight, color: isActive ? 'var(--text-dark)' : 'var(--text-gray)' }}>
                 {step.label}
               </span>
             </div>
-            {idx < steps.length - 1 && (
-              <div style={{ width: '20px', height: '1px', backgroundColor: 'var(--border-color)', margin: '0 4px' }} />
+            {idx < STEPS.length - 1 && (
+              <div style={{
+                width: '28px', height: '1.5px',
+                background: currentStep > step.num ? '#1A1A1A' : 'rgba(0,0,0,0.12)',
+                borderRadius: '2px',
+                transition: 'background 0.3s',
+              }} />
             )}
           </React.Fragment>
         );

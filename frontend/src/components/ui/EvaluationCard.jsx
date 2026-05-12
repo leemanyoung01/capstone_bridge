@@ -11,7 +11,7 @@ import { Info, ChevronDown, ChevronUp } from 'lucide-react';
 const METRIC_INFO = [
   {
     key: 'precision_at_k', alt: 'precision@k', label: 'Precision',
-    desc: '상위 K개 추천 중 관련 있다고 판단된 식당의 비율',
+    desc: 'Top5 추천 적합률 — Top5 중 human-label 기준 적합한 식당 비율',
   },
   {
     key: 'recall_at_k', alt: 'recall@k', label: 'Recall',
@@ -25,51 +25,32 @@ const METRIC_INFO = [
     key: 'ndcg_at_k', alt: 'ndcg@k', label: 'NDCG',
     desc: '관련 식당이 더 높은 순위에 배치되었는지 평가하는 순위 품질 점수',
   },
+  {
+    key: 'axis_match_rate', alt: 'axis_match@k', label: 'AxisMatch',
+    desc: '맛 축 일치율 — 사용자 선택 축과 추천 식당 top_axes 교집합 / 사용자 선택 축',
+  },
 ];
 
 const EvaluationCard = () => {
   const [data, setData] = useState(null);
-  const [missing, setMissing] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     let alive = true;
+    // /api/evaluation은 항상 200으로 응답(ok:false면 데이터 없음). 404 fallback도 유지.
     fetch('/api/evaluation')
-      .then((res) => res.json().then((j) => ({ ok: res.ok, body: j })))
-      .then(({ ok, body }) => {
+      .then((res) => res.json().catch(() => null))
+      .then((d) => {
         if (!alive) return;
-        if (ok && body && body.ok && body.metrics) {
-          setData(body);
-        } else {
-          setMissing(true);
-        }
+        if (d && d.ok && d.metrics) setData(d);
+        else setHidden(true);
       })
-      .catch(() => alive && setMissing(true));
+      .catch(() => alive && setHidden(true));
     return () => { alive = false; };
   }, []);
 
-  if (missing) {
-    return (
-      <div style={{
-        backgroundColor: 'var(--white)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '16px',
-        boxShadow: 'var(--shadow-sm)',
-        border: '1px dashed var(--border-color)',
-        marginTop: '16px',
-        marginBottom: '8px',
-        textAlign: 'center',
-        color: 'var(--text-gray)',
-        fontSize: '12px',
-      }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-dark)' }}>
-          추천 목록 품질 평가
-        </div>
-        평가 데이터 없음 — <code>python evaluation.py --labels eval_labels.csv --k 5</code> 실행 후 표시됩니다.
-      </div>
-    );
-  }
-  if (!data) return null;
+  if (hidden || !data) return null;
 
   const {
     metrics = {},
@@ -80,6 +61,14 @@ const EvaluationCard = () => {
   } = data;
 
   const isPseudo = label_type === 'pseudo-label';
+  const fmt = (m) => {
+    const v = m[METRIC_INFO[0].key]; // dummy
+    return typeof v === 'number' ? v.toFixed(3) : '—';
+  };
+  const get = (info) => {
+    const v = metrics[info.key] ?? metrics[info.alt];
+    return typeof v === 'number' ? v.toFixed(3) : '—';
+  };
 
   return (
     <div style={{
@@ -113,42 +102,35 @@ const EvaluationCard = () => {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
+        // AxisMatch 추가로 5칸. 모바일에선 2/3행으로 자연스럽게 줄바꿈.
+        gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))',
         gap: '8px',
         marginBottom: '10px',
       }}>
         {METRIC_INFO.map((info) => {
-          const raw = metrics[info.key] ?? metrics[info.alt];
-          const num = typeof raw === 'number' ? raw : null;
-          const pct = num != null ? Math.max(0, Math.min(100, Math.round(num * 100))) : 0;
+          const isPrecision = info.key === 'precision_at_k';
+          const isAxisMatch = info.key === 'axis_match_rate';
+          // Top5 추천 적합률 (Precision@5)과 맛 축 일치율은 발표 핵심 지표 — 강조 스타일.
+          const emphasize = isPrecision || isAxisMatch;
           return (
             <div key={info.key} style={{
-              background: '#FAF9F6',
+              background: emphasize ? '#FFF6E8' : '#FAF9F6',
+              border: emphasize ? '1px solid #F5D08A' : '1px solid transparent',
               borderRadius: 'var(--radius-md)',
-              padding: '14px 10px',
+              padding: '16px 8px',
               textAlign: 'center',
             }} title={info.desc}>
-              <div style={{ fontSize: '12px', color: 'var(--text-gray)', fontWeight: 600, marginBottom: '4px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-gray)', fontWeight: 700, marginBottom: '4px' }}>
                 {info.label}@{k}
               </div>
               <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text-dark)' }}>
-                {num != null ? num.toFixed(3) : '—'}
+                {get(info)}
               </div>
-              <div style={{
-                marginTop: '8px',
-                height: '6px',
-                background: '#E5E7EB',
-                borderRadius: '999px',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  width: `${pct}%`,
-                  height: '100%',
-                  background: 'var(--primary, #FF7E67)',
-                  borderRadius: '999px',
-                  transition: 'width 0.4s',
-                }} />
-              </div>
+              {emphasize && (
+                <div style={{ fontSize: '9px', color: '#A8770F', fontWeight: 700, marginTop: '2px' }}>
+                  {isPrecision ? 'Top5 적합률' : '맛 축 일치율'}
+                </div>
+              )}
             </div>
           );
         })}

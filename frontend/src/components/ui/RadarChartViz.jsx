@@ -14,16 +14,21 @@ const RadarChartViz = ({ data, axes }) => {
 
   // Determine domain based on max value to make it look "fuller"
   const maxVal = Math.max(...chartData.map(d => d.A), 0.1);
-  const domainMax = maxVal * 1.1; // Tight domain for maximum spread
+  // 데이터 스케일에 따라 축 최댓값을 유동적으로 결정 (정규화된 값 대응)
+  let domainMax;
+  if (maxVal <= 1.0) domainMax = 1.0;
+  else if (maxVal <= 5.0) domainMax = 5.0;
+  else if (maxVal <= 10.0) domainMax = 10.0;
+  else domainMax = maxVal * 1.1;
 
   return (
-    <div style={{ width: '100%', height: '320px', margin: '0 auto' }}>
+    <div style={{ width: '100%', height: '340px', margin: '0 auto' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart cx="50%" cy="50%" outerRadius="90%" data={chartData}>
+        <RadarChart cx="50%" cy="50%" outerRadius="60%" data={chartData} margin={{ top: 15, right: 35, bottom: 15, left: 35 }}>
           <PolarGrid stroke="#E5E7EB" />
-          <PolarAngleAxis 
-            dataKey="subject" 
-            tick={{ fill: 'var(--text-dark)', fontSize: 12, fontWeight: 800 }} 
+          <PolarAngleAxis
+            dataKey="subject"
+            tick={{ fill: 'var(--text-dark)', fontSize: 14, fontWeight: 800 }}
           />
           <PolarRadiusAxis 
             angle={90} 

@@ -1,298 +1,407 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import Button from '../ui/Button';
-import AxisMatchBar from '../ui/AxisMatchBar';
+import { motion, AnimatePresence } from 'framer-motion';
+// AxisMatchBar는 현재 코드에서 사용되지 않아 주석 처리 또는 삭제를 권장합니다.
+// import AxisMatchBar from '../ui/AxisMatchBar'; 
 import RadarChartViz from '../ui/RadarChartViz';
 import EvaluationCard from '../ui/EvaluationCard';
-import { axisLabel } from '../../utils/labels';
-import { Star, ExternalLink, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import { ExternalLink, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'; // HelpCircle도 미사용이라 제외
 
-const ordinal = (n) => `${n}위`;
+// ── Background Doodles ──
+const StarDoodle = ({ size = 14, style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" style={style}>
+    <path d="M10 1 L12 7.5 L19 7.5 L13.5 11.5 L15.5 18 L10 14 L4.5 18 L6.5 11.5 L1 7.5 L8 7.5 Z" fill="#333" opacity="0.12" />
+  </svg>
+);
+
+const WavyLine = ({ style = {} }) => (
+  <svg width="48" height="14" viewBox="0 0 48 14" fill="none" style={style}>
+    <path d="M2 7 C6 2 10 12 14 7 C18 2 22 12 26 7 C30 2 34 12 38 7 C42 2 46 12 50 7" stroke="#888" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.2" />
+  </svg>
+);
+
+const PlusDoodle = ({ style = {} }) => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={style}>
+    <line x1="10" y1="2" x2="10" y2="18" stroke="#555" strokeWidth="2.2" strokeLinecap="round" opacity="0.18" />
+    <line x1="2" y1="10" x2="18" y2="10" stroke="#555" strokeWidth="2.2" strokeLinecap="round" opacity="0.18" />
+  </svg>
+);
+
+// Pastel accent pool for rank cards
+const CARD_ACCENTS = [
+  { bg: '#FFF3C4', border: '#F5D45E', rank: '#B87A00' },
+  { bg: '#E8DCFF', border: '#C4A8F5', rank: '#6B3FA0' },
+  { bg: '#D4EDD4', border: '#9DD09D', rank: '#2E7D32' },
+  { bg: '#DAEAFF', border: '#90BFFF', rank: '#1A56B0' },
+  { bg: '#FFE4D6', border: '#F5A07A', rank: '#B84E00' },
+];
+
+// 추천 결과 화면 상한. 백엔드도 기본 5건만 내려주지만, 백엔드 실수로 더 내려와도
+// 프론트에서 한 번 더 자른다 (이중 방어).
+const FRONT_RESULT_LIMIT = 5;
 
 const InferenceStep = ({ results, error, onRestart }) => {
   const [expanded, setExpanded] = useState({});
-  const toggle = (idx) => setExpanded((p) => ({ ...p, [idx]: !p[idx] }));
+  const toggle = (idx) => setExpanded(p => ({ ...p, [idx]: !p[idx] }));
 
   if (error) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
-        <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#D94452' }}>추천을 불러오지 못했습니다</h2>
+        <div style={{ fontSize: '44px', marginBottom: '16px' }}>⚠️</div>
+        <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#D94452' }}>추천을 불러오지 못했습니다</h2>
         <p style={{ color: 'var(--text-gray)', marginTop: '8px', marginBottom: '24px' }}>{error}</p>
-        <Button variant="primary" onClick={onRestart}>처음으로 돌아가기</Button>
+        <motion.button
+          onClick={onRestart}
+          whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+          style={{
+            background: 'var(--btn-dark)', color: 'white', border: 'none',
+            borderRadius: '999px', padding: '14px 32px', fontSize: '15px',
+            fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          처음으로 돌아가기
+        </motion.button>
       </div>
     );
   }
-  if (!results || results.length === 0) {
-    return <div style={{ textAlign: 'center', padding: '60px 20px' }}>추천 결과가 없습니다.</div>;
+
+  if (!results) {
+    return (
+      <div style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-gray)' }}>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+          style={{ fontSize: '32px', display: 'inline-block', marginBottom: '16px' }}
+        >
+          🍳
+        </motion.div>
+        <p style={{ fontWeight: 700, fontSize: '15px' }}>취향 분석 중...</p>
+      </div>
+    );
+  }
+
+  if (results.length === 0) {
+    return <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-gray)' }}>추천 결과가 없습니다.</div>;
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '20px', maxWidth: '640px', margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: '800' }}>나만의 맛 스니펫 완성! 🍕</h2>
-        <p style={{ color: 'var(--text-gray)', fontSize: '14px', marginTop: '4px' }}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ position: 'relative', minHeight: '100vh' }}
+    >
+      {/* Scattered decorative doodles */}
+      <StarDoodle size={18} style={{ position: 'absolute', top: '8%', left: '3%' }} />
+      <PlusDoodle style={{ position: 'absolute', top: '25%', left: '2%' }} />
+      <WavyLine style={{ position: 'absolute', top: '45%', left: '4%' }} />
+      <StarDoodle size={12} style={{ position: 'absolute', top: '15%', right: '3%' }} />
+      <PlusDoodle style={{ position: 'absolute', top: '35%', right: '2%' }} />
+      <WavyLine style={{ position: 'absolute', top: '55%', right: '1%' }} />
+
+      {/* ── Heading ── */}
+      <div style={{ textAlign: 'center', padding: '52px 24px 36px' }}>
+        <h2 style={{
+          fontSize: 'clamp(32px, 5vw, 48px)',
+          fontWeight: 900,
+          letterSpacing: '-1px',
+          lineHeight: 1.15,
+          color: 'var(--text-dark)',
+          marginBottom: '10px',
+        }}>
+          나만의 맛 스니펫 <span style={{ color: 'var(--text-gray)' }}>완성!</span> 🎉
+        </h2>
+        <p style={{ color: 'var(--text-gray)', fontSize: '15px' }}>
           취향 벡터와 가장 가까운 식당을 순위로 제시합니다.
         </p>
       </div>
 
-      {/* EvaluationCard moved to individual cards */}
+      {/* ── Card list container ── */}
+      <div style={{ maxWidth: '680px', margin: '0 auto', padding: '0 24px' }}>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
-        {results.map((item, idx) => {
-          const rank = item.rank || idx + 1;
-          const matchPct = item.match_percent != null
-            ? item.match_percent
-            : Math.round((item.similarity || 0) * 100);
-          const rankScore = item.rank_score != null
-            ? item.rank_score
-            : (item.similarity_score != null ? item.similarity_score : item.similarity);
-          const isExpanded = !!expanded[idx];
-          const placeUrl = item.naver_place_url || item.place_url || item.naver_url || item.fallback_search_url;
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '32px' }}>
+          {/* Top-N 안전 컷 — 백엔드도 기본 5건만 내려주지만, 더 와도 화면에는 5건만. */}
+          {results.slice(0, FRONT_RESULT_LIMIT).map((item, idx) => {
+            const rank = item.rank || idx + 1;
+            const accent = CARD_ACCENTS[(rank - 1) % CARD_ACCENTS.length];
+            const matchPct = item.match_percent != null
+              ? item.match_percent
+              : Math.round((item.similarity || 0) * 100);
 
-          // 축별 매칭 (top_axes + axis_scores)
-          const topAxes = (item.top_axes || item.reasons || []).slice(0, 5);
-          const axisScores = item.axis_scores || {};
-          const axisContribs = item.axis_contributions || {};
-          const matchData = topAxes.map((name) => ({
-            name,
-            value: axisScores[name] != null ? axisScores[name] : 0,
-            contribution: axisContribs[name],
-          }));
+            const isExpanded = !!expanded[idx];
+            const placeUrl = item.naver_place_url || item.place_url || item.naver_url || item.fallback_search_url;
 
-          // 추천 반영 비율 (text/image evidence ratio)
-          const textRatio = item.text_evidence_ratio != null
-            ? item.text_evidence_ratio
-            : (item.fusion_weights?.text ?? 1);
-          const imageRatio = item.image_evidence_ratio != null
-            ? item.image_evidence_ratio
-            : (item.fusion_weights?.image ?? 0);
-          const textPct = Math.round(textRatio * 100);
-          const imgPct = Math.round(imageRatio * 100);
-          const hasImageBasis = imgPct > 0 && (item.image_confidence || 0) > 0.05;
+            const topAxes = (item.top_axes || item.reasons || []).slice(0, 5);
+            const axisScores = item.axis_scores || {};
+            const axisContribs = item.axis_contributions || {};
+            const matchData = topAxes.map(name => ({
+              name, value: axisScores[name] ?? 0, contribution: axisContribs[name],
+            }));
 
-          // 대표 이미지
-          const repImg = item.representative_image && item.representative_image.image_src
-            ? item.representative_image
-            : null;
+            const textRatio = item.text_evidence_ratio != null ? item.text_evidence_ratio : (item.fusion_weights?.text ?? 1);
+            const imageRatio = item.image_evidence_ratio != null ? item.image_evidence_ratio : (item.fusion_weights?.image ?? 0);
+            const textPct = Math.round(textRatio * 100);
+            const imgPct = Math.round(imageRatio * 100);
+            const hasImageBasis = imgPct > 0 && (item.image_confidence || 0) > 0.05;
 
-          // 축별 evidence
-          const evSentences = item.evidence_sentences && typeof item.evidence_sentences === 'object'
-            ? item.evidence_sentences
-            : null;
+            const repImg = item.representative_image?.image_src ? item.representative_image : null;
+            const evSentences = item.evidence_sentences && typeof item.evidence_sentences === 'object' ? item.evidence_sentences : null;
 
-          // pseudo-label relevance
-          const pr = item.pseudo_relevance;     // "relevant" | "not_relevant" | null
+            // 유기적인 스크랩북 느낌을 위한 미세한 기울기
+            const rotation = (idx % 2 === 0 ? -0.7 : 0.7) + (idx * 0.1 % 0.5);
 
-          return (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.08 }}
-              style={{
-                backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', padding: '18px',
-                boxShadow: 'var(--shadow-md)',
-                border: matchPct >= 80 ? '2px solid var(--primary)' : '1px solid var(--border-color)'
-              }}
-            >
-              {/* 헤더 */}
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                {repImg && (
-                  <img
-                    src={repImg.image_src}
-                    alt={repImg.label || item.name}
-                    style={{ width: '72px', height: '72px', borderRadius: 'var(--radius-md)', objectFit: 'cover', flexShrink: 0 }}
-                    onError={(e) => { e.target.style.display = 'none'; }}
-                  />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                    <h3 style={{ fontSize: '17px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                      <span style={{
-                        background: 'var(--primary-light, #FFF1ED)', color: 'var(--primary, #FF7E67)',
-                        padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 700,
-                      }}>{ordinal(rank)}</span>
-                      {item.name}
-                      {matchPct >= 80 && <span style={{ fontSize: '11px', background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '10px' }}>강력 추천</span>}
-                    </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#FFF5E5', padding: '8px 16px', borderRadius: '999px', flexShrink: 0, border: '1px solid #FCD34D' }}>
-                      <Star size={18} color="#F59E0B" fill="#F59E0B" />
-                      <span style={{ fontSize: '20px', fontWeight: '900', color: '#B45309' }}>{matchPct}%</span>
-                    </div>
-                  </div>
-                  {item.address && (
-                    <p style={{ fontSize: '12px', color: 'var(--text-gray)', marginTop: '4px' }}>{item.address}</p>
-                  )}
-                  <div style={{ fontSize: '11px', color: 'var(--text-gray)', marginTop: '4px' }}>
-                    취향 일치도 {matchPct}% · 랭킹 점수 {typeof rankScore === 'number' ? rankScore.toFixed(2) : '—'}
-                  </div>
-                </div>
-              </div>
-
-              {/* 추천 한 줄 설명 */}
-              {item.debug_reason && (
-                <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--text-gray)' }}>
-                  💡 {item.debug_reason}
-                </div>
-              )}
-
-              {/* 주요 일치 축 + contribution % */}
-              {topAxes.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
-                  {topAxes.slice(0, 3).map((r) => {
-                    const c = axisContribs[r];
-                    const pct = typeof c === 'number' ? Math.round(c * 100) : null;
-                    return (
-                      <span key={r} style={{
-                        fontSize: '12px',
-                        backgroundColor: 'var(--bg-color)',
-                        color: 'var(--text-dark)',
-                        padding: '4px 10px',
-                        borderRadius: '999px',
-                        fontWeight: '600',
-                      }}>
-                        #{axisLabel(r, item)}{pct != null ? <span style={{ color: 'var(--text-gray)', marginLeft: 4 }}>{pct}%</span> : null}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* 추천 반영 비율 */}
-              <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '11px' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text-dark)' }}>추천 반영 비율</span>
-                <span style={{ background: '#EEF2FF', color: '#4338CA', padding: '3px 8px', borderRadius: '6px', fontWeight: '600' }}>
-                  텍스트 {textPct}%
-                </span>
-                {hasImageBasis ? (
-                  <span style={{ background: '#FEF3C7', color: '#92400E', padding: '3px 8px', borderRadius: '6px', fontWeight: '600' }}>
-                    이미지 {imgPct}%
-                  </span>
-                ) : (
-                  <span style={{ background: '#F3F4F6', color: '#6B7280', padding: '3px 8px', borderRadius: '6px', fontWeight: '600' }}>
-                    이미지 근거 없음 · 텍스트 기반 추천
-                  </span>
-                )}
-              </div>
-
-              {/* pseudo-label 배지 */}
-              {pr && (
-                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
-                  <span
-                    title="평가용 pseudo-label에서 이 식당이 관련 있음/없음으로 분류된 표기입니다. 실제 사용자 평가는 아닙니다."
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '4px',
-                      background: pr === 'relevant' ? '#DCFCE7' : '#F3F4F6',
-                      color:       pr === 'relevant' ? '#166534' : '#6B7280',
-                      padding: '3px 8px', borderRadius: '6px', fontWeight: 700,
-                    }}
-                  >
-                    평가 기준: {pr === 'relevant' ? '관련 있음' : '관련 낮음'}
-                    <HelpCircle size={11} />
-                  </span>
-                  <span style={{ color: 'var(--text-gray)' }}>(pseudo-label)</span>
-                </div>
-              )}
-
-              {/* Evidence Quote Block Removed */}
-
-              {/* 자세히 보기 토글 */}
-              <button
-                onClick={() => toggle(idx)}
+            return (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 30, rotate: 0 }}
+                animate={{ opacity: 1, y: 0, rotate: rotation }}
+                transition={{ delay: idx * 0.08, type: 'spring', stiffness: 200, damping: 20 }}
+                whileHover={{ y: -5, rotate: 0 }}
                 style={{
-                  marginTop: '10px', background: 'transparent', border: 'none',
-                  color: 'var(--primary)', fontSize: '13px', fontWeight: 600,
-                  display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', padding: 0
+                  backgroundColor: 'var(--white)',
+                  borderRadius: '8px',
+                  overflow: 'visible',
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+                  border: '1px solid var(--border-color)',
+                  position: 'relative',
+                  padding: '24px 20px',
                 }}
               >
-                자세히 보기 {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
+                {/* ── 1. 금메달 랭킹 배지 (Top Left Overlapping) ── */}
+                <div style={{
+                  position: 'absolute', top: '-14px', left: '-14px', zIndex: 10,
+                  width: '56px', height: '56px', borderRadius: '50%',
+                  background: accent.bg, border: `2.5px dashed ${accent.border}`,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  transform: 'rotate(-10deg)',
+                }}>
+                  <span style={{ fontSize: '10px', fontWeight: 900, color: accent.rank, lineHeight: 1 }}>RANK</span>
+                  <span style={{ fontSize: '24px', fontWeight: 900, color: accent.rank, lineHeight: 1 }}>{rank}</span>
+                </div>
 
-              {isExpanded && (
-                <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {(matchData.length > 0 || Object.keys(axisContribs).length > 0) && (
-                    <div style={{ 
-                      background: 'var(--bg-color)', 
-                      borderRadius: 'var(--radius-md)', 
-                      padding: '20px 0',
-                      marginTop: '10px'
-                    }}>
-                      <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-dark)' }}>
-                        취향 밸런스 분석
-                      </div>
-                      <RadarChartViz 
-                        data={axisScores} 
-                        axes={Array.from(new Set([
-                          ...topAxes, 
-                          ...Object.keys(axisContribs).sort((a, b) => axisContribs[b] - axisContribs[a]).slice(0, 6)
-                        ])).slice(0, 7)} 
+                {/* ── 2. 매치 점수 스탬프 (Top Right) ── */}
+                <div style={{
+                  position: 'absolute', top: '20px', right: '20px', zIndex: 5,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  width: '68px', height: '68px', borderRadius: '50%',
+                  border: `3.5px double ${accent.border}`,
+                  color: accent.rank,
+                  transform: 'rotate(15deg)',
+                  opacity: 0.85,
+                }}>
+                  <span style={{ fontSize: '19px', fontWeight: 900, lineHeight: 1 }}>{matchPct}%</span>
+                  <span style={{ fontSize: '12px', fontWeight: 800 }}>일치</span>
+                </div>
+
+                {/* ── 3. 가로 배치 레이아웃 (Image Left, Details Right) ── */}
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+
+                  {/* 왼쪽: 큼직한 대표 이미지 (폴라로이드 프레임) */}
+                  <div style={{
+                    width: '130px', flexShrink: 0,
+                    background: 'white', padding: '6px 6px 18px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.05)',
+                    borderRadius: '3px',
+                    transform: 'rotate(-2deg)',
+                    alignSelf: 'center',
+                  }}>
+                    {repImg ? (
+                      <img
+                        src={repImg.image_src}
+                        alt={repImg.label || item.name}
+                        style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: '2px' }}
+                        onError={e => { e.target.style.display = 'none'; }}
                       />
-                      <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-gray)', marginTop: '4px' }}>
-                        식당의 특징 점수와 취향 기여도를 종합한 그래프입니다.
-                      </div>
+                    ) : (
+                      <div style={{
+                        width: '100%', aspectRatio: '1/1', background: '#F5F0EA',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '40px', borderRadius: '2px'
+                      }}>🍽️</div>
+                    )}
+                  </div>
+
+                  {/* 오른쪽: 상세 정보 */}
+                  <div style={{ flex: 1, minWidth: 0, paddingTop: '4px' }}>
+
+                    {/* 식당 이름 & 주소 */}
+                    <div style={{ paddingRight: '60px' }}>
+                      <h3 style={{
+                        fontSize: '28px',
+                        fontWeight: 800,
+                        color: 'var(--text-dark)',
+                        marginBottom: '6px',
+                        lineHeight: 1.1,
+                        letterSpacing: '-0.5px'
+                      }}>
+                        {item.name}
+                      </h3>
+                      {item.address && (
+                        <p style={{ fontSize: '12px', color: 'var(--text-gray)' }}>📍 {item.address}</p>
+                      )}
                     </div>
-                  )}
-                  {evSentences && Object.keys(evSentences).length > 0 && (
-                    <div>
-                      <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-dark)' }}>
-                        축별 추천 근거 문장
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {Object.entries(evSentences).slice(0, 4).map(([ax, sents]) => {
-                          const raw = (sents || [])[0] || '';
-                          // 이모티콘/반복 정리 + 80~100자 자르기
-                          const cleaned = String(raw)
-                            .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
-                            .replace(/[ㅋㅎ!?.~]{3,}/g, (s) => s.slice(0, 2))
-                            .trim();
-                          if (!cleaned) return null;
-                          const truncated = cleaned.length > 95 ? cleaned.slice(0, 95) + '…' : cleaned;
+
+                    {/* 특징 태그 (마스킹 테이프 스타일) */}
+                    {topAxes.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '16px' }}>
+                        {topAxes.slice(0, 3).map(r => {
+                          const c = axisContribs[r];
+                          const pct = typeof c === 'number' ? Math.round(c * 100) : null;
                           return (
-                            <div key={ax} style={{ fontSize: '12px' }}>
-                              <span style={{ fontWeight: 700, color: 'var(--primary)' }}>#{axisLabel(ax, item)} 근거</span>{' '}
-                              <span style={{ color: 'var(--text-gray)', fontStyle: 'italic' }}>"{truncated}"</span>
-                            </div>
+                            <span key={r} style={{
+                              fontSize: '15px', background: '#F5F0EA', color: 'var(--text-dark)',
+                              padding: '4px 12px', borderRadius: '4px 12px 12px 4px', fontWeight: 700,
+                              borderLeft: '3px solid var(--primary-light)',
+                              boxShadow: '1px 2px 4px rgba(0,0,0,0.05)',
+                            }}>
+                              #{r}{pct != null ? <span style={{ color: 'var(--text-gray)', marginLeft: 4, fontSize: '13px' }}>{pct}%</span> : null}
+                            </span>
                           );
                         })}
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Evaluation Metrics inserted here */}
-                  <div style={{ marginTop: '10px' }}>
-                     <EvaluationCard />
+                    {/* 반영 비율 (귀여운 스티커 스타일) */}
+                    <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{
+                        fontSize: '14px',
+                        background: '#EEF2FF', color: '#4338CA',
+                        padding: '3px 10px', borderRadius: '3px', fontWeight: 700,
+                        transform: 'rotate(-1.5deg)'
+                      }}>
+                        📝 텍스트 {textPct}%
+                      </span>
+                      {hasImageBasis && (
+                        <span style={{
+                          fontSize: '14px',
+                          background: '#FEF3C7', color: '#92400E',
+                          padding: '3px 10px', borderRadius: '3px', fontWeight: 700,
+                          transform: 'rotate(1.5deg)'
+                        }}>
+                          📸 이미지 {imgPct}%
+                        </span>
+                      )}
+                    </div>
+
+                    {/* AI 요약/디버그 이유 */}
+                    {item.debug_reason && (
+                      <div style={{
+                        marginTop: '16px', fontSize: '13px', color: 'var(--text-gray)',
+                        background: 'var(--bg-color)',
+                        padding: '8px 12px', borderRadius: '8px', border: '1px dashed var(--border-color)'
+                      }}>
+                        💡 {item.debug_reason}
+                      </div>
+                    )}
+
                   </div>
                 </div>
-              )}
 
-              {placeUrl && (
-                <div style={{ marginTop: '12px', textAlign: 'right' }}>
-                  <a
-                    href={placeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '6px',
-                      fontSize: '13px', fontWeight: 600, color: 'var(--primary)',
-                      textDecoration: 'none', padding: '6px 12px',
-                      border: '1px solid var(--primary)', borderRadius: 'var(--radius-md)'
-                    }}
-                  >
-                    {(item.naver_place_url || item.naver_url) ? '네이버 플레이스 보기' : '네이버에서 검색'} <ExternalLink size={13} />
-                  </a>
-                </div>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
+                {/* Expand toggle (손글씨 적용) */}
+                <button
+                  onClick={() => toggle(idx)}
+                  style={{
+                    marginTop: '20px', background: 'transparent', border: 'none',
+                    color: 'var(--text-gray)', fontSize: '16px', fontWeight: 700,
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    cursor: 'pointer', padding: 0,
+                    marginLeft: 'auto'
+                  }}
+                >
+                  자세히 보기 {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
 
-      <div style={{ textAlign: 'center' }}>
-        <Button variant="primary" onClick={onRestart}>다시 테스트하기</Button>
-      </div>
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      key="expanded"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25 }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        {(matchData.length > 0 || Object.keys(axisContribs).length > 0) && (
+                          <div style={{ background: 'var(--bg-color)', borderRadius: '16px', padding: '16px 8px' }}>
+                            <div style={{ textAlign: 'center', fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>취향 밸런스 분석</div>
+                            <RadarChartViz
+                              data={axisScores}
+                              axes={Array.from(new Set([
+                                ...topAxes,
+                                ...Object.keys(axisContribs).sort((a, b) => axisContribs[b] - axisContribs[a]).slice(0, 6),
+                              ])).slice(0, 7)}
+                            />
+                            <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-gray)', marginTop: '4px' }}>
+                              식당의 특징 점수와 취향 기여도를 종합한 그래프입니다.
+                            </div>
+                          </div>
+                        )}
+
+                        {evSentences && Object.keys(evSentences).length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '12px', fontWeight: 800, marginBottom: '8px' }}>축별 추천 근거</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {Object.entries(evSentences).slice(0, 4).map(([ax, sents]) => (
+                                <div key={ax} style={{ fontSize: '12px', background: 'var(--bg-color)', borderRadius: '10px', padding: '8px 12px' }}>
+                                  <span style={{ fontWeight: 800, color: 'var(--btn-dark)' }}>#{ax}</span>{' '}
+                                  <span style={{ color: 'var(--text-gray)', fontStyle: 'italic' }}>"{(sents || [])[0]}"</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <EvaluationCard />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {/* ⚠️ 기존 코드에 있던 불필요한 </div> 가 삭제된 부분입니다. */}
+
+                {/* Naver link */}
+                {
+                  placeUrl && (
+                    <div style={{ borderTop: '1px solid var(--border-color)', padding: '12px 18px', textAlign: 'right', marginTop: '16px' }}>
+                      <a
+                        href={placeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '6px',
+                          fontSize: '12px', fontWeight: 700, color: 'var(--text-dark)',
+                          background: 'var(--bg-color)', border: '1.5px solid var(--border-color)',
+                          borderRadius: '999px', padding: '7px 14px', textDecoration: 'none',
+                        }}
+                      >
+                        {(item.naver_place_url || item.naver_url) ? '네이버 플레이스 보기' : '네이버에서 검색'} <ExternalLink size={12} />
+                      </a>
+                    </div>
+                  )
+                }
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <div style={{ textAlign: 'center', paddingBottom: '40px' }}>
+          <motion.button
+            onClick={onRestart}
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.96 }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              background: 'var(--btn-dark)', color: 'white', border: 'none',
+              borderRadius: '999px', padding: '14px 36px', fontSize: '15px',
+              fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+              boxShadow: '0 6px 24px rgba(0,0,0,0.20)',
+            }}
+          >
+            <RotateCcw size={16} /> 다시 테스트하기
+          </motion.button>
+        </div>
+      </div>{/* ⚠️ 기존 /div> 였던 오타를 </div> 로 수정한 부분입니다. */}
     </motion.div>
   );
-};
+}; // ⚠️ 기존 }; < 로 떠돌던 < 가 삭제된 부분입니다.
 
 export default InferenceStep;

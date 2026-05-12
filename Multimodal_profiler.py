@@ -24,6 +24,7 @@ import json
 import math
 import os
 import sys
+import urllib.parse
 from collections import defaultdict
 from typing import Optional
 
@@ -75,11 +76,20 @@ def get_search_terms(keyword):
 
 # ── 리뷰 로드: DB 우선, CSV 폴백 ──────────────────────────────
 
-def load_reviews_from_db(keyword: str) -> Optional[pd.DataFrame]:
+def load_reviews_from_db(keyword: str, debug_dump: dict | None = None) -> Optional[pd.DataFrame]:
     terms = get_search_terms(keyword)
     try:
         with get_conn() as conn:
-            rows = get_reviews_for_profiler(conn, keyword, terms)
+            if debug_dump is not None:
+                rows, kw_debug = get_reviews_for_profiler(conn, keyword, terms, return_debug=True)
+                debug_dump["keyword_filter"] = kw_debug
+                print(f"  🔎 키워드 필터: 후보 {kw_debug.get('candidate_restaurants', 0)}곳 "
+                      f"→ 통과 {kw_debug.get('kept_restaurants', 0)}곳 "
+                      f"| density 제외 {kw_debug.get('excluded_by_density', 0)} "
+                      f"| 카테고리 제외 {kw_debug.get('excluded_by_category', 0)} "
+                      f"| 이름보호 {kw_debug.get('protected_by_name', 0)}")
+            else:
+                rows = get_reviews_for_profiler(conn, keyword, terms)
     except Exception as e:
         print(f"  ⚠️ DB 로드 실패: {e}")
         return None
@@ -96,13 +106,25 @@ def load_reviews_from_db(keyword: str) -> Optional[pd.DataFrame]:
 
 
 def load_reviews_from_csv(keyword: str) -> Optional[pd.DataFrame]:
+    """
+    CSV 로더 — keyword 경계 강제. Food_profiler.load_from_csv와 동일 정책.
+    파일명에 keyword가 들어간 CSV만 우선. 없으면 fallback으로 모든 CSV를 보되
+    CrawlKeyword 컬럼이 있으면 그 값을 기준으로 다른 keyword 행을 제거.
+    """
+    terms = get_search_terms(keyword)
+    all_csvs = [f for f in sorted(glob.glob("*.csv"))
+                if not any(x in f for x in ["_dictionary", "_vectors", "_axes",
+                                            "candidate", "eval_labels"])]
+    scoped = [f for f in all_csvs
+              if any(t in os.path.basename(f) for t in terms)]
+    target_csvs = scoped if scoped else all_csvs
+
     frames = []
-    for f in sorted(glob.glob("*.csv")):
-        if any(x in f for x in ["_dictionary", "_vectors", "_axes", "candidate"]):
-            continue
+    for f in target_csvs:
         try:
             tmp = pd.read_csv(f, encoding="utf-8-sig")
             if "Review" in tmp.columns and "Restaurant" in tmp.columns:
+                tmp["__source_csv__"] = os.path.basename(f)
                 frames.append(tmp)
         except Exception:
             pass
@@ -111,7 +133,12 @@ def load_reviews_from_csv(keyword: str) -> Optional[pd.DataFrame]:
     df = pd.concat(frames, ignore_index=True)
     df = df.drop_duplicates(subset=["Restaurant", "Date", "Review"], keep="first")
 
-    terms = get_search_terms(keyword)
+    if "CrawlKeyword" in df.columns:
+        df["CrawlKeyword"] = df["CrawlKeyword"].fillna("").astype(str)
+        has_crawl_meta = df["CrawlKeyword"].str.strip() != ""
+        crawl_match = df["CrawlKeyword"].apply(lambda v: any(t == v.strip() for t in terms))
+        df = df[(~has_crawl_meta) | crawl_match].copy()
+
     def has_kw(row):
         text = (str(row.get("Menu", "")) + " " + str(row.get("Review", ""))).lower()
         return any(t.lower() in text for t in terms)
@@ -507,6 +534,52 @@ def late_fusion_dynamic(text_vecs, img_vecs, dynamic=True):
 
 # ── 대표 이미지 선정 ──────────────────────────────────────────
 
+# ── keyword 경계: S3 URL prefix 검사 ─────────────────────────
+#
+# 크롤러가 `python Naver_place_crawler.py 김밥`로 수집한 이미지는 S3에
+# `reviews/김밥/{filename}` prefix로 업로드되고, review_images.image_url에는
+#   https://<bucket>.s3.<region>.amazonaws.com/reviews/%EA%B9%80%EB%B0%A5/{filename}
+# 형태(한글이 URL 인코딩) 또는 raw 한글이 그대로 들어간 형태로 저장된다.
+#
+# 다른 keyword 폴더의 이미지가 한 식당의 review_images에 섞여 있을 수 있으므로,
+# 현재 keyword의 `/reviews/<keyword>/` prefix를 가진 이미지만 후보로 허용한다.
+
+def _keyword_prefix_variants(keyword: str) -> list[str]:
+    """현재 keyword의 S3 prefix 후보(raw / URL-encoded). 둘 다 매칭."""
+    if not keyword:
+        return []
+    raw = f"/reviews/{keyword}/"
+    enc = f"/reviews/{urllib.parse.quote(keyword, safe='')}/"
+    variants = [raw]
+    if enc != raw:
+        variants.append(enc)
+    return variants
+
+
+def _image_url_matches_keyword(image_url: str, keyword: str) -> tuple[bool, str]:
+    """
+    image_url이 현재 keyword의 S3 prefix를 갖는지 검사.
+
+    반환: (matches, classification)
+      - matches=True  : prefix 일치 또는 S3 prefix가 없는 데이터(local/dev)
+      - classification: "match" | "mismatch_other_keyword" | "no_reviews_prefix"
+
+    규칙:
+      1) image_url에 `/reviews/`가 아예 없으면 → 로컬·dev 데이터로 간주, 통과(True)
+      2) `/reviews/<keyword>/` (raw 또는 URL-encoded) 포함 → 통과
+      3) `/reviews/`는 있는데 현재 keyword가 아니면 → 차단
+    """
+    if not image_url:
+        return True, "no_reviews_prefix"  # URL 없으면 image_path로 대체될 수 있음 → 통과
+    url = str(image_url)
+    if "/reviews/" not in url:
+        return True, "no_reviews_prefix"
+    for v in _keyword_prefix_variants(keyword):
+        if v in url:
+            return True, "match"
+    return False, "mismatch_other_keyword"
+
+
 def _expand_images_per_review(df) -> list[dict]:
     """
     DataFrame의 각 row(리뷰)를 image_id 단위로 펼친다.
@@ -565,9 +638,9 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
 
     th = image_filtering.get("thresholds", {}) or {}
     min_food   = float(th.get("min_food_presence", 0.18))
-    max_non    = float(th.get("max_non_food_penalty", 0.22))
+    max_non    = float(th.get("max_non_food_penalty", 0.18))
     min_cat    = float(th.get("min_category_presence", 0.15))
-    max_wrong  = float(th.get("max_wrong_food_penalty", 0.25))
+    max_wrong  = float(th.get("max_wrong_food_penalty", 0.20))
     w_food     = float(th.get("food_presence_weight", 0.0))
     w_non      = float(th.get("non_food_penalty_weight", 0.6))
     w_cat      = float(th.get("category_bonus_weight", 0.30))
@@ -575,16 +648,49 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     w_link     = float(th.get("linked_text_weight", 0.15))
     dup_thresh = float(th.get("duplicate_threshold", 0.92))
     w_dup      = float(th.get("duplicate_penalty_weight", 0.30))
-    max_per_review = int(th.get("max_per_review", 2))
+    max_per_review = int(th.get("max_per_review", 1))
+    max_per_review_loose = int(th.get("max_per_review_loose", 2))
+    max_per_restaurant = int(th.get("max_per_restaurant", 2))
     max_per_rest_axis = int(th.get("max_per_restaurant_axis", 1))
+    fallback_target = int(th.get("fallback_target_count", top_n))
+    fallback_min_combined = float(th.get("fallback_min_combined", 0.10))
 
     # image_id 단위로 펼치기
-    images = _expand_images_per_review(df)
+    images_all = _expand_images_per_review(df)
+    if not images_all:
+        return []
+
+    # ── (0) keyword 경계 강제: S3 prefix `/reviews/<keyword>/` 검사 ──
+    # 다른 keyword 폴더의 이미지가 같은 식당 review_images에 섞여 있을 수 있으므로,
+    # CLIP 평가 전에 prefix가 어긋난 이미지는 후보에서 완전히 제거한다.
+    images: list[dict] = []
+    skipped_keyword_mismatch: list[dict] = []
+    for im in images_all:
+        ok, classification = _image_url_matches_keyword(im.get("image_url", ""), keyword)
+        if ok:
+            images.append(im)
+        else:
+            skipped_keyword_mismatch.append({
+                "image_id": im.get("image_id"),
+                "review_id": im.get("review_id"),
+                "restaurant_name": im.get("restaurant", ""),
+                "image_url": im.get("image_url", ""),
+                "expected_prefix_variants": _keyword_prefix_variants(keyword),
+                "classification": classification,  # 항상 "mismatch_other_keyword"
+                "excluded_reason": "keyword_prefix_mismatch",
+            })
+
+    if skipped_keyword_mismatch:
+        print(f"  🚧 keyword 경계 컷오프(다른 폴더의 S3 이미지): {len(skipped_keyword_mismatch)}장")
     if not images:
+        if debug_dump is not None:
+            debug_dump["skipped_keyword_mismatch_count"] = len(skipped_keyword_mismatch)
+            debug_dump["skipped_keyword_mismatch"] = skipped_keyword_mismatch[:200]
         return []
 
     # ── (1) image_id 단위로 keyword-level CLIP 점수 1회 캐시 ──
-    print(f"  🔍 후보 이미지 {len(images)}장 (image_id 단위 평가)")
+    print(f"  🔍 후보 이미지 {len(images)}장 (image_id 단위 평가) "
+          f"| keyword 경계 컷오프 {len(skipped_keyword_mismatch)}장")
     img_keyword_meta: dict[int, dict] = {}
     img_embeddings: dict[int, "np.ndarray"] = {}
     download_count = 0
@@ -611,15 +717,19 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
         category = clip_prompt_score(resolved_path, cat_prompts, use_cache=use_cache) if cat_prompts else 1.0
         wrong = clip_prompt_score(resolved_path, wrong_prompts, use_cache=use_cache) if wrong_prompts else 0.0
 
+        # excluded_reason 표준 명칭 (debug JSON / API 응답 일관성):
+        #   rejected_non_food            — 메뉴판/영수증/매장 외관/사람 등 음식이 아닌 사진
+        #   rejected_low_foodness        — 음식 자체가 거의 보이지 않음 (food/category 둘 다 낮음)
+        #   rejected_wrong_visual        — 현재 keyword와 다른 음식이 잡힘
         ok, excluded = True, None
-        if food < min_food:
-            ok, excluded = False, "food_presence_too_low"
-        elif non_food > max_non:
-            ok, excluded = False, "non_food_image"
-        elif category < min_cat:
-            ok, excluded = False, "wrong_category_for_keyword"
+        if non_food > max_non:
+            ok, excluded = False, "rejected_non_food"
+        elif food < min_food:
+            ok, excluded = False, "rejected_low_foodness"
         elif wrong > max_wrong:
-            ok, excluded = False, "shows_wrong_food"
+            ok, excluded = False, "rejected_wrong_visual"
+        elif category < min_cat:
+            ok, excluded = False, "rejected_low_foodness"
 
         img_keyword_meta[im["image_id"]] = {
             "food": food, "non_food": non_food, "category": category, "wrong": wrong,
@@ -735,72 +845,190 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                 "excluded_reason": None,
             })
 
-    # ── (3) 같은 review_id 내 max_per_review 제한 ──
+    # ── (3) 같은 review_id 내 후보 풀 상한 ──
+    # 풀 단계에서는 loose cap(=2)까지 허용하고, 선정 단계에서 strict cap(=1)을 적용.
+    # fallback 단계에서 loose cap을 허용해 같은 review에서 1장 추가 가능.
     for ax_name, cands in candidates_per_axis.items():
         cands.sort(key=lambda c: -c["score"])
         per_review_count: dict[int, int] = defaultdict(int)
         kept = []
         for c in cands:
             rid = c["review_id"] or 0
-            if rid and per_review_count[rid] >= max_per_review:
+            if rid and per_review_count[rid] >= max_per_review_loose:
                 continue
             per_review_count[rid] += 1
             kept.append(c)
         candidates_per_axis[ax_name] = kept
 
-    # ── (4) 축별 선정: 같은 (restaurant, axis) 1장, duplicate penalty ──
+    # ── (4) 축별 선정 ──
+    # 같은 (restaurant, axis) 1장 (max_per_rest_axis), 같은 restaurant 전체 누적 max_per_restaurant 장,
+    # 같은 image_id 1회, duplicate_penalty 적용.
     rep: list[dict] = []
     seen_pairs: set[tuple[str, str]] = set()
     seen_image_ids: set[int] = set()
+    per_restaurant_count: dict[str, int] = defaultdict(int)
+    per_review_selected: dict[int, int] = defaultdict(int)
     selected_embs: list["np.ndarray"] = []
+    # 선정 단계 거절 로그 — debug_dump.selection_rejections에 적재.
+    # phase: "primary" | "fallback" | "fallback_relaxed"
+    selection_rejections: list[dict] = []
 
     axis_order = sorted(candidates_per_axis.keys(),
                         key=lambda a: -sum(c["score"] for c in candidates_per_axis[a][:3]))
 
+    def _try_select(cand, fallback: bool, allow_relax_restaurant: bool = False) -> tuple[bool, str | None]:
+        """선정 시도. 통과하면 rep에 추가하고 (True, None) 반환, 차단되면 (False, reason)."""
+        # 1) image_id 중복 (같은 사진이 여러 축을 차지하지 않게)
+        if cand["image_id"] in seen_image_ids:
+            return False, "rejected_duplicate_image"
+        # 2) (restaurant, axis) 중복
+        if (cand["restaurant"], cand["axis"]) in seen_pairs:
+            return False, "rejected_duplicate_restaurant"
+        # 3) 같은 review_id 누적 cap: primary는 strict(=1), fallback은 loose(=2)
+        review_cap = max_per_review_loose if fallback else max_per_review
+        rid = cand["review_id"] or 0
+        if rid and per_review_selected[rid] >= review_cap:
+            return False, "rejected_duplicate_review"
+        # 4) 같은 restaurant 누적 cap (다양성). fallback 2단계에서 +1 허용.
+        rest_cap = max_per_restaurant + (1 if allow_relax_restaurant else 0)
+        if cand["restaurant"] and per_restaurant_count[cand["restaurant"]] >= rest_cap:
+            return False, "rejected_duplicate_restaurant"
+
+        # duplicate_penalty 적용
+        dup_pen = 0.0
+        emb = img_embeddings.get(cand["image_id"])
+        if emb is not None and selected_embs:
+            sims = [float(np.dot(emb, e)) for e in selected_embs]
+            if sims and max(sims) >= dup_thresh:
+                dup_pen = w_dup
+                cand["score"] = round(cand["score"] - dup_pen, 4)
+
+        seen_pairs.add((cand["restaurant"], cand["axis"]))
+        seen_image_ids.add(cand["image_id"])
+        per_restaurant_count[cand["restaurant"]] += 1
+        if rid:
+            per_review_selected[rid] += 1
+        cand["_duplicate_penalty"] = dup_pen
+        cand["clip_vector"] = img_vecs.get(cand["restaurant"], {})
+        cand["reason"] = (f"axis={cand['_axis_clip']:+.2f} cat={cand['_category']:.2f} "
+                          f"non_food={cand['_non_food']:.2f} wrong={cand['_wrong']:.2f} "
+                          f"linked={cand['_linked']:+.2f} dup={dup_pen:.2f}"
+                          f"{' [fallback]' if fallback else ''}")
+        cand["selected_fallback"] = bool(fallback)
+        rep.append(cand)
+        if emb is not None:
+            selected_embs.append(emb)
+        # debug_records 동기화
+        for r in all_records:
+            if r["image_id"] == cand["image_id"] and r["axis"] == cand["axis"]:
+                r["selected"] = True
+                r["selected_fallback"] = bool(fallback)
+                r["duplicate_penalty"] = dup_pen
+                r["final_score"] = cand["score"]
+                break
+        return True, None
+
+    # (4a) 축별 1차 선정 — 각 축에서 점수 최상위 후보 1장씩 시도
     for ax_name in axis_order:
         cands = candidates_per_axis[ax_name]
         for cand in cands:
-            pair = (cand["restaurant"], cand["axis"])
-            if pair in seen_pairs:
-                continue
-            if cand["image_id"] in seen_image_ids:
-                continue
-
-            # duplicate_penalty 적용
-            dup_pen = 0.0
-            emb = img_embeddings.get(cand["image_id"])
-            if emb is not None and selected_embs:
-                sims = [float(np.dot(emb, e)) for e in selected_embs]
-                if sims and max(sims) >= dup_thresh:
-                    dup_pen = w_dup
-                    cand["score"] = round(cand["score"] - dup_pen, 4)
-                    # 갱신된 점수로 재정렬 안 하므로 그대로 통과
-            seen_pairs.add(pair)
-            seen_image_ids.add(cand["image_id"])
-            cand["_duplicate_penalty"] = dup_pen
-            cand["clip_vector"] = img_vecs.get(cand["restaurant"], {})
-            cand["reason"] = (f"axis={cand['_axis_clip']:+.2f} cat={cand['_category']:.2f} "
-                              f"non_food={cand['_non_food']:.2f} wrong={cand['_wrong']:.2f} "
-                              f"linked={cand['_linked']:+.2f} dup={dup_pen:.2f}")
-            rep.append(cand)
-            if emb is not None:
-                selected_embs.append(emb)
-
-            # debug_records 동기화
-            for r in all_records:
-                if r["image_id"] == cand["image_id"] and r["axis"] == ax_name:
-                    r["selected"] = True
-                    r["duplicate_penalty"] = dup_pen
-                    r["final_score"] = cand["score"]
-                    break
-            break
+            ok_sel, sel_reason = _try_select(cand, fallback=False, allow_relax_restaurant=False)
+            if ok_sel:
+                break
+            selection_rejections.append({
+                "phase": "primary",
+                "image_id": cand["image_id"],
+                "review_id": cand["review_id"],
+                "restaurant": cand["restaurant"],
+                "axis": ax_name,
+                "score": cand["score"],
+                "reason": sel_reason,  # rejected_duplicate_image / _restaurant / _review
+            })
         if len(rep) >= top_n:
             break
 
+    # ── (5) 6개 미만이면 fallback fill ──
+    # 같은 keyword 내 깨끗한 후보(meta gate 통과 + foodness 충분) 중에서
+    # rep에 아직 없는 image를 점수 순으로 추가. 다른 keyword prefix는 절대 사용하지 않는다
+    # (이 함수가 받는 images 자체가 이미 prefix 컷오프된 상태).
+    fallback_added = 0
+    fallback_relaxed_restaurant = False
+    if len(rep) < fallback_target:
+        # 모든 (image × axis) 후보를 flat하게 모아 점수 순으로 정렬
+        all_cands_flat: list[dict] = []
+        for cs in candidates_per_axis.values():
+            all_cands_flat.extend(cs)
+        all_cands_flat.sort(key=lambda c: -c["score"])
+
+        # foodness 결합 점수 — meta gate를 한 번 더 보수적으로 확인
+        def _foodness_combined(c: dict) -> float:
+            return (float(c.get("_category", 0.0)) + float(c.get("_food", 0.0))
+                    - float(c.get("_non_food", 0.0)) - float(c.get("_wrong", 0.0)))
+
+        # 1단계: 기존 cap 그대로
+        for cand in all_cands_flat:
+            if len(rep) >= fallback_target:
+                break
+            if _foodness_combined(cand) < fallback_min_combined:
+                selection_rejections.append({
+                    "phase": "fallback",
+                    "image_id": cand["image_id"], "review_id": cand["review_id"],
+                    "restaurant": cand["restaurant"], "axis": cand["axis"],
+                    "score": cand["score"], "reason": "rejected_low_foodness",
+                })
+                continue
+            ok_sel, sel_reason = _try_select(cand, fallback=True, allow_relax_restaurant=False)
+            if ok_sel:
+                fallback_added += 1
+            else:
+                selection_rejections.append({
+                    "phase": "fallback",
+                    "image_id": cand["image_id"], "review_id": cand["review_id"],
+                    "restaurant": cand["restaurant"], "axis": cand["axis"],
+                    "score": cand["score"], "reason": sel_reason,
+                })
+
+        # 2단계: 여전히 모자라면 per_restaurant cap을 +1 완화
+        if len(rep) < fallback_target:
+            fallback_relaxed_restaurant = True
+            for cand in all_cands_flat:
+                if len(rep) >= fallback_target:
+                    break
+                if _foodness_combined(cand) < fallback_min_combined:
+                    continue
+                ok_sel, sel_reason = _try_select(cand, fallback=True, allow_relax_restaurant=True)
+                if ok_sel:
+                    fallback_added += 1
+                else:
+                    selection_rejections.append({
+                        "phase": "fallback_relaxed",
+                        "image_id": cand["image_id"], "review_id": cand["review_id"],
+                        "restaurant": cand["restaurant"], "axis": cand["axis"],
+                        "score": cand["score"], "reason": sel_reason,
+                    })
+
     rep.sort(key=lambda x: -x["score"])
 
+    # ── (6) 요약 로그 ──
     cutoff_count = sum(1 for r in all_records if r.get("excluded_reason"))
-    print(f"  🖼️  대표 이미지 {len(rep)}장  (컷오프 {cutoff_count}건)")
+    raw_candidate_count = len(images)
+    meta_ok_count = sum(1 for m in img_keyword_meta.values() if m.get("ok"))
+    base_selected = len(rep) - fallback_added
+    print(f"  🖼️  대표 이미지 {len(rep)}장 "
+          f"(축별 {base_selected} + fallback {fallback_added}) "
+          f"| 후보 {raw_candidate_count}장 → meta-OK {meta_ok_count}장 → 컷오프 {cutoff_count}건")
+    if fallback_relaxed_restaurant:
+        print(f"    ↪️ per_restaurant cap 완화 적용 (한 식당이 {max_per_restaurant + 1}장까지)")
+    if len(rep) < fallback_target:
+        # 6개를 못 채운 사유 진단
+        if raw_candidate_count == 0:
+            reason = "raw image 0장 — 해당 keyword로 크롤링된 이미지가 없음"
+        elif meta_ok_count < fallback_target:
+            reason = (f"foodness gate 통과 {meta_ok_count}장 < {fallback_target} "
+                      f"— 비음식/저품질 사진이 너무 많음")
+        else:
+            reason = "다양성 제한으로 후보가 부족 — 같은 식당/리뷰 반복"
+        print(f"  ⚠️  {len(rep)}/{fallback_target}장 (부족 사유: {reason})")
     if not rep:
         print(f"  ⚠️ 현재 keyword({keyword})로 음식이 보이는 후보가 부족 → 대표 이미지 생략")
 
@@ -811,7 +1039,20 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
         json.dump({"keyword": keyword, "images": rep_for_json}, f, ensure_ascii=False, indent=2)
 
     if debug_dump is not None:
+        debug_dump["skipped_keyword_mismatch_count"] = len(skipped_keyword_mismatch)
+        debug_dump["skipped_keyword_mismatch"] = skipped_keyword_mismatch[:200]
         debug_dump["image_axis_evaluations"] = all_records
+        debug_dump["selection_rejections"] = selection_rejections[:400]
+        debug_dump["selection_summary"] = {
+            "raw_candidates_after_prefix_cut": raw_candidate_count,
+            "meta_gate_passed": meta_ok_count,
+            "selected_total": len(rep),
+            "selected_primary": base_selected,
+            "selected_fallback": fallback_added,
+            "fallback_target": fallback_target,
+            "fallback_relaxed_restaurant": fallback_relaxed_restaurant,
+            "per_restaurant_count": dict(per_restaurant_count),
+        }
         debug_dump["image_filtering_thresholds"] = {
             "min_food_presence": min_food, "max_non_food_penalty": max_non,
             "min_category_presence": min_cat, "max_wrong_food_penalty": max_wrong,
@@ -819,7 +1060,11 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
             "non_food_penalty_weight": w_non, "linked_text_weight": w_link,
             "duplicate_threshold": dup_thresh, "duplicate_penalty_weight": w_dup,
             "max_per_review": max_per_review,
+            "max_per_review_loose": max_per_review_loose,
+            "max_per_restaurant": max_per_restaurant,
             "max_per_restaurant_axis": max_per_rest_axis,
+            "fallback_target_count": fallback_target,
+            "fallback_min_combined": fallback_min_combined,
         }
 
     return rep
@@ -895,10 +1140,12 @@ def main():
                 text_vecs[rest] = dict(zip(axes_list, info["vector"]))
     print(f"\n📊 텍스트 벡터: {len(text_vecs)}개 식당")
 
+    debug_dump = {"keyword": keyword} if args.debug else None
+
     # 리뷰 로드: DB 우선
     df = None
     if args.source in ("auto", "db"):
-        df = load_reviews_from_db(keyword)
+        df = load_reviews_from_db(keyword, debug_dump=debug_dump)
     if (df is None or len(df) == 0) and args.source in ("auto", "csv"):
         print("  → CSV 폴백")
         df = load_reviews_from_csv(keyword)
@@ -906,8 +1153,6 @@ def main():
     rules = load_stand()["rules"] if load_stand() else {
         "scoring": {"positive_hit": 1.0, "negative_hit": -0.5}
     }
-
-    debug_dump = {"keyword": keyword} if args.debug else None
 
     if df is None or len(df) == 0:
         print("  ⚠️ 이미지 리뷰 없음 → 텍스트 벡터만 DB 저장")

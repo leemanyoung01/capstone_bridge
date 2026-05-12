@@ -1,5 +1,5 @@
 {
-  "version": "2.0",
+  "version": "2.1",
   "description": "축별 키워드 사전 + CLIP 프롬프트. Food_profiler가 positive/negative로 텍스트 점수를 매기고, Multimodal_profiler가 clip_prompt_pos/neg로 CLIP 추론한다.",
   "common": {
     "전반적만족": {
@@ -600,104 +600,52 @@
       "패티퀄리티": {
         "positive": ["육즙", "두툼", "불향", "육향", "수제패티", "패티"],
         "negative": ["퍽퍽", "잡내", "얇은", "냉동", "질긴"],
-        "clip_prompt_pos": [
-          "close-up photo of a juicy thick beef patty cross section",
-          "photo of a hamburger cut in half showing the patty",
-          "photo of a grilled beef patty with char marks inside a bun"
-        ],
-        "clip_prompt_neg": [
-          "photo of a thin processed frozen meat patty",
-          "photo of a dry crumbled meat patty"
-        ]
+        "clip_prompt_pos": ["close-up photo of a juicy thick beef patty cross section", "photo of a hamburger cut in half showing the patty", "photo of a grilled beef patty with char marks inside a bun"],
+        "clip_prompt_neg": ["photo of a thin processed frozen meat patty", "photo of a dry crumbled meat patty"]
       },
       "번식감": {
         "positive": ["폭신", "부드러운", "번", "버터향", "브리오슈", "고소한"],
         "negative": ["질긴", "퍽퍽한", "눅눅", "푸석"],
-        "clip_prompt_pos": [
-          "close-up photo of a glossy golden brioche bun on a hamburger",
-          "photo of a soft fluffy burger bun with sesame seeds",
-          "photo of a hamburger showing the bun texture"
-        ],
-        "clip_prompt_neg": [
-          "photo of a flattened soggy burger bun",
-          "photo of a dry pale burger bun"
-        ]
+        "clip_prompt_pos": ["close-up photo of a glossy golden brioche bun on a hamburger", "photo of a soft fluffy burger bun with sesame seeds", "photo of a hamburger showing the bun texture"],
+        "clip_prompt_neg": ["photo of a flattened soggy burger bun", "photo of a dry pale burger bun"]
       },
       "야채신선도": {
         "positive": ["아삭", "싱싱", "신선", "양상추", "프레쉬", "풍성"],
         "negative": ["시든", "야채부실", "갈변"],
-        "clip_prompt_pos": [
-          "close-up photo of fresh crisp green lettuce and red tomato inside a burger",
-          "photo of a hamburger with vivid fresh vegetables visible",
-          "photo of bright green lettuce on a beef patty"
-        ],
-        "clip_prompt_neg": [
-          "photo of withered brown lettuce in a burger",
-          "photo of a burger without any visible vegetables"
-        ]
+        "clip_prompt_pos": ["close-up photo of fresh crisp green lettuce and red tomato inside a burger", "photo of a hamburger with vivid fresh vegetables visible", "photo of bright green lettuce on a beef patty"],
+        "clip_prompt_neg": ["photo of withered brown lettuce in a burger", "photo of a burger without any visible vegetables"]
       },
       "소스조화": {
         "positive": ["단짠", "조화", "소스 넉넉", "중독성"],
         "negative": ["짜", "소스 부족", "느끼"],
-        "clip_prompt_pos": [
-          "close-up photo of creamy sauce and melted cheese dripping from a hamburger",
-          "photo of a burger with glossy sauce on the patty"
-        ],
-        "clip_prompt_neg": [
-          "photo of a dry hamburger without sauce",
-          "photo of a hamburger with sparse plain bread"
-        ]
+        "clip_prompt_pos": ["close-up photo of creamy sauce and melted cheese dripping from a hamburger", "photo of a burger with glossy sauce on the patty"],
+        "clip_prompt_neg": ["photo of a dry hamburger without sauce", "photo of a hamburger with sparse plain bread"]
       }
     },
     "회": {
       "신선도": {
         "positive": ["신선", "살아있", "탱글", "싱싱", "퀄리티", "빛깔", "프레쉬", "갓 잡은", "활어"],
         "negative": ["비린", "냄새", "푸석", "냉동", "해동"],
-        "clip_prompt_pos": [
-          "close-up photo of glistening fresh raw fish slices on a plate",
-          "photo of bright pink salmon sashimi with shiny surface",
-          "photo of vibrant fresh sliced raw fish arranged neatly"
-        ],
-        "clip_prompt_neg": [
-          "photo of dull old looking raw fish",
-          "photo of dry pale sashimi without sheen"
-        ]
+        "clip_prompt_pos": ["close-up photo of glistening fresh raw fish slices on a plate", "photo of bright pink salmon sashimi with shiny surface", "photo of vibrant fresh sliced raw fish arranged neatly"],
+        "clip_prompt_neg": ["photo of dull old looking raw fish", "photo of dry pale sashimi without sheen"]
       },
       "깔끔함": {
         "positive": ["깔끔", "담백", "잡내 없", "비린내 안", "냄새 없"],
         "negative": ["비린", "냄새", "바다냄새", "역한", "잡내"],
-        "clip_prompt_pos": [
-          "photo of cleanly plated raw fish without garnish clutter",
-          "photo of well presented sashimi on a clean white plate"
-        ],
-        "clip_prompt_neg": [
-          "photo of messy raw fish with strong garnish smell",
-          "photo of fishy looking poorly plated sashimi"
-        ]
+        "clip_prompt_pos": ["photo of cleanly plated raw fish without garnish clutter", "photo of well presented sashimi on a clean white plate"],
+        "clip_prompt_neg": ["photo of messy raw fish with strong garnish smell", "photo of fishy looking poorly plated sashimi"]
       },
       "구성": {
         "positive": ["다양", "구성", "세트", "푸짐", "스끼다시", "밑반찬", "종류", "알찬", "모듬", "모둠"],
         "negative": ["부실", "빈약", "종류 적"],
-        "clip_prompt_pos": [
-          "photo of a large sashimi platter with various fish types",
-          "photo of an assorted Korean raw fish set with side dishes"
-        ],
-        "clip_prompt_neg": [
-          "photo of a single small piece of raw fish",
-          "photo of sashimi with no side dishes"
-        ]
+        "clip_prompt_pos": ["photo of a large sashimi platter with various fish types", "photo of an assorted Korean raw fish set with side dishes"],
+        "clip_prompt_neg": ["photo of a single small piece of raw fish", "photo of sashimi with no side dishes"]
       },
       "식감": {
         "positive": ["쫄깃", "탱글", "쫀득", "녹는", "사르르", "입에서 녹", "부드러", "고소"],
         "negative": ["질기", "푸석", "딱딱", "물컹"],
-        "clip_prompt_pos": [
-          "close-up photo of marbled tuna sashimi with melt-in-mouth texture",
-          "photo of springy chewy raw fish slices"
-        ],
-        "clip_prompt_neg": [
-          "photo of mushy overcooked seafood",
-          "photo of dried out raw fish"
-        ]
+        "clip_prompt_pos": ["close-up photo of marbled tuna sashimi with melt-in-mouth texture", "photo of springy chewy raw fish slices"],
+        "clip_prompt_neg": ["photo of mushy overcooked seafood", "photo of dried out raw fish"]
       }
     },
     "감자튀김": {
@@ -820,6 +768,332 @@
         "negative": ["식어", "차가", "미지근", "눅눅"],
         "clip_prompt_pos": ["fresh healthy Korean lunchbox with vegetables"],
         "clip_prompt_neg": ["old stale cold food"]
+      }
+    },
+    "커피": {
+      "산미": {
+        "positive": ["산미", "산뜻", "상큼", "시트러스", "과일향", "프루티", "후르티", "베리향", "산미있", "산미가 좋"],
+        "negative": ["산미 너무", "신맛만", "시기만", "너무 셔", "쉬어버린"],
+        "clip_prompt_pos": ["a photo of a black coffee with bright clear color", "a cup of pour-over filter coffee with light roast"],
+        "clip_prompt_neg": ["a photo of dark muddy bitter coffee", "a photo of burnt over-extracted espresso"]
+      },
+      "바디감": {
+        "positive": ["바디감", "묵직", "진한", "꽉찬", "풀바디", "묵직한", "바디 좋", "농밀", "두툼한 맛"],
+        "negative": ["밍밍", "물맛", "맹탕", "밋밋", "심심", "옅은", "가벼운 물"],
+        "clip_prompt_pos": ["a close-up photo of a dark espresso shot with thick body", "a cup of strong rich black coffee"],
+        "clip_prompt_neg": ["a photo of pale watery coffee", "a photo of very diluted americano"]
+      },
+      "로스팅": {
+        "positive": ["로스팅", "다크로스팅", "미디엄", "라이트로스팅", "잘 볶", "에티오피아", "콜롬비아", "케냐", "원두 좋"],
+        "negative": ["탄맛", "쓰기만", "원두 별로", "냉동원두", "쩐내"],
+        "clip_prompt_pos": ["a photo of well-roasted coffee beans on a wooden surface", "a photo of brewed coffee with golden brown crema"],
+        "clip_prompt_neg": ["a photo of burnt blackened coffee beans", "a photo of stale pale coffee"]
+      },
+      "향미": {
+        "positive": ["향", "향긋", "향이 좋", "꽃향", "초콜릿향", "너티", "고소", "캐러멜향", "풍미", "아로마", "잔향"],
+        "negative": ["향이 없", "잡내", "쩐", "쉰 냄새", "탄내"],
+        "clip_prompt_pos": ["a photo of an espresso cup with rising aromatic steam", "a close-up photo of fragrant brewed coffee"],
+        "clip_prompt_neg": ["a photo of an old stale cup of coffee", "a photo of coffee without any aroma"]
+      },
+      "크레마": {
+        "positive": ["크레마", "거품", "황금빛 크레마", "두꺼운 크레마", "에스프레소 좋", "크레마 살아있"],
+        "negative": ["크레마 없", "크레마 얇", "거품 없"],
+        "clip_prompt_pos": ["a close-up photo of a thick golden crema on top of espresso", "a photo of fresh espresso shot with rich foam"],
+        "clip_prompt_neg": ["a photo of espresso without crema", "a photo of stale dark espresso with no foam"]
+      },
+      "쓴맛균형": {
+        "positive": ["쓴맛 적당", "균형", "밸런스", "안 쓰", "마시기 편", "부드러운 쓴맛", "쓰지 않"],
+        "negative": ["너무 쓰", "쓰기만", "탄맛", "약 같", "쓴맛 강"],
+        "clip_prompt_pos": ["a photo of balanced smooth coffee in a white cup"],
+        "clip_prompt_neg": ["a photo of bitter dark over-extracted coffee"]
+      }
+    },
+    "라떼류": {
+      "우유부드러움": {
+        "positive": ["부드러", "고소", "벨벳", "벨베티", "실키", "우유 좋", "우유 부드", "스팀밀크 좋", "폭신"],
+        "negative": ["밍밍한 우유", "물탄", "우유 묽", "거품만"],
+        "clip_prompt_pos": ["a photo of a latte with creamy velvety steamed milk", "a cup of cafe latte with smooth microfoam"],
+        "clip_prompt_neg": ["a photo of a latte with separated milk and coffee", "a photo of a watery thin latte"]
+      },
+      "에스프레소밸런스": {
+        "positive": ["커피맛", "에스프레소 진", "에쏘 진", "샷 진하", "라떼 진", "균형", "조화", "밸런스 좋"],
+        "negative": ["우유맛만", "커피맛 없", "에쏘 약", "샷이 약", "심심", "우유에 묻"],
+        "clip_prompt_pos": ["a photo of a latte with visible dark espresso layer beneath milk"],
+        "clip_prompt_neg": ["a photo of a milk-only drink without coffee color"]
+      },
+      "단맛균형": {
+        "positive": ["적당히 달", "단맛 적당", "안 달", "달지 않", "단맛 균형", "은은한 단맛"],
+        "negative": ["너무 달", "달기만", "시럽 과", "달아터진", "설탕맛"],
+        "clip_prompt_pos": ["a photo of a balanced not too sweet latte"],
+        "clip_prompt_neg": ["a photo of an overly sweet syrupy drink"]
+      },
+      "시럽풍미": {
+        "positive": ["바닐라", "카라멜", "헤이즐넛", "시럽", "플레이버", "풍미", "향이 좋", "달콤한 향"],
+        "negative": ["시럽 가짜", "인공적", "약품맛", "시럽 과"],
+        "clip_prompt_pos": ["a photo of a flavored latte with caramel drizzle on top", "a photo of a vanilla latte with syrup swirl"],
+        "clip_prompt_neg": ["a photo of a plain milk drink without any toppings"]
+      },
+      "라떼아트": {
+        "positive": ["라떼아트", "하트", "튤립", "로제타", "예쁜 라떼", "라떼아트 이쁘", "라떼아트 예쁘"],
+        "negative": ["라떼아트 별로", "거품 깨진"],
+        "clip_prompt_pos": ["a top-down photo of a latte with beautiful rosetta latte art", "a close-up photo of heart-shaped latte art"],
+        "clip_prompt_neg": ["a photo of a latte without any latte art", "a photo of broken messy foam on a latte"]
+      }
+    },
+    "디저트": {
+      "달콤함": {
+        "positive": ["달콤", "달달", "스위트", "꿀맛", "디저트답게 단", "적당히 달", "황홀하게 달"],
+        "negative": ["달기만", "단맛 과", "너무 달", "설탕만"],
+        "clip_prompt_pos": ["a photo of a glossy sweet dessert with sugar coating", "a close-up photo of a cake with sweet cream"],
+        "clip_prompt_neg": ["a photo of a plain unsweet baked good"]
+      },
+      "부드러움": {
+        "positive": ["부드러", "사르륵", "녹는", "촉촉", "크리미", "벨벳", "혀에 녹", "입에 녹"],
+        "negative": ["퍽퍽", "푸석", "딱딱", "건조", "버석"],
+        "clip_prompt_pos": ["a close-up photo of a soft moist piece of cake", "a photo of creamy smooth dessert texture"],
+        "clip_prompt_neg": ["a photo of a dry crumbly old cake", "a photo of a hard rock-like dessert"]
+      },
+      "풍미": {
+        "positive": ["풍미", "향긋", "버터향", "초코향", "고급", "원재료", "재료 좋", "깊은 맛"],
+        "negative": ["인공적", "맛이 가벼", "향이 없", "싸구려맛"],
+        "clip_prompt_pos": ["a photo of an elegant artisan dessert with rich layers", "a photo of a chocolate cake with deep dark cocoa color"],
+        "clip_prompt_neg": ["a photo of a cheap mass-produced dessert"]
+      },
+      "비주얼": {
+        "positive": ["예쁘", "비주얼", "이쁨", "감성", "포토존", "사진", "찍기 좋", "데코", "플레이팅", "꾸민"],
+        "negative": ["비주얼 별로", "투박", "못생긴"],
+        "clip_prompt_pos": ["a photo of a beautifully plated dessert with elegant decoration", "a top-down photo of an aesthetic cafe dessert"],
+        "clip_prompt_neg": ["a photo of a messy poorly plated dessert"]
+      },
+      "무거움": {
+        "positive": [],
+        "negative": ["느끼", "느글", "기름지", "무겁", "헤비", "버터 과", "한 입만", "더 못 먹"],
+        "clip_prompt_pos": ["a photo of a very rich heavy chocolate dessert"],
+        "clip_prompt_neg": ["a photo of a light airy delicate dessert"]
+      }
+    },
+    "베이커리": {
+      "결과층": {
+        "positive": ["결", "층", "겹겹", "결살이있", "층이 살아", "결이 좋", "겹이 살아", "버터 결"],
+        "negative": ["결 없", "떡진", "뭉친", "층 없"],
+        "clip_prompt_pos": ["a close-up photo of a croissant cross-section showing flaky layers", "a photo of a laminated pastry with visible buttery layers"],
+        "clip_prompt_neg": ["a photo of a dense bread without any layers", "a photo of a flat squashed pastry"]
+      },
+      "버터향": {
+        "positive": ["버터", "버터향", "고소", "리치한 버터", "버터 가득", "버터풍미", "버터 진하"],
+        "negative": ["버터 없", "기름맛", "마가린", "쇼트닝"],
+        "clip_prompt_pos": ["a photo of golden buttery pastry with rich brown crust", "a close-up of a croissant with glossy butter sheen"],
+        "clip_prompt_neg": ["a photo of a pale dry bread without buttery color"]
+      },
+      "속촉촉함": {
+        "positive": ["속촉", "촉촉", "촉촉한 속", "쫀득", "부드러", "말랑", "안이 촉촉", "속이 부드"],
+        "negative": ["퍽퍽", "푸석", "건조", "딱딱", "속이 마른"],
+        "clip_prompt_pos": ["a photo of a freshly baked bun with moist soft interior", "a close-up of bread cross-section showing tender crumb"],
+        "clip_prompt_neg": ["a photo of a stale dry hard piece of bread", "a photo of bread with dry crumbly interior"]
+      },
+      "겉바삭함": {
+        "positive": ["겉바", "바삭", "크리스피", "겉바속촉", "크러스트", "껍질 바삭", "파삭"],
+        "negative": ["눅눅", "축축", "흐물", "딱딱한 껍질"],
+        "clip_prompt_pos": ["a close-up of a crispy golden crust pastry", "a photo of a bread with crackly outer shell"],
+        "clip_prompt_neg": ["a photo of a soggy soft-crust bread"]
+      },
+      "크기실속": {
+        "positive": ["큼지막", "크기", "푸짐", "묵직", "두툼", "한 끼", "양이 많", "실속"],
+        "negative": ["작아", "작은", "한입", "비싸기만", "양 적"],
+        "clip_prompt_pos": ["a photo of a large generous-sized bakery item next to a hand for scale"],
+        "clip_prompt_neg": ["a photo of a tiny small bakery pastry"]
+      }
+    },
+
+    "김밥": {
+      "김밥상태": {
+        "positive": ["김밥 맛있", "신선", "재료 많", "속이 꽉", "잘 말린", "터지지 않", "단면", "두툼"],
+        "negative": ["김밥 별로", "밥이 딱딱", "재료 적", "터짐", "말림이 별로"],
+        "clip_prompt_pos": ["fresh kimbap with abundant fillings", "close-up photo of kimbap cross-section showing fillings"],
+        "clip_prompt_neg": ["dried out kimbap with few fillings", "messy broken kimbap roll"]
+      },
+      "속재료구성": {
+        "positive": ["속재료", "재료 많", "속이 꽉", "알찬", "다양", "야채", "계란", "참치", "치즈"],
+        "negative": ["속재료 적", "밥만 많", "부실"],
+        "clip_prompt_pos": ["kimbap roll filled with many colorful ingredients"],
+        "clip_prompt_neg": ["plain kimbap with very few fillings"]
+      },
+      "밥의간과양": {
+        "positive": ["밥 간", "밥 양", "간이 좋", "밥이 적당", "밥과 재료 비율"],
+        "negative": ["밥이 많", "밥만 많", "싱거", "짜"],
+        "clip_prompt_pos": ["kimbap with balanced rice and fillings"],
+        "clip_prompt_neg": ["kimbap with too much rice and little filling"]
+      },
+      "참기름고소함": {
+        "positive": ["참기름", "고소", "김 향", "깨", "꼬소"],
+        "negative": ["고소함 부족", "김 향 없음", "밍밍"],
+        "clip_prompt_pos": ["glossy kimbap with sesame oil and seaweed aroma"],
+        "clip_prompt_neg": ["dry dull kimbap without sesame oil shine"]
+      },
+      "매운맛강도": {
+        "positive": ["매콤", "땡초", "청양", "매운 김밥", "매운맛"],
+        "negative": ["안 매", "맵지 않", "매운맛 부족"],
+        "clip_prompt_pos": ["spicy kimbap with chili pepper filling"],
+        "clip_prompt_neg": ["plain mild kimbap"]
+      },
+      "재료신선도": {
+        "positive": ["신선", "야채 신선", "아삭", "재료 신선"],
+        "negative": ["시든", "눅눅", "재료 오래됨"],
+        "clip_prompt_pos": ["fresh kimbap with crisp vegetables"],
+        "clip_prompt_neg": ["old soggy kimbap with wilted vegetables"]
+      }
+    },
+
+    "칼국수": {
+      "면발식감": {
+        "positive": ["쫄깃", "탱탱", "면발", "찰진", "탱글", "쫀득"],
+        "negative": ["퍼진", "불은", "면이 별로", "퍼졌", "흐물"],
+        "clip_prompt_pos": ["chewy fresh kalguksu knife-cut wheat noodles in clear broth"],
+        "clip_prompt_neg": ["soggy overcooked pale noodles in broth"]
+      },
+      "국물깊이": {
+        "positive": ["국물 깊", "진한 국물", "구수", "감칠", "멸치 육수", "사골 육수", "국물 진"],
+        "negative": ["국물 묽", "맹탕", "심심", "밍밍"],
+        "clip_prompt_pos": ["a bowl of rich Korean kalguksu broth steaming hot"],
+        "clip_prompt_neg": ["watery thin pale soup broth"]
+      },
+      "고명과양": {
+        "positive": ["고명", "양 많", "푸짐", "건더기", "애호박", "감자", "조개", "닭고기"],
+        "negative": ["양 적", "고명 부족", "허전"],
+        "clip_prompt_pos": ["kalguksu with plenty of toppings such as zucchini clams and meat"],
+        "clip_prompt_neg": ["plain kalguksu with very few toppings"]
+      },
+      "김치와조화": {
+        "positive": ["김치 맛있", "겉절이", "김치가 잘", "곁들임 김치"],
+        "negative": ["김치 별로", "김치만 신"],
+        "clip_prompt_pos": ["kalguksu bowl served with fresh kimchi side dish"],
+        "clip_prompt_neg": ["kalguksu without proper kimchi side"]
+      },
+      "구수함": {
+        "positive": ["구수", "들깨", "들깨가루", "고소", "들기름"],
+        "negative": ["밍밍", "맛 없"],
+        "clip_prompt_pos": ["kalguksu with perilla seed powder topping"],
+        "clip_prompt_neg": ["bland flat-tasting noodle soup"]
+      }
+    },
+
+    "김치찌개": {
+      "국물맛": {
+        "positive": ["국물 진", "깊은", "감칠", "시원", "끓", "보글보글"],
+        "negative": ["국물 묽", "심심", "밍밍"],
+        "clip_prompt_pos": ["bubbling rich kimchi jjigae broth in a stone pot"],
+        "clip_prompt_neg": ["watery thin pale kimchi stew"]
+      },
+      "김치풍미": {
+        "positive": ["묵은지", "잘 익은 김치", "푹 익은", "신김치", "김치 맛"],
+        "negative": ["김치 별로", "안 익은 김치", "단맛만"],
+        "clip_prompt_pos": ["kimchi jjigae with well-fermented aged kimchi"],
+        "clip_prompt_neg": ["kimchi stew with unfermented kimchi"]
+      },
+      "고기두부양": {
+        "positive": ["고기 많", "두부 많", "푸짐", "건더기", "삼겹살", "참치", "스팸"],
+        "negative": ["고기 적", "두부 적", "허전"],
+        "clip_prompt_pos": ["kimchi jjigae loaded with pork belly tofu chunks"],
+        "clip_prompt_neg": ["kimchi stew with very few meat or tofu pieces"]
+      },
+      "밥궁합": {
+        "positive": ["밥 도둑", "밥에 잘", "밥 한그릇", "밥 비벼", "밥과 잘"],
+        "negative": ["밥과 안 어울", "심심"],
+        "clip_prompt_pos": ["kimchi jjigae served with a hot bowl of rice"],
+        "clip_prompt_neg": ["kimchi stew not paired with rice"]
+      },
+      "매운정도": {
+        "positive": ["매콤", "얼큰", "칼칼", "매운맛", "화끈"],
+        "negative": ["안 매", "순한", "맵지 않"],
+        "clip_prompt_pos": ["spicy red Korean kimchi stew"],
+        "clip_prompt_neg": ["mild non-spicy kimchi stew"]
+      }
+    },
+
+    "청국장": {
+      "향과깊이": {
+        "positive": ["청국장 향", "구수한 향", "깊은", "진한 향", "콩 향"],
+        "negative": ["향 없", "밍밍", "이상한 냄새"],
+        "clip_prompt_pos": ["a bubbling bowl of Korean cheonggukjang fermented soybean stew"],
+        "clip_prompt_neg": ["clear soup without fermented bean texture"]
+      },
+      "건더기양": {
+        "positive": ["건더기 많", "두부", "야채 많", "푸짐", "콩 알갱이"],
+        "negative": ["건더기 적", "허전", "묽"],
+        "clip_prompt_pos": ["cheonggukjang stew packed with tofu vegetables and beans"],
+        "clip_prompt_neg": ["thin cheonggukjang with few ingredients"]
+      },
+      "밥궁합": {
+        "positive": ["밥 도둑", "밥에 잘", "밥 비벼", "밥과 잘"],
+        "negative": ["밥과 안 어울"],
+        "clip_prompt_pos": ["cheonggukjang served with bowl of rice"],
+        "clip_prompt_neg": ["cheonggukjang served alone without rice"]
+      },
+      "구수함": {
+        "positive": ["구수", "고소", "전통", "할머니"],
+        "negative": ["밍밍", "맛 없"],
+        "clip_prompt_pos": ["rustic homestyle cheonggukjang stew on table"],
+        "clip_prompt_neg": ["bland thin stew without depth"]
+      }
+    },
+
+    "조개": {
+      "신선도": {
+        "positive": ["신선", "싱싱", "살아 있", "탱탱", "쫄깃"],
+        "negative": ["비린", "오래", "안 신선"],
+        "clip_prompt_pos": ["fresh live clams shellfish glistening on a plate"],
+        "clip_prompt_neg": ["old dull-looking shellfish"]
+      },
+      "조개살식감": {
+        "positive": ["쫄깃", "탱글", "탱탱", "살이 통통", "조개살 좋"],
+        "negative": ["질긴", "물러", "퍽퍽"],
+        "clip_prompt_pos": ["plump chewy clam meat in shells"],
+        "clip_prompt_neg": ["shriveled tough clam meat"]
+      },
+      "구성푸짐함": {
+        "positive": ["푸짐", "양 많", "다양", "조개 종류", "모듬", "해물 많"],
+        "negative": ["양 적", "허전", "부실"],
+        "clip_prompt_pos": ["a generous mixed shellfish platter with various clams"],
+        "clip_prompt_neg": ["a small plate with few clams"]
+      },
+      "해물향": {
+        "positive": ["바다 향", "해물 향", "감칠", "국물이 시원"],
+        "negative": ["비린", "잡내"],
+        "clip_prompt_pos": ["aromatic clam soup with seafood broth steam"],
+        "clip_prompt_neg": ["clam dish with fishy unpleasant smell description"]
+      }
+    },
+
+    "한상": {
+      "반찬구성": {
+        "positive": ["반찬 많", "반찬 다양", "반찬 푸짐", "여러 가지", "한상 가득", "한 상 차림"],
+        "negative": ["반찬 적", "허전", "부실"],
+        "clip_prompt_pos": ["a Korean meal table set with rice soup and many banchan side dishes"],
+        "clip_prompt_neg": ["a Korean meal with only one or two side dishes"]
+      },
+      "집밥느낌": {
+        "positive": ["집밥", "엄마 손맛", "할머니", "정성", "푸근", "정겨움"],
+        "negative": ["밋밋", "공장표", "성의 없"],
+        "clip_prompt_pos": ["a warm home-style Korean meal arrangement on a wooden table"],
+        "clip_prompt_neg": ["a clinical restaurant plating without homestyle warmth"]
+      },
+      "밥국조화": {
+        "positive": ["밥과 국", "국과 밥", "한 끼", "밥 국 조화"],
+        "negative": ["국이 별로", "밥이 별로"],
+        "clip_prompt_pos": ["a bowl of rice and a bowl of soup served together with side dishes"],
+        "clip_prompt_neg": ["a meal missing either rice or soup"]
+      },
+      "메인반찬품질": {
+        "positive": ["메인", "메인 반찬", "고기", "생선", "메인이 좋", "메인이 푸짐"],
+        "negative": ["메인 부실", "메인 별로"],
+        "clip_prompt_pos": ["a Korean set meal with a substantial main protein dish"],
+        "clip_prompt_neg": ["a Korean set meal with a weak main dish"]
+      },
+      "정갈함": {
+        "positive": ["정갈", "깔끔", "예쁘", "정돈", "깨끗"],
+        "negative": ["지저분", "어수선", "허접"],
+        "clip_prompt_pos": ["a neatly arranged Korean meal tray with tidy dishes"],
+        "clip_prompt_neg": ["a messy cluttered table setting"]
       }
     }
   }
