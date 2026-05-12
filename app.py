@@ -35,6 +35,10 @@ from db import (
 
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
+FRONTEND_DIST = os.environ.get(
+    "FRONTEND_DIST",
+    os.path.join(BASE_DIR, "frontend", "dist"),
+)
 
 app = Flask(__name__)
 
@@ -253,10 +257,32 @@ def _fuse_dynamic(tv: dict, iv: dict, axes: list[str]) -> tuple[dict, dict, str]
 
 @app.route("/")
 def index():
-    for fn in ("survey.html","index.html"):
+    dist_index = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(dist_index):
+        return send_file(dist_index)
+    for fn in ("survey.html", "index.html"):
         p = os.path.join(BASE_DIR, fn)
-        if os.path.exists(p): return send_file(p)
-    return "<h1>survey.html을 같은 폴더에 놓아주세요</h1>", 404
+        if os.path.exists(p):
+            return send_file(p)
+    return "<h1>frontend/dist 빌드가 없습니다 (npm run build)</h1>", 404
+
+
+@app.route("/assets/<path:fn>")
+def serve_assets(fn):
+    return send_from_directory(os.path.join(FRONTEND_DIST, "assets"), fn)
+
+
+@app.route("/<path:fn>")
+def serve_static(fn):
+    if fn.startswith(("api/", "images/", "assets/")):
+        return "Not Found", 404
+    full = os.path.join(FRONTEND_DIST, fn)
+    if os.path.isfile(full):
+        return send_from_directory(FRONTEND_DIST, fn)
+    dist_index = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(dist_index):
+        return send_file(dist_index)
+    return "Not Found", 404
 
 
 @app.route("/images/<path:fn>")
