@@ -162,7 +162,7 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
         >
           {card.emoji}
 
-          {/* Handwritten annotation */}
+          {/* Handwritten annotation - removed fontFamily override to use Pretendard */}
           <div style={{
             position: 'absolute',
             ...card.annotationPos,
@@ -178,7 +178,6 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
               style={{ opacity: 0.65 }}
             />
             <span style={{
-              fontFamily: 'var(--font-handwritten)',
               fontSize: '16px',
               fontWeight: 700,
               color: '#3A3A3A',

@@ -35,6 +35,10 @@ const CARD_ACCENTS = [
   { bg: '#FFE4D6', border: '#F5A07A', rank: '#B84E00' },
 ];
 
+// 추천 결과 화면 상한. 백엔드도 기본 5건만 내려주지만, 백엔드 실수로 더 내려와도
+// 프론트에서 한 번 더 자른다 (이중 방어).
+const FRONT_RESULT_LIMIT = 5;
+
 const InferenceStep = ({ results, error, onRestart }) => {
   const [expanded, setExpanded] = useState({});
   const toggle = (idx) => setExpanded(p => ({ ...p, [idx]: !p[idx] }));
@@ -96,7 +100,6 @@ const InferenceStep = ({ results, error, onRestart }) => {
       {/* ── Heading ── */}
       <div style={{ textAlign: 'center', padding: '52px 24px 36px' }}>
         <h2 style={{
-          fontFamily: 'var(--font-handwritten)',
           fontSize: 'clamp(32px, 5vw, 48px)',
           fontWeight: 900,
           letterSpacing: '-1px',
@@ -115,7 +118,8 @@ const InferenceStep = ({ results, error, onRestart }) => {
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '0 24px' }}>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '32px' }}>
-          {results.map((item, idx) => {
+          {/* Top-N 안전 컷 — 백엔드도 기본 5건만 내려주지만, 더 와도 화면에는 5건만. */}
+          {results.slice(0, FRONT_RESULT_LIMIT).map((item, idx) => {
             const rank = item.rank || idx + 1;
             const accent = CARD_ACCENTS[(rank - 1) % CARD_ACCENTS.length];
             const matchPct = item.match_percent != null
@@ -185,7 +189,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                   opacity: 0.85,
                 }}>
                   <span style={{ fontSize: '19px', fontWeight: 900, lineHeight: 1 }}>{matchPct}%</span>
-                  <span style={{ fontFamily: 'var(--font-handwritten)', fontSize: '12px', fontWeight: 800 }}>일치</span>
+                  <span style={{ fontSize: '12px', fontWeight: 800 }}>일치</span>
                 </div>
 
                 {/* ── 3. 가로 배치 레이아웃 (Image Left, Details Right) ── */}
@@ -222,7 +226,6 @@ const InferenceStep = ({ results, error, onRestart }) => {
                     {/* 식당 이름 & 주소 */}
                     <div style={{ paddingRight: '60px' }}>
                       <h3 style={{
-                        fontFamily: 'var(--font-handwritten)',
                         fontSize: '28px',
                         fontWeight: 800,
                         color: 'var(--text-dark)',
@@ -233,7 +236,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                         {item.name}
                       </h3>
                       {item.address && (
-                        <p style={{ fontSize: '12px', color: 'var(--text-gray)', fontFamily: 'var(--font-handwritten)' }}>📍 {item.address}</p>
+                        <p style={{ fontSize: '12px', color: 'var(--text-gray)' }}>📍 {item.address}</p>
                       )}
                     </div>
 
@@ -245,7 +248,6 @@ const InferenceStep = ({ results, error, onRestart }) => {
                           const pct = typeof c === 'number' ? Math.round(c * 100) : null;
                           return (
                             <span key={r} style={{
-                              fontFamily: 'var(--font-handwritten)',
                               fontSize: '15px', background: '#F5F0EA', color: 'var(--text-dark)',
                               padding: '4px 12px', borderRadius: '4px 12px 12px 4px', fontWeight: 700,
                               borderLeft: '3px solid var(--primary-light)',
@@ -261,7 +263,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                     {/* 반영 비율 (귀여운 스티커 스타일) */}
                     <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{
-                        fontFamily: 'var(--font-handwritten)', fontSize: '14px',
+                        fontSize: '14px',
                         background: '#EEF2FF', color: '#4338CA',
                         padding: '3px 10px', borderRadius: '3px', fontWeight: 700,
                         transform: 'rotate(-1.5deg)'
@@ -270,7 +272,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                       </span>
                       {hasImageBasis && (
                         <span style={{
-                          fontFamily: 'var(--font-handwritten)', fontSize: '14px',
+                          fontSize: '14px',
                           background: '#FEF3C7', color: '#92400E',
                           padding: '3px 10px', borderRadius: '3px', fontWeight: 700,
                           transform: 'rotate(1.5deg)'
@@ -284,7 +286,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                     {item.debug_reason && (
                       <div style={{
                         marginTop: '16px', fontSize: '13px', color: 'var(--text-gray)',
-                        fontFamily: 'var(--font-handwritten)', background: 'var(--bg-color)',
+                        background: 'var(--bg-color)',
                         padding: '8px 12px', borderRadius: '8px', border: '1px dashed var(--border-color)'
                       }}>
                         💡 {item.debug_reason}
@@ -301,7 +303,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                     marginTop: '20px', background: 'transparent', border: 'none',
                     color: 'var(--text-gray)', fontSize: '16px', fontWeight: 700,
                     display: 'flex', alignItems: 'center', gap: '4px',
-                    cursor: 'pointer', padding: 0, fontFamily: 'var(--font-handwritten)',
+                    cursor: 'pointer', padding: 0,
                     marginLeft: 'auto'
                   }}
                 >
@@ -321,7 +323,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                       <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {(matchData.length > 0 || Object.keys(axisContribs).length > 0) && (
                           <div style={{ background: 'var(--bg-color)', borderRadius: '16px', padding: '16px 8px' }}>
-                            <div style={{ fontFamily: 'var(--font-handwritten)', textAlign: 'center', fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>취향 밸런스 분석</div>
+                            <div style={{ textAlign: 'center', fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>취향 밸런스 분석</div>
                             <RadarChartViz
                               data={axisScores}
                               axes={Array.from(new Set([

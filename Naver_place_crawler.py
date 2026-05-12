@@ -4,7 +4,7 @@ Naver_place_crawler.py — 리뷰 크롤러 (PostgreSQL + S3 저장)
 
 기능:
   - 네이버 플레이스 리뷰 크롤링
-  - 리뷰/식당 정보 PostgreSQL 저장
+  - 리뷰/식당 정보 PostgreSQL 저장 (reviews.crawl_keyword 함께 저장)
   - CSV 백업 저장
   - 이미지 로컬 images/ 저장
   - UPLOAD_S3=true이면 이미지 S3 업로드
@@ -12,11 +12,17 @@ Naver_place_crawler.py — 리뷰 크롤러 (PostgreSQL + S3 저장)
 
 실행:
   python Naver_place_crawler.py
+  python Naver_place_crawler.py --keyword 김밥
+  python Naver_place_crawler.py --keyword 회
+
+  --keyword가 주어지면 .env의 CRAWL_KEYWORD보다 우선 사용되고,
+  S3_PREFIX가 명시되지 않은 경우 자동으로 reviews/<keyword>가 사용된다.
 
 필요 패키지:
   pip install requests pandas psycopg2-binary boto3 python-dotenv
 """
 
+import argparse
 import os
 import random
 import time
@@ -53,13 +59,8 @@ def _is_review_image(url: str) -> bool:
 
 # ── 크롤링 대상 ───────────────────────────────────────────────
 restaurants = {
-    "안동할매청국장": "19886347",
-    "두부촌": "31234445",
-    "원진노기순청국장": "11712457",
-    "성북손두부": "13584925",
-    "청보리" : "1465991709",
-    "타종식당": "1001190962",
-    "꾸지뽕민물매운탕&장단콩마을" : "37257347"
+    "왓더버거 돈암점": "2043625366",
+    "프레디버거 부평시장역점": "2082159143",
 }
 
 
@@ -70,7 +71,7 @@ SAVE_CSV = True
 CSV_PATH = "naver_reviews.csv"
 
 # 테스트할 때는 50 또는 100 추천. 전체 수집하려면 None.
-MAX_REVIEWS_PER_RESTAURANT = 200
+MAX_REVIEWS_PER_RESTAURANT = None
 
 DELAY_PAGE_MIN = 3.0
 DELAY_PAGE_MAX = 4.5
@@ -80,10 +81,53 @@ MAX_IMAGE_WORKERS = 10
 
 
 # ── S3 설정 (s3_uploader 모듈에서 환경변수 처리) ──────────────
+# CRAWL_KEYWORD / S3_PREFIX_BASE는 parse_cli_and_env()가 --keyword 인자 처리 후 갱신.
 UPLOAD_S3 = s3_is_enabled()
 CRAWL_KEYWORD = os.environ.get("CRAWL_KEYWORD", "default").strip()
 S3_BUCKET = os.environ.get("S3_BUCKET", "").strip()  # 표시용만; 실제 처리는 s3_uploader가 함
 S3_PREFIX_BASE = os.environ.get("S3_PREFIX", f"reviews/{CRAWL_KEYWORD or 'default'}").strip().strip("/")
+
+
+def parse_cli_and_env() -> argparse.Namespace:
+    """
+    --keyword가 주어지면 다음을 모두 동기화한다:
+      - 모듈 전역 CRAWL_KEYWORD
+      - 환경변수 CRAWL_KEYWORD (parse_review가 os.environ.get로 읽기 때문)
+      - S3_PREFIX 환경변수가 명시되지 않았다면 reviews/<keyword>로 자동 설정
+
+    .env / AWS 키 / DB 비밀번호는 출력하지 않는다.
+    """
+    global CRAWL_KEYWORD, S3_PREFIX_BASE
+
+    parser = argparse.ArgumentParser(description="네이버 플레이스 리뷰 크롤러")
+    # positional 또는 --keyword 둘 다 허용: 둘 다 주어지면 --keyword 우선.
+    #   python Naver_place_crawler.py 김밥
+    #   python Naver_place_crawler.py --keyword 김밥
+    parser.add_argument("keyword_positional", nargs="?", default=None,
+                        help="크롤 keyword (positional). 예: python Naver_place_crawler.py 김밥")
+    parser.add_argument("--keyword", default=None,
+                        help="크롤 keyword. .env의 CRAWL_KEYWORD보다 우선.")
+    parser.add_argument("--limit", type=int, default=None,
+                        help="식당당 최대 리뷰 수 (None=무제한)")
+    args = parser.parse_args()
+
+    kw_arg = args.keyword or args.keyword_positional
+    if kw_arg:
+        kw = kw_arg.strip()
+        CRAWL_KEYWORD = kw
+        os.environ["CRAWL_KEYWORD"] = kw  # parse_review의 os.environ.get(...)와 동기
+        # S3_PREFIX가 환경변수로 명시되지 않은 경우만 자동 설정
+        if not os.environ.get("S3_PREFIX"):
+            S3_PREFIX_BASE = f"reviews/{kw}"
+            print(f"   ↪️  S3_PREFIX 자동 설정: {S3_PREFIX_BASE}")
+        else:
+            S3_PREFIX_BASE = os.environ["S3_PREFIX"].strip().strip("/")
+
+    if args.limit is not None:
+        global MAX_REVIEWS_PER_RESTAURANT
+        MAX_REVIEWS_PER_RESTAURANT = args.limit
+
+    return args
 
 
 # ── GraphQL 쿼리 ──────────────────────────────────────────────
@@ -113,14 +157,6 @@ GRAPHQL_QUERY = """query getVisitorReviews($input: VisitorReviewsInput) {
 def get_headers(place_id: str) -> dict:
     cookie = os.environ.get("NAVER_COOKIE", "").strip()
 
-    # .env에 NAVER_COOKIE가 설정되어 있지 않으면 아래 하드코딩된 필수값 사용
-    if not cookie:
-        cookie = (
-            "NNB=ZUXLAEZQ2YRGA; "
-            "NID_AUT=bqo3A3hTlJ/DZmMpB9tAR56FzcgrGeMJlKw1EjYIXU2zORMOpPQFL07hsR/ZX2Iy; "
-            "NID_SES=AAAB4thobv/kZ4mx3wKXMD9zacHtXg5J3LED26h1q19a+/x9ab9+C4Vs88gkcbdXLTXd5FpNjVCXpp5C9G7PFlHLRbJop0fO+M2o41EB2uQYFlLvMmUt1t5Sfiq0TMthd02UqdPUyYWO4LXe0Jnd6fI5o6tyLCCGC4y9oADVoqVxNBzqOfznyPBoUzdoMRkCUldgPARqknKrPCtnN23Et3N8SU98gmcBdO9et908oCBi1pc3FByvdniS4NuNXU5AZ2gf5WdhN9sngCbEW9RcfcvHNX2ghwDaXGVZovNNdy9EgF0At/MCNWouK/BHJavBI3pch22hDWvcC3Q0ZuqcCGKenmxR2mxF6Ksclh9Xy7w4aZtimQwzwJyQQxRxYAoJnmAPqU9hyZZugYKUxEvmjsS+ntze9SbJnNe0DDsQxhhZvMU73LGyo0iCiPhpYIlVQFM7Hrgutn6T563kW/eS1tPZxdo/wTmlBA555zBMBC4NknMuP/zIR9W2TCQeW6jFthUWL+CUUjZ2aRtE/itF3sjn06WybJM+54R5eIqLLAJyaAqgkuyQiHpx255mxpA37f6BMgaRjK+GVp60CJvoieATbVrC30c+ssnEAHrZe+APxcscqf3xfWLp646qRoQPxlOgDMvflvBZ9edYXFCe0Mf7Kpk=;"
-        )
-
     return {
         "accept": "*/*",
         "accept-language": "ko",
@@ -132,7 +168,7 @@ def get_headers(place_id: str) -> dict:
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/145.0.0.0 Safari/537.36"
         ),
-        "cookie": cookie,
+        "cookie": '''NAC=YL19BMQKiMhK; NNB=YFLRAYGZENQWM; NFS=2; NID_AUT=8rpJgQ97MpUohDOG1qAhmtuzKrCUYHFp5kLEYoHA3uX9+FBJrymzIMXBk77SUIyj; cto_bundle=DOpvjF9rT0t6MWxGYXElMkZma2RpajFHM0paUGxFJTJGTDd2TlJVUUdYUnFUJTJGUHpwWUpValJYR3pWOTRGVEtCYTdtSHJhTmt3WHFZcFhmVTViWHExMVlVMjdOJTJCbGUzSXhOSXBnc3ZlaUppb05saEZqaFk3WkhNckxKVWszbjNUZGNOJTJCcTU1TDROdXFQViUyRkwxeG1IUDBzQlJkMDhYeXclM0QlM0Q; bnb_tooltip_shown_finance_v1=true; ASID=dfc29f200000019cf58edbe60000001d; NV_WETR_LOCATION_RGN_M="MDkyOTAxMTQ="; NV_WETR_LAST_ACCESS_RGN_M="MDkyOTAxMTQ="; PLACE_LANGUAGE=ko; tooltipDisplayed=true; NACT=1; SRT30=1777304956; SRT5=1777304956; _naver_usersession_=CZHiouVFBPUxebCN4eKHL6Id; page_uid=jP+aQwqpsW7sk9GosUN-072220; NID_SES=AAABoh/WW4HoAcJYpPM/yKl7kBfcGRvyYgA9rZgWCv472b989BoH/CvM2tZ/KBO4GfJNd1HOgcUSfr5e13dwxGPznWi9eK05zRXloyPjNY1LW4BUMV6Vu6gI9qgzA8y9CxG82h3kUwxe2xKqOQAAT8ElRd+NJY7V3nUqPA633ZQ7sF0pmoa2bTc+38V5FHvWVLha7p33njLBeBI3BgxNmO16d0R2ZQ6yN1CnAUelUSK2yfuUcoc1H0YPgURJYVysqddvfVnzd9bdXZwz1ySU9gFqUOUfDftu5d8Wb1q03ZnsAkK28vvVy5y/AEZbwElMeWQFIrIdlIh3nQFVQ1PYvV8QjnWfok93hfGRtJbxYHEo7r+x53sayMClOY9/4pPilEt87aDxpBLQoJsAeI4ty1y5w/MFzg+Iv7s8LNPiOXs2XSQdXzhrNiYVuIwh5ykAT0CDU8H7LtLBAWgfF9h9nKvomvgH9GXxv+4VvpcGFlx2OLAkn2uXU/eb1QigM+FtkmNzYYnTU8/Ghg6+ARU5Q24DM3+kZWiR1vQ7n12O+cTTu/RC4+9FmwQL8vzKMJp8cr1jMg==; BUC=fbLEIlEQKqFtaIVmvuP7k33xu0eAu_ypR7TxwFOP-7Q=''',
     }
 
 
@@ -438,7 +474,10 @@ def crawl_reviews(restaurants_dict: dict) -> list[dict]:
 # ── 진입점 ────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    parse_cli_and_env()
+
     print("🔍 네이버 플레이스 크롤러 (PostgreSQL + S3 연동)")
+    print(f"   crawl_keyword: {CRAWL_KEYWORD or '(없음)'}")
     print(f"   대상: {len(restaurants)}개 식당")
     print(f"   식당당 최대: {MAX_REVIEWS_PER_RESTAURANT if MAX_REVIEWS_PER_RESTAURANT else '무제한'}건")
     print(f"   이미지 다운로드: {'ON' if DOWNLOAD_IMAGES else 'OFF'}")

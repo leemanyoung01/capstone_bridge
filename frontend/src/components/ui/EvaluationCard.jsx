@@ -11,7 +11,7 @@ import { Info, ChevronDown, ChevronUp } from 'lucide-react';
 const METRIC_INFO = [
   {
     key: 'precision_at_k', alt: 'precision@k', label: 'Precision',
-    desc: '상위 K개 추천 중 관련 있다고 판단된 식당의 비율',
+    desc: 'Top5 추천 적합률 — Top5 중 human-label 기준 적합한 식당 비율',
   },
   {
     key: 'recall_at_k', alt: 'recall@k', label: 'Recall',
@@ -25,6 +25,10 @@ const METRIC_INFO = [
     key: 'ndcg_at_k', alt: 'ndcg@k', label: 'NDCG',
     desc: '관련 식당이 더 높은 순위에 배치되었는지 평가하는 순위 품질 점수',
   },
+  {
+    key: 'axis_match_rate', alt: 'axis_match@k', label: 'AxisMatch',
+    desc: '맛 축 일치율 — 사용자 선택 축과 추천 식당 top_axes 교집합 / 사용자 선택 축',
+  },
 ];
 
 const EvaluationCard = () => {
@@ -34,11 +38,9 @@ const EvaluationCard = () => {
 
   useEffect(() => {
     let alive = true;
+    // /api/evaluation은 항상 200으로 응답(ok:false면 데이터 없음). 404 fallback도 유지.
     fetch('/api/evaluation')
-      .then((res) => {
-        if (!res.ok) throw new Error('no eval');
-        return res.json();
-      })
+      .then((res) => res.json().catch(() => null))
       .then((d) => {
         if (!alive) return;
         if (d && d.ok && d.metrics) setData(d);
@@ -100,25 +102,38 @@ const EvaluationCard = () => {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
+        // AxisMatch 추가로 5칸. 모바일에선 2/3행으로 자연스럽게 줄바꿈.
+        gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))',
         gap: '8px',
         marginBottom: '10px',
       }}>
-        {METRIC_INFO.map((info) => (
-          <div key={info.key} style={{
-            background: '#FAF9F6',
-            borderRadius: 'var(--radius-md)',
-            padding: '16px 8px',
-            textAlign: 'center',
-          }} title={info.desc}>
-            <div style={{ fontSize: '12px', color: 'var(--text-gray)', fontWeight: 600, marginBottom: '4px' }}>
-              {info.label}@{k}
+        {METRIC_INFO.map((info) => {
+          const isPrecision = info.key === 'precision_at_k';
+          const isAxisMatch = info.key === 'axis_match_rate';
+          // Top5 추천 적합률 (Precision@5)과 맛 축 일치율은 발표 핵심 지표 — 강조 스타일.
+          const emphasize = isPrecision || isAxisMatch;
+          return (
+            <div key={info.key} style={{
+              background: emphasize ? '#FFF6E8' : '#FAF9F6',
+              border: emphasize ? '1px solid #F5D08A' : '1px solid transparent',
+              borderRadius: 'var(--radius-md)',
+              padding: '16px 8px',
+              textAlign: 'center',
+            }} title={info.desc}>
+              <div style={{ fontSize: '11px', color: 'var(--text-gray)', fontWeight: 700, marginBottom: '4px' }}>
+                {info.label}@{k}
+              </div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text-dark)' }}>
+                {get(info)}
+              </div>
+              {emphasize && (
+                <div style={{ fontSize: '9px', color: '#A8770F', fontWeight: 700, marginTop: '2px' }}>
+                  {isPrecision ? 'Top5 적합률' : '맛 축 일치율'}
+                </div>
+              )}
             </div>
-            <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text-dark)' }}>
-              {get(info)}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <button

@@ -12,13 +12,15 @@ v2 개선점:
   python app.py
   gunicorn app:app -b 0.0.0.0:5000 --workers 3
 """
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
 import csv
 import json, math, os
 from urllib.parse import quote
 import numpy as np
 from flask import Flask, jsonify, request, send_file, send_from_directory
+
+# 추천 결과 기본 Top-N. /api/recommend?limit=... 로 override 가능 (max 50).
+DEFAULT_RESULT_LIMIT = 5
+MAX_RESULT_LIMIT = 50
 
 from db import (
     get_conn,
@@ -28,6 +30,7 @@ from db import (
     get_axes_config,
     get_representative_images,
     get_all_rep_keywords,
+    get_best_restaurant_image,
 )
 
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
@@ -156,6 +159,20 @@ def _split_axes(bundle: dict) -> tuple[list[str], list[str]]:
     return taste, meta
 
 
+def _axis_label_map(bundle: dict) -> dict:
+    """axes_config의 label 필드에서 {axis_key: display_label} 맵을 만든다."""
+    out = {}
+    for name, info in (bundle.get("axes_config") or {}).items():
+        if name.startswith("_"):
+            continue
+        out[name] = info.get("label") or name
+    return out
+
+
+def _label_of(axis_key: str, label_map: dict) -> str:
+    return label_map.get(axis_key) or axis_key
+
+
 def _rest_info(name: str) -> dict:
     if name in REST_DB: return REST_DB[name]
     compact = name.replace("-","").replace(" ","").lower()
@@ -280,23 +297,103 @@ def api_config():
         groups = dict(groups)
 
     taste, meta = _split_axes(bundle)
+    label_map = _axis_label_map(bundle)
     return jsonify({
-        "keyword":     kw,
-        "axes":        _all_axes(bundle),
-        "taste_axes":  taste,
-        "meta_axes":   meta,
-        "groups":      groups,
-        "axes_config": bundle.get("axes_config", {}),
+        "keyword":         kw,
+        "axes":            _all_axes(bundle),
+        "taste_axes":      taste,
+        "meta_axes":       meta,
+        "groups":          groups,
+        "axes_config":     bundle.get("axes_config", {}),
+        "axis_label_map":  label_map,
+        "taste_axes_labels": [label_map.get(a, a) for a in taste],
+        "meta_axes_labels":  [label_map.get(a, a) for a in meta],
     })
+
+
+def _image_src_matches_keyword(src: str, keyword: str) -> bool:
+    """
+    image_src의 S3 URL이 `/reviews/<keyword>/` (raw 또는 URL-encoded) 을 포함하는지.
+    `/reviews/` 자체가 없으면 로컬·dev 데이터로 간주해 통과 (앱 깨짐 방지).
+    """
+    if not src or not keyword:
+        return True
+    s = str(src)
+    if "/reviews/" not in s:
+        return True
+    raw = f"/reviews/{keyword}/"
+    enc = f"/reviews/{quote(keyword, safe='')}/"
+    return (raw in s) or (enc in s)
 
 
 @app.route("/api/representative_images")
 def api_rep_images():
     kw = _norm_kw(request.args.get("keyword", DEFAULT_KW))
-    if kw in REP_IMAGES: return jsonify(REP_IMAGES[kw])
+    bundle = ALL_DATA.get(kw) or {}
+    label_map = _axis_label_map(bundle)
+
+    def _augment(payload, target_kw):
+        raw_imgs = payload.get("images") or []
+        db_loaded_count = len(raw_imgs)
+        # (restaurant, axis) 단위 dedup 안전망 — DB 단에서도 보장하지만 API에서 한 번 더.
+        # 동일 image_src 반복도 제거해 같은 사진이 여러 축을 차지하지 않게 함.
+        # 추가로: image_src의 S3 prefix가 현재 keyword와 어긋나면 차단 (DB 오염 방어).
+        seen_pair: set = set()
+        seen_src: set = set()
+        out: list = []
+        skipped_mismatch = 0
+        for img in raw_imgs:
+            src = img.get("image_src", "")
+            if not _image_src_matches_keyword(src, target_kw):
+                skipped_mismatch += 1
+                continue
+            pair = (img.get("restaurant", ""), img.get("axis", ""))
+            if pair in seen_pair or (src and src in seen_src):
+                continue
+            seen_pair.add(pair)
+            if src:
+                seen_src.add(src)
+            ax = img.get("axis", "")
+            if ax and "axis_label" not in img:
+                img["axis_label"] = label_map.get(ax) or img.get("label") or ax
+            out.append(img)
+
+        returned_count = len(out)
+        regeneration_needed = (returned_count == 0)
+
+        # 진단 로그 (CLIP 등 무거운 연산은 안 함 — 카운트만)
+        print(f"[api_rep_images] keyword={target_kw} "
+              f"db_loaded={db_loaded_count} returned={returned_count} "
+              f"prefix-skipped={skipped_mismatch}")
+        if regeneration_needed:
+            print(f"[api_rep_images] representative_images regeneration needed "
+                  f"for keyword={target_kw}")
+
+        return {
+            **payload,
+            "images": out,
+            "axis_label_map": label_map,
+            "db_loaded_count": db_loaded_count,
+            "returned_count": returned_count,
+            "skipped_keyword_mismatch_count": skipped_mismatch,
+            "regeneration_needed": regeneration_needed,
+        }
+
+    if kw in REP_IMAGES:
+        return jsonify(_augment(dict(REP_IMAGES[kw]), kw))
     for k, v in REP_IMAGES.items():
-        if kw in k or k in kw: return jsonify(v)
-    return jsonify({"keyword": kw, "images": []})
+        if kw in k or k in kw:
+            return jsonify(_augment(dict(v), kw))
+    # 캐시에 keyword 자체가 없는 경우 (예: 칼국수) — regeneration_needed=True 명시
+    print(f"[api_rep_images] keyword={kw} not in REP_IMAGES cache "
+          f"(representative_images empty or 모듈 시작 후 신규 생성) "
+          f"→ regeneration needed")
+    return jsonify({
+        "keyword": kw, "images": [], "axis_label_map": label_map,
+        "db_loaded_count": 0, "returned_count": 0,
+        "skipped_keyword_mismatch_count": 0,
+        "regeneration_needed": True,
+    })
 
 
 def _build_fallback_url(name: str, keyword: str) -> str:
@@ -362,20 +459,58 @@ def _pseudo_relevance(keyword: str, user_prefs: dict, rest_name: str):
     return "relevant" if flag == 1 else "not_relevant"
 
 
-def _rep_image_for(kw: str, rest_name: str) -> dict:
-    """해당 식당의 대표 이미지 1장 (없으면 빈 dict)."""
-    bundle = REP_IMAGES.get(kw)
-    if not bundle:
-        return {}
+def _rep_image_for(kw: str, rest_name: str, top_axes: list[str] | None = None) -> dict:
+    """
+    Inference 카드용 식당 대표 이미지 1장.
+
+    레이어 분리:
+      - Layer 1: Gallery 대표 이미지 6장(REP_IMAGES) 중 같은 식당이 있으면 그걸 사용.
+        (이미 axis-aware로 선정된 best image)
+      - Layer 2: 없으면 DB에서 `/reviews/<kw>/` prefix clean image를 식당 단위로 검색.
+        Gallery 6장에 포함되지 않은 식당도 자기 이미지를 표시할 수 있게 함.
+      - 없으면 빈 dict.
+
+    image_src의 keyword prefix는 항상 검증 — DB가 오염돼 있어도 prefix가 어긋난
+    이미지는 절대 노출하지 않는다.
+    """
+    # ── Layer 1: Gallery REP_IMAGES (in-process cache) ──
+    bundle = REP_IMAGES.get(kw) or {}
     for img in bundle.get("images", []):
         if img.get("restaurant") == rest_name:
-            return {
-                "image_src": img.get("image_src", ""),
-                "axis": img.get("axis", ""),
-                "label": img.get("label", ""),
-                "review_snippet": img.get("review_snippet", ""),
-            }
-    return {}
+            src = img.get("image_src", "")
+            if _image_src_matches_keyword(src, kw):
+                return {
+                    "image_src": src,
+                    "axis": img.get("axis", ""),
+                    "label": img.get("label", ""),
+                    "review_snippet": img.get("review_snippet", ""),
+                    "source": "gallery_rep_image",
+                }
+
+    # ── Layer 2: DB에서 식당 단위 clean image fallback ──
+    ri = _rest_info(rest_name) or {}
+    rest_id = ri.get("restaurant_id")
+    if not rest_id:
+        return {}
+    try:
+        with get_conn() as conn:
+            cand = get_best_restaurant_image(conn, kw, int(rest_id), top_axes=top_axes)
+    except Exception as e:
+        print(f"[_rep_image_for] DB fallback 실패 ({rest_name}): {type(e).__name__}")
+        return {}
+
+    if not cand:
+        return {}
+    src = cand.get("image_src", "")
+    if not _image_src_matches_keyword(src, kw):
+        return {}
+    return {
+        "image_src": src,
+        "axis": "",
+        "label": "",
+        "review_snippet": cand.get("review_snippet", ""),
+        "source": cand.get("source", "restaurant_clean_image_fallback"),
+    }
 
 
 @app.route("/api/recommend", methods=["POST"])
@@ -404,6 +539,7 @@ def api_recommend():
         return jsonify({"error": "축 정보 없음"}), 500
 
     taste_axes, meta_axes = _split_axes(bundle)
+    label_map = _axis_label_map(bundle)
 
     # 사용자 벡터
     user_tv = {ax: float(user_prefs.get(ax, 0.0)) for ax in all_axes}
@@ -491,8 +627,8 @@ def api_recommend():
         naver_url = ri.get("naver_url", "") or ""
         fallback_url = _build_fallback_url(name, kw)
 
-        # 대표 이미지
-        rep_img = _rep_image_for(kw, name)
+        # 대표 이미지 — Gallery 6장에 없으면 식당 단위 clean image fallback (db lookup)
+        rep_img = _rep_image_for(kw, name, top_axes=top_axes_names[:3])
 
         # debug_reason
         if top_axes:
@@ -522,14 +658,18 @@ def api_recommend():
             "rank_score":         round(float(sim), 4),
             "match_percent":      max(0, min(100, round(float(sim) * 100))),
             "top_axes":           top_axes_names[:3],
+            "top_axes_labels":    [label_map.get(a, a) for a in top_axes_names[:3]],
             "axis_scores":        axis_scores,
             "axis_contributions": axis_contributions,
+            "axis_contributions_labels": {label_map.get(a, a): v for a, v in axis_contributions.items()},
+            "axis_label_map":     label_map,
             "text_confidence":    round(text_conf, 3),
             "image_confidence":   round(img_conf, 3),
             "fusion_weights":     {"text": text_w, "image": img_w},
             "text_evidence_ratio":  text_w,
             "image_evidence_ratio": img_w,
             "evidence_sentences": evidence_sentences,
+            "evidence_sentences_labels": {label_map.get(a, a): v for a, v in evidence_sentences.items()},
             "representative_image": rep_img,
             "place_url":          naver_url,
             "naver_place_url":    naver_url,
@@ -542,14 +682,24 @@ def api_recommend():
     for i, item in enumerate(results, start=1):
         item["rank"] = i
 
+    # Top-N 결정: ?limit=... query param (기본 5, 1~50 클램프).
+    # 추천 결과를 화면에 너무 많이 노출하지 않도록 백엔드 단에서 1차 제한.
+    try:
+        limit_req = int(request.args.get("limit", DEFAULT_RESULT_LIMIT))
+    except (TypeError, ValueError):
+        limit_req = DEFAULT_RESULT_LIMIT
+    limit = max(1, min(MAX_RESULT_LIMIT, limit_req))
+
     return jsonify(_clean({
         "keyword":         kw,
         "fusion_mode":     fusion_mode,
         "user_weights":    user_weights,
         "taste_axes":      taste_axes,
         "meta_axes":       meta_axes,
+        "axis_label_map":  label_map,
         "count":           len(results),
-        "results":         results[:10],
+        "limit":           limit,
+        "results":         results[:limit],
         "user_vector":     user_vec_dict,
         "label_type":      _RELEVANCE_CACHE.get("label_type", "pseudo-label"),
     }))
@@ -559,20 +709,29 @@ def api_recommend():
 def api_evaluation():
     """
     evaluation.py가 만든 evaluation_results.json을 그대로 내려준다.
-    파일이 없으면 ok:false + 안내 메시지 (frontend는 카드 자체를 숨김).
+    파일이 없거나 읽기 실패해도 항상 200 OK + ok:false 형태로 응답
+    (frontend는 ok:false면 카드를 숨김 또는 안내 메시지 표시).
     """
     path = os.path.join(BASE_DIR, "evaluation_results.json")
     if not os.path.exists(path):
         return jsonify({
             "ok": False,
+            "available": False,
             "message": "evaluation_results.json이 없습니다. evaluation.py를 먼저 실행하세요.",
-        }), 404
+            "hint": "python evaluation.py --labels eval_labels.csv --k 5 --output evaluation_results.json",
+        })
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
+        data.setdefault("ok", True)
+        data.setdefault("available", True)
         return jsonify(data)
     except Exception as e:
-        return jsonify({"ok": False, "message": f"읽기 실패: {e}"}), 500
+        return jsonify({
+            "ok": False,
+            "available": False,
+            "message": f"읽기 실패: {type(e).__name__}",
+        })
 
 
 @app.route("/api/reload", methods=["POST"])

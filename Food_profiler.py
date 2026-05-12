@@ -34,8 +34,6 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-sys.stdout.reconfigure(encoding='utf-8')
-
 from db import (
     get_conn,
     upsert_restaurant,
@@ -93,12 +91,13 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
     axes_def = stand["axes"]
     lexicon = stand["lexicon"]
 
-    def build(name, group, lex_sec):
+    def build(name, group, lex_sec, label=None):
         lex = lex_sec.get(name, {})
         return {
             "positive": lex.get("positive", []),
             "negative": lex.get("negative", []),
             "group": group,
+            "label": label or name,
             "clip_prompt_pos": lex.get("clip_prompt_pos", []),
             "clip_prompt_neg": lex.get("clip_prompt_neg", []),
         }
@@ -108,7 +107,8 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
         if name.startswith("_"):
             continue
         meta[name] = {
-            **build(name, info.get("group", "메타"), lexicon.get("common", {})),
+            **build(name, info.get("group", "메타"), lexicon.get("common", {}),
+                    label=info.get("label")),
             "_weight": info.get("weight", 0.3),
         }
 
@@ -116,7 +116,8 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
     for name, info in axes_def.get("taste_axes", {}).items():
         if name.startswith("_"):
             continue
-        taste[name] = build(name, info.get("group", "맛"), lexicon.get("shared", {}))
+        taste[name] = build(name, info.get("group", "맛"), lexicon.get("shared", {}),
+                            label=info.get("label"))
 
     food_specific = axes_def.get("food_specific_axes", {})
     alias_to_cat = axes_def.get("alias_to_category", {})
@@ -152,6 +153,7 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
                 "positive": lex.get("positive", []),
                 "negative": lex.get("negative", []),
                 "group": info.get("group", matched + "특화"),
+                "label": info.get("label", name),
                 "clip_prompt_pos": lex.get("clip_prompt_pos", []),
                 "clip_prompt_neg": lex.get("clip_prompt_neg", []),
             }
@@ -359,10 +361,47 @@ def score_review(row: dict, taste_axes: dict, meta_axes: dict, rules: dict,
 
 # ── 리뷰 로드 ─────────────────────────────────────────────────
 
-def load_from_db(keyword: str) -> pd.DataFrame:
+def load_from_db(keyword: str, debug_dump: dict | None = None) -> pd.DataFrame:
+    """
+    DB에서 keyword 관련 리뷰 로드.
+
+    source boundary 기반 후보 산정 결과를 항상(debug 모드 아니어도) 콘솔에 출력한다.
+    debug_dump dict가 주어지면 keyword_filter 디버그 dict를 그대로 적재.
+    """
     terms = get_search_terms(keyword)
     with get_conn() as conn:
-        rows = get_reviews_for_profiler(conn, keyword, terms)
+        rows, kw_debug = get_reviews_for_profiler(conn, keyword, terms, return_debug=True)
+
+    # ── source boundary 로그 (항상 출력) ──
+    src_prefix = kw_debug.get("source_by_prefix_restaurants", 0)
+    src_crawl = kw_debug.get("crawl_keyword_restaurants", 0)
+    text_alias = kw_debug.get("text_alias_matched_restaurants", 0)
+    final_rest = kw_debug.get("final_restaurants", 0)
+    excluded_no_src = kw_debug.get("excluded_no_source_prefix", 0)
+    print(f"  🔎 source boundary "
+          f"| /reviews/{keyword}/ prefix 식당 {src_prefix} "
+          f"+ crawl_keyword 식당 {src_crawl} "
+          f"| text/alias 매치 {text_alias}곳 "
+          f"→ 최종 {final_rest}곳 "
+          f"| source 없어 제외 {excluded_no_src}곳")
+    if kw_debug.get("source_set_empty_fallback"):
+        print(f"  ⚠️ source_set 비어 있음 (prefix·crawl_keyword 신호 0건) "
+              f"→ text/alias fallback 모드 (옛 데이터 호환). "
+              f"새 크롤링이나 image_url 마이그레이션을 권장.")
+    if final_rest > 0:
+        density_th = kw_debug.get("density_threshold")
+        prot_prefix = kw_debug.get("protected_by_prefix", 0)
+        prot_name = kw_debug.get("protected_by_name", 0)
+        prot_crawl = kw_debug.get("protected_by_crawl_keyword", 0)
+        excl_density = kw_debug.get("excluded_by_density", 0)
+        excl_cat = kw_debug.get("excluded_by_category", 0)
+        print(f"  └─ density<{density_th} 제외 {excl_density} "
+              f"| 카테고리 제외 {excl_cat} "
+              f"| 보호: prefix {prot_prefix} / 이름 {prot_name} / crawl {prot_crawl}")
+
+    if debug_dump is not None:
+        debug_dump["keyword_filter"] = kw_debug
+
     if not rows:
         return pd.DataFrame()
     df = pd.DataFrame(rows)
@@ -371,14 +410,28 @@ def load_from_db(keyword: str) -> pd.DataFrame:
 
 
 def load_from_csv(keyword: str) -> pd.DataFrame:
+    """
+    CSV 로더 — keyword 경계 강제.
+    1) 파일명에 keyword가 포함된 CSV만 우선 사용 (예: naver_reviews_김밥.csv, 김밥.csv).
+       매치되는 CSV가 하나도 없으면 fallback으로 모든 CSV를 스캔하되,
+       각 행의 CrawlKeyword 컬럼이 현재 keyword/aliases와 일치하는 행만 남긴다.
+    2) CrawlKeyword 컬럼이 없는 옛 CSV는 review-content alias 매칭으로 통과 (호환).
+    """
     terms = get_search_terms(keyword)
+    all_csvs = [f for f in sorted(glob.glob("*.csv"))
+                if not any(x in f for x in ["_dictionary", "_vectors", "_axes",
+                                            "candidate", "summary", "eval_labels"])]
+    # 파일명에 keyword 또는 alias가 들어간 CSV만 우선
+    scoped = [f for f in all_csvs
+              if any(t in os.path.basename(f) for t in terms)]
+    target_csvs = scoped if scoped else all_csvs
+
     frames = []
-    for f in sorted(glob.glob("*.csv")):
-        if any(x in f for x in ["_dictionary", "_vectors", "_axes", "candidate", "summary"]):
-            continue
+    for f in target_csvs:
         try:
             tmp = pd.read_csv(f, encoding="utf-8-sig")
             if "Review" in tmp.columns and "Restaurant" in tmp.columns:
+                tmp["__source_csv__"] = os.path.basename(f)
                 frames.append(tmp)
         except Exception:
             pass
@@ -389,12 +442,21 @@ def load_from_csv(keyword: str) -> pd.DataFrame:
     df = pd.concat(frames, ignore_index=True)
     df = df.drop_duplicates(subset=["Restaurant", "Date", "Review"], keep="first")
 
+    # CrawlKeyword 컬럼이 있으면 그 값으로 1차 필터 — 다른 keyword 행은 즉시 제거.
+    if "CrawlKeyword" in df.columns:
+        df["CrawlKeyword"] = df["CrawlKeyword"].fillna("").astype(str)
+        has_crawl_meta = df["CrawlKeyword"].str.strip() != ""
+        crawl_match = df["CrawlKeyword"].apply(lambda v: any(t == v.strip() for t in terms))
+        # CrawlKeyword가 있는 행: 일치해야 통과. 비어있는 행은 호환 대상.
+        df = df[(~has_crawl_meta) | crawl_match].copy()
+
     def has_kw(row):
         text = (str(row.get("Menu", "")) + " " + str(row.get("Review", ""))).lower()
         return any(t.lower() in text for t in terms)
 
     filtered = df[df.apply(has_kw, axis=1)].copy()
-    print(f"  CSV: {len(filtered)}건 (식당 {filtered['Restaurant'].nunique()}개)")
+    src_names = sorted(filtered["__source_csv__"].unique().tolist()) if "__source_csv__" in filtered.columns else []
+    print(f"  CSV: {len(filtered)}건 (식당 {filtered['Restaurant'].nunique()}개) | sources={src_names}")
     return filtered
 
 
@@ -515,6 +577,7 @@ def save_to_db(keyword: str, profiles: dict, all_axes: dict,
     axes_config = {
         name: {
             "group": info.get("group", "기타"),
+            "label": info.get("label", name),
             "positive_keywords": info.get("positive", []),
             "negative_keywords": info.get("negative", []),
             "clip_prompt_pos": info.get("clip_prompt_pos", []),
@@ -583,10 +646,69 @@ def save_json(keyword: str, profiles: dict, axes_names: list,
     print(f"  ✅ {safe}_vectors.json")
 
 
-def save_debug(keyword: str, profiles: dict, taste_axes: dict, meta_axes: dict):
+def _included_entry(name: str, profile: dict, samples: list[dict]) -> dict:
+    sample = next((s for s in samples if s.get("name") == name), None)
+    if sample is None:
+        return {"name": name, "keyword_reviews": profile["keyword_reviews"],
+                "density_ratio": None, "included_reason": "density_pass"}
+    # 우선순위: prefix > crawl_keyword > name > density
+    if sample.get("protected_by_prefix"):
+        reason = "protected_by_prefix"
+    elif sample.get("protected_by_crawl"):
+        reason = "protected_by_crawl_keyword"
+    elif sample.get("protected_by_name"):
+        reason = "protected_by_name"
+    else:
+        reason = "density_pass"
+    return {
+        "name": name,
+        "keyword_reviews": profile["keyword_reviews"],
+        "density_ratio": round(sample.get("density", 0), 4),
+        "included_reason": reason,
+    }
+
+
+def save_debug(keyword: str, profiles: dict, taste_axes: dict, meta_axes: dict,
+               keyword_filter: dict | None = None):
     safe = keyword.replace(" ", "_")
+    included_restaurants = sorted(profiles.keys())
+    included_set = set(included_restaurants)
+
+    excluded_restaurants: list[dict] = []
+    samples = (keyword_filter or {}).get("samples", []) if keyword_filter else []
+    for s in samples:
+        if not s.get("kept") and s.get("name") not in included_set:
+            excluded_restaurants.append({
+                "name": s.get("name"),
+                "category": s.get("category"),
+                "total_reviews": s.get("total_reviews"),
+                "hit_reviews": s.get("hit_reviews"),
+                "density_ratio": s.get("density"),
+                "excluded_reason": s.get("excluded_reason"),
+            })
+
     debug = {
         "keyword": keyword,
+        "search_terms": (keyword_filter or {}).get("search_terms", [keyword]),
+        "density_threshold": (keyword_filter or {}).get("density_threshold"),
+        # source boundary 진단 필드
+        "source_by_prefix_restaurants":   (keyword_filter or {}).get("source_by_prefix_restaurants", 0),
+        "crawl_keyword_restaurants":      (keyword_filter or {}).get("crawl_keyword_restaurants", 0),
+        "text_alias_matched_restaurants": (keyword_filter or {}).get("text_alias_matched_restaurants", 0),
+        "excluded_no_source_prefix":      (keyword_filter or {}).get("excluded_no_source_prefix", 0),
+        "source_set_empty_fallback":      (keyword_filter or {}).get("source_set_empty_fallback", False),
+        "candidate_restaurants_count": (keyword_filter or {}).get("candidate_restaurants"),
+        "included_restaurants_count": len(included_restaurants),
+        "excluded_restaurants_count": ((keyword_filter or {}).get("excluded_by_density", 0)
+                                       + (keyword_filter or {}).get("excluded_by_category", 0)),
+        "protected_by_prefix_count":      (keyword_filter or {}).get("protected_by_prefix", 0),
+        "protected_by_name_count": (keyword_filter or {}).get("protected_by_name", 0),
+        "protected_by_crawl_keyword_count": (keyword_filter or {}).get("protected_by_crawl_keyword", 0),
+        "included_restaurants": [
+            _included_entry(name, p, samples)
+            for name, p in profiles.items()
+        ],
+        "excluded_restaurants": excluded_restaurants,
         "taste_axes": list(taste_axes.keys()),
         "meta_axes": list(meta_axes.keys()),
         "restaurants": {
@@ -643,7 +765,8 @@ def main():
     rules = stand["rules"] if stand else {"scoring": {"positive_hit": 1.0, "negative_hit": -0.5}}
 
     print(f"\n📂 리뷰 로드...")
-    df = load_from_csv(keyword) if args.csv else load_from_db(keyword)
+    debug_dump: dict | None = {} if args.debug else None
+    df = load_from_csv(keyword) if args.csv else load_from_db(keyword, debug_dump=debug_dump)
     if df.empty and not args.csv:
         print("  DB에 없음 → CSV 폴백 시도")
         df = load_from_csv(keyword)
@@ -677,7 +800,8 @@ def main():
                 print(f"    {ax:12s} {val:+.3f}  conf={conf:.2f}  {bar}")
 
     if args.debug:
-        save_debug(keyword, profiles, taste_axes, meta_axes)
+        kw_filter = (debug_dump or {}).get("keyword_filter") if debug_dump else None
+        save_debug(keyword, profiles, taste_axes, meta_axes, keyword_filter=kw_filter)
 
     if args.dry_run:
         print("\n  [DRY-RUN] DB/JSON 저장 생략")

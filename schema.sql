@@ -34,8 +34,12 @@ CREATE TABLE IF NOT EXISTS reviews (
     voted_keywords      TEXT,
     owner_reply         TEXT,
     reviewed_at         TIMESTAMP,
+    crawl_keyword       VARCHAR(64),
     crawled_at          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 기존 DB가 이미 있는 환경에서도 컬럼만 안전하게 추가 (원본 데이터 보존).
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS crawl_keyword VARCHAR(64);
 
 -- ── 리뷰 이미지 ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS review_images (
@@ -101,6 +105,7 @@ CREATE INDEX IF NOT EXISTS idx_restaurant_place   ON restaurants(place_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_restaurant ON reviews(restaurant_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_naver_id   ON reviews(naver_review_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_menu       ON reviews(menu);
+CREATE INDEX IF NOT EXISTS idx_reviews_crawl_kw    ON reviews(crawl_keyword);
 CREATE INDEX IF NOT EXISTS idx_vectors_keyword    ON restaurant_vectors(keyword);
 CREATE INDEX IF NOT EXISTS idx_vectors_fused      ON restaurant_vectors USING GIN (fused_vector);
 CREATE INDEX IF NOT EXISTS idx_vectors_text       ON restaurant_vectors USING GIN (text_vector);

@@ -1,69 +1,108 @@
 {
-  "version": "2.2",
-
+  "version": "2.3",
   "scoring": {
     "positive_hit": 1.0,
     "negative_hit": -0.5,
     "normalization": "tanh"
   },
-
   "intensifiers": {
-    "아주": 1.3, "엄청": 1.5, "진짜": 1.4, "완전": 1.5,
-    "너무": 1.3, "정말": 1.4, "개": 1.5, "매우": 1.4,
-    "꽤": 1.1, "제법": 1.1, "다소": 0.7,
-    "조금": 0.7, "살짝": 0.6, "약간": 0.7, "좀": 0.8,
-    "그냥": 0.6, "그닥": 0.5
+    "아주": 1.3,
+    "엄청": 1.5,
+    "진짜": 1.4,
+    "완전": 1.5,
+    "너무": 1.3,
+    "정말": 1.4,
+    "개": 1.5,
+    "매우": 1.4,
+    "꽤": 1.1,
+    "제법": 1.1,
+    "다소": 0.7,
+    "조금": 0.7,
+    "살짝": 0.6,
+    "약간": 0.7,
+    "좀": 0.8,
+    "그냥": 0.6,
+    "그닥": 0.5
   },
-
   "negations": [
-    "안", "않", "못", "별로", "덜", "없",
-    "아쉽", "실망", "과하", "지나치",
-    "기대 이하", "별루", "그저그래", "그저 그래"
+    "안",
+    "않",
+    "못",
+    "별로",
+    "덜",
+    "없",
+    "아쉽",
+    "실망",
+    "과하",
+    "지나치",
+    "기대 이하",
+    "별루",
+    "그저그래",
+    "그저 그래"
   ],
-
   "reversals": [
-    "하지만", "근데", "그런데", "다만", "그래도",
-    "이긴 한데", "긴 한데", "한데", "는데",
-    "하긴 하지만", "하긴 한데"
+    "하지만",
+    "근데",
+    "그런데",
+    "다만",
+    "그래도",
+    "이긴 한데",
+    "긴 한데",
+    "한데",
+    "는데",
+    "하긴 하지만",
+    "하긴 한데"
   ],
-
   "rating_adjustments": {
     "전반적만족": {
-      "taste_ge": [4, 0.3],
-      "taste_le": [2, -0.5],
-      "total_le": [2, -1.0],
-      "total_ge_default": [5, 0.3]
+      "taste_ge": [
+        4,
+        0.3
+      ],
+      "taste_le": [
+        2,
+        -0.5
+      ],
+      "total_le": [
+        2,
+        -1.0
+      ],
+      "total_ge_default": [
+        5,
+        0.3
+      ]
     },
     "양많음": {
-      "quantity_ge": [5, 0.2],
-      "quantity_le": [2, -0.2]
+      "quantity_ge": [
+        5,
+        0.2
+      ],
+      "quantity_le": [
+        2,
+        -0.2
+      ]
     }
   },
-
   "low_review_penalty": {
     "min_reviews": 3,
     "scale": "sqrt",
     "_comment": "리뷰 수가 min_reviews 미만이면 sqrt(n/min) 비율로 점수 스케일다운"
   },
-
   "fusion": {
     "text_weight": 0.7,
     "image_weight": 0.3,
     "dynamic": true,
     "_comment": "dynamic=true면 app.py가 confidence 비율로 가중치를 자동 조정"
   },
-
   "meta_axes_weight": 0.3,
   "taste_axes_weight": 1.0,
   "meta_boost": 0.05,
-
   "recommendation": {
     "mode_a": "cosine(taste_user, taste_restaurant) + meta_boost * cosine(meta)",
     "mode_b": "0.4 * cosine(abs) + 0.6 * cosine(delta)"
   },
-
   "image_filtering": {
-    "_comment": "대표 이미지 후보 필터링용 CLIP prompt + 점수식 파라미터. 매장 외관/메뉴판/영수증/스크린샷을 컷오프하기 위한 설정.",
+    "_comment": "image_id 단위 평가용. food_presence/non_food는 일반 음식 여부, category_presence는 keyword 음식 여부, wrong_food는 다른 음식 사진 패널티.",
     "food_presence_prompts": [
       "a clear photo of food on a plate ready to eat",
       "a close-up photo of a cooked dish",
@@ -77,12 +116,543 @@
       "a photo of people posing without food visible",
       "a photo of a logo or graphic design without food"
     ],
+    "category_presence_prompts": {
+      "_default": [
+        "a clear photo of food on a plate"
+      ],
+      "버거": [
+        "a photo of a hamburger with a bun and patty",
+        "a close-up photo of a burger sandwich showing patty cheese and vegetables",
+        "a photo of a stacked burger with bun on top"
+      ],
+      "햄버거": [
+        "a photo of a hamburger with a bun and patty",
+        "a close-up photo of a burger sandwich"
+      ],
+      "치킨": [
+        "a photo of korean fried chicken pieces"
+      ],
+      "피자": [
+        "a photo of a pizza with melted cheese on top"
+      ],
+      "파스타": [
+        "a photo of a plate of pasta with sauce"
+      ],
+      "스테이크": [
+        "a photo of a grilled steak on a plate"
+      ],
+      "리조또": [
+        "a photo of a creamy risotto in a bowl"
+      ],
+      "샐러드": [
+        "a photo of a fresh salad bowl with vegetables",
+        "a photo of a salad bowl with leafy greens and dressing",
+        "a photo of mixed salad with toppings"
+      ],
+      "삼겹살": [
+        "a photo of grilled pork belly samgyeopsal"
+      ],
+      "구이": [
+        "a photo of korean grilled meat"
+      ],
+      "돈까스": [
+        "a photo of a breaded pork cutlet tonkatsu"
+      ],
+      "탕수육": [
+        "a photo of korean sweet and sour pork tangsuyuk"
+      ],
+      "짜장": [
+        "a photo of korean black bean noodles jajangmyeon"
+      ],
+      "짬뽕": [
+        "a photo of korean spicy seafood noodle soup jjamppong"
+      ],
+      "볶음밥": [
+        "a photo of korean fried rice"
+      ],
+      "떡볶이": [
+        "a photo of korean spicy rice cakes tteokbokki"
+      ],
+      "분식": [
+        "a photo of korean street food snacks"
+      ],
+      "찌개전골": [
+        "a photo of korean stew jjigae bubbling"
+      ],
+      "찜류": [
+        "a photo of korean braised dish jjim with seasoned sauce",
+        "a photo of agujjim or galbijjim or haemuljjim on a plate"
+      ],
+      "찜": [
+        "a photo of korean braised dish jjim with seasoned sauce",
+        "a photo of agujjim or galbijjim or haemuljjim on a plate"
+      ],
+      "국밥탕": [
+        "a photo of korean rice soup gukbap"
+      ],
+      "순대국밥": [
+        "a photo of korean sundae soup"
+      ],
+      "감자탕": [
+        "a photo of korean pork bone soup gamjatang"
+      ],
+      "족발": [
+        "a photo of korean braised pig trotters jokbal"
+      ],
+      "감자튀김": [
+        "a photo of golden french fries"
+      ],
+      "도시락": [
+        "a photo of a korean lunchbox dosirak"
+      ],
+      "회": [
+        "a photo of fresh raw fish sashimi slices",
+        "a photo of sliced raw fish on a plate",
+        "a photo of a sashimi platter"
+      ],
+      "조개": [
+        "a photo of clams or shellfish",
+        "a photo of grilled clams jogae gui",
+        "a photo of steamed clams jogae jjim",
+        "a photo of clam soup jogae tang"
+      ],
+      "김밥": [
+        "a photo of korean kimbap rice rolls",
+        "a close-up photo of kimbap cross-section showing fillings",
+        "a photo of seaweed-wrapped rice rolls with vegetables and meat"
+      ],
+      "청국장": [
+        "a photo of korean cheonggukjang fermented soybean stew",
+        "a photo of bubbling korean stew in a stone bowl with side dishes"
+      ],
+      "칼국수": [
+        "a bowl of kalguksu Korean knife-cut noodle soup",
+        "a photo of Korean noodle soup with broth and noodles",
+        "chopsticks lifting noodles from a hot broth bowl",
+        "a close-up of wheat noodles in clear soup"
+      ],
+      "김치찌개": [
+        "a photo of Korean kimchi stew kimchi jjigae",
+        "bubbling kimchi jjigae in a hot pot",
+        "a photo of kimchi stew with tofu and pork belly",
+        "red Korean stew with kimchi in a stone pot"
+      ],
+      "한상": [
+        "a photo of a Korean set meal table with rice soup and many side dishes",
+        "a Korean meal tray hansangchaek with main dish and banchan",
+        "a Korean home-style full table with various side dishes",
+        "a tray of Korean meal courses arranged together"
+      ],
+      "커피": [
+        "a photo of a cup of black coffee on a table",
+        "a close-up photo of an espresso shot with crema",
+        "a top-down photo of an iced americano with ice cubes",
+        "a photo of a clear cup of black coffee"
+      ],
+      "라떼류": [
+        "a photo of a cafe latte with milk and espresso",
+        "a top-down photo of latte art on a coffee cup",
+        "a photo of a cappuccino with foamed milk",
+        "a photo of a flavored cafe drink in a tall glass"
+      ],
+      "디저트": [
+        "a photo of a slice of cake on a plate",
+        "a close-up photo of a colorful dessert in a cafe",
+        "a photo of macarons on a plate",
+        "a photo of a tart or pudding dessert"
+      ],
+      "베이커리": [
+        "a photo of a croissant on a wooden board",
+        "a photo of fresh bakery breads on a tray",
+        "a photo of a scone or bun in a bakery",
+        "a close-up photo of pastries with golden crust"
+      ],
+      "아메리카노": [
+        "a photo of an iced americano in a clear cup with ice",
+        "a top-down photo of black coffee in a glass cup",
+        "a photo of a tall iced black coffee"
+      ],
+      "에스프레소": [
+        "a close-up photo of a small espresso shot with thick crema",
+        "a photo of a demitasse cup with dark espresso"
+      ],
+      "콜드브루": [
+        "a photo of a cold brew coffee in a glass bottle",
+        "a tall glass of dark cold brew coffee with no foam"
+      ],
+      "드립커피": [
+        "a photo of pour-over drip coffee being brewed",
+        "a hand-drip coffee setup with a server"
+      ],
+      "아인슈페너": [
+        "a glass of einspaenner coffee with thick whipped cream on top"
+      ],
+      "라떼": [
+        "a photo of a cafe latte with smooth steamed milk",
+        "a top-down photo of latte art in a white cup"
+      ],
+      "말차": [
+        "a photo of a bright green matcha latte in a cup",
+        "a top-down photo of matcha latte with green color"
+      ],
+      "초코라떼": [
+        "a photo of a chocolate latte with cocoa powder on top"
+      ],
+      "밀크티": [
+        "a photo of a glass of milk tea with brown color",
+        "a tall glass of chai latte with cinnamon"
+      ],
+      "에이드": [
+        "a photo of a refreshing fruit ade in a tall glass with ice",
+        "a glass of lemonade or grapefruit ade with bubbles"
+      ],
+      "치즈케이크": [
+        "a slice of basque burnt cheesecake on a plate",
+        "a photo of a cheesecake slice with golden top"
+      ],
+      "티라미수": [
+        "a photo of tiramisu dessert with cocoa powder dust on top"
+      ],
+      "당근케이크": [
+        "a slice of carrot cake with cream cheese frosting"
+      ],
+      "가또쇼콜라": [
+        "a slice of dark chocolate gateau with shiny ganache"
+      ],
+      "마카롱": [
+        "a photo of colorful French macarons arranged on a plate"
+      ],
+      "푸딩": [
+        "a photo of caramel pudding with glossy sauce on top",
+        "a small glass jar of cafe pudding"
+      ],
+      "타르트": [
+        "a photo of a fruit tart with glazed fruits on top",
+        "a slice of lemon tart with golden crust"
+      ],
+      "브라우니": [
+        "a square piece of fudgy chocolate brownie"
+      ],
+      "쿠키": [
+        "a photo of a thick chunky chocolate chip cookie",
+        "a stack of bakery cookies on a plate"
+      ],
+      "크로아상": [
+        "a close-up photo of a flaky golden croissant",
+        "a croissant cross-section showing layered pastry"
+      ],
+      "베이글": [
+        "a photo of a sesame bagel on a wooden board",
+        "a bagel sandwich filled with cream cheese"
+      ],
+      "스콘": [
+        "a photo of a rustic scone with rough top",
+        "a plate of scones with clotted cream and jam"
+      ],
+      "소금빵": [
+        "a photo of a buttery salt bun pastry with salt flakes on top"
+      ],
+      "크로플": [
+        "a top-down photo of a croffle with toppings",
+        "a waffle-pressed croissant with syrup"
+      ],
+      "와플": [
+        "a photo of a Belgian waffle with whipped cream and syrup"
+      ],
+      "휘낭시에": [
+        "a photo of small rectangular financier cakes on a plate"
+      ],
+      "마들렌": [
+        "a close-up photo of shell-shaped madeleine cakes"
+      ],
+      "까눌레": [
+        "a close-up photo of dark glossy canele pastries"
+      ],
+      "식빵": [
+        "a photo of a loaf of sliced sandwich bread"
+      ]
+    },
+    "wrong_food_prompts": {
+      "_default": [],
+      "버거": [
+        "a photo of korean fried chicken pieces only",
+        "a photo of french fries alone without burger",
+        "a photo of pizza",
+        "a photo of beverages or drinks only without food",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a paper menu filled with text"
+      ],
+      "햄버거": [
+        "a photo of korean fried chicken pieces only",
+        "a photo of french fries alone",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a paper menu filled with text"
+      ],
+      "치킨": [
+        "a photo of a hamburger sandwich"
+      ],
+      "피자": [
+        "a photo of pasta noodles",
+        "a photo of a burger"
+      ],
+      "파스타": [
+        "a photo of pizza",
+        "a photo of a burger"
+      ],
+      "스테이크": [
+        "a photo of pasta noodles"
+      ],
+      "회": [
+        "a photo of grilled meat",
+        "a photo of fried chicken",
+        "a photo of grilled clams or steamed clams",
+        "a photo of korean stew or soup",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a paper menu filled with text"
+      ],
+      "조개": [
+        "a photo of raw fish sashimi or sushi",
+        "a photo of kimbap rice rolls",
+        "a photo of dessert or cake",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a paper menu filled with text"
+      ],
+      "김밥": [
+        "a photo of rice cake or tteok",
+        "a photo of butter rice cake or sweet pastry",
+        "a photo of bread or cake",
+        "a photo of dessert or beverages only",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a paper menu filled with text"
+      ],
+      "샐러드": [
+        "a photo of grilled meat or barbecue",
+        "a photo of bread or pastry",
+        "a photo of dessert or cake",
+        "a photo of coffee or beverage only",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "찜": [
+        "a photo of a salad bowl",
+        "a photo of pizza",
+        "a photo of dessert or cake",
+        "a photo of cafe drinks",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "찜류": [
+        "a photo of a salad bowl",
+        "a photo of pizza",
+        "a photo of dessert or cake",
+        "a photo of cafe drinks",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "청국장": [
+        "a photo of a salad bowl",
+        "a photo of pizza or pasta",
+        "a photo of dessert or cake",
+        "a photo of coffee or cafe drinks",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "칼국수": [
+        "a photo of kimchi side dish only without noodles",
+        "a photo of korean pancake or jeon only",
+        "a photo of dried fried food only",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of an empty bowl or empty table"
+      ],
+      "김치찌개": [
+        "a photo of a salad bowl",
+        "a photo of pizza or pasta",
+        "a photo of dessert or cake",
+        "a photo of coffee or cafe drinks",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "한상": [
+        "a photo of a single dish only without side dishes",
+        "a photo of dessert or cake",
+        "a photo of coffee or cafe drinks",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "삼겹살": [
+        "a photo of raw fish sashimi",
+        "a photo of a hamburger"
+      ],
+      "커피": [
+        "a photo of a slice of cake or dessert without coffee",
+        "a photo of bread or pastry alone without coffee",
+        "a photo of korean stew or soup",
+        "a photo of grilled meat or fried chicken",
+        "a photo of a fruit ade or juice without coffee color",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "라떼류": [
+        "a photo of black coffee with no milk",
+        "a photo of a slice of cake or dessert alone",
+        "a photo of korean stew or soup",
+        "a photo of grilled meat or fried chicken",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "디저트": [
+        "a photo of a cup of black coffee alone",
+        "a photo of korean stew or soup",
+        "a photo of grilled meat or sashimi",
+        "a photo of bread loaf or savory bakery alone",
+        "a photo of a salad bowl",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "베이커리": [
+        "a photo of a cup of coffee alone",
+        "a photo of a slice of cake alone without bread",
+        "a photo of korean stew or soup",
+        "a photo of grilled meat or fried chicken",
+        "a photo of a salad bowl",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "아메리카노": [
+        "a photo of a cafe latte with milk",
+        "a photo of cake or dessert without coffee",
+        "a photo of fruit ade or juice",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "라떼": [
+        "a photo of black americano without milk",
+        "a photo of cake or pastry alone",
+        "a photo of fruit ade or juice",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "말차": [
+        "a photo of black coffee or americano",
+        "a photo of brown latte without green color",
+        "a photo of cake alone",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "크로아상": [
+        "a photo of a slice of cake",
+        "a photo of a cup of coffee alone",
+        "a photo of a sandwich with vegetables only",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "베이글": [
+        "a photo of a doughnut without hole shape",
+        "a slice of cake alone",
+        "a cup of coffee alone",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "스콘": [
+        "a slice of cake alone",
+        "a photo of a croissant",
+        "a cup of coffee alone",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "마카롱": [
+        "a slice of cake alone",
+        "a photo of cookies without round macaron shape",
+        "a cup of coffee alone",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "티라미수": [
+        "a photo of a cup of coffee alone",
+        "a photo of plain bread or croissant",
+        "a slice of cheesecake or carrot cake",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "치즈케이크": [
+        "a photo of tiramisu with cocoa powder",
+        "a photo of chocolate gateau cake",
+        "a photo of bread or pastry alone",
+        "a cup of coffee alone",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ]
+    },
     "thresholds": {
-      "min_food_presence":      0.18,
-      "max_non_food_penalty":   0.22,
-      "food_presence_weight":   0.4,
+      "_comment": "Foodness hard gate. 종이/메뉴판/영수증/간판처럼 음식이 아닌 사진이 대표로 선정되지 않도록 더 엄격하게 잡았다. 너무 많이 탈락하면 max_non_food_penalty를 0.22로, max_wrong_food_penalty를 0.25로 다시 풀어주면 된다.",
+      "min_food_presence": 0.18,
+      "max_non_food_penalty": 0.18,
+      "min_category_presence": 0.15,
+      "max_wrong_food_penalty": 0.2,
+      "food_presence_weight": 0.0,
       "non_food_penalty_weight": 0.6,
-      "linked_text_weight":     0.15
+      "category_bonus_weight": 0.3,
+      "wrong_food_weight": 0.7,
+      "linked_text_weight": 0.15,
+      "duplicate_threshold": 0.92,
+      "duplicate_penalty_weight": 0.3,
+      "max_per_review": 1,
+      "max_per_review_loose": 2,
+      "max_per_restaurant": 2,
+      "max_per_restaurant_axis": 1,
+      "fallback_target_count": 6,
+      "fallback_min_combined": 0.1
     }
   }
 }

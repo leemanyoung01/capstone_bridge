@@ -87,19 +87,39 @@ function App() {
     setScores(fresh);
   };
 
+  // 프론트 prefix 방어: image_src가 S3 URL이면 `/reviews/<keyword>/`
+  // (raw 또는 URL-encoded) 가 포함된 이미지만 통과. `/reviews/`가 없는
+  // 로컬·dev 데이터는 통과. 핵심 필터는 백엔드 담당, 여기는 이중 방어.
+  const filterImagesByKeyword = (imgs, kw) => {
+    if (!Array.isArray(imgs) || !kw) return imgs || [];
+    const raw = `/reviews/${kw}/`;
+    const enc = `/reviews/${encodeURIComponent(kw)}/`;
+    return imgs.filter(img => {
+      const src = img && img.image_src ? String(img.image_src) : '';
+      if (!src) return true;
+      if (!src.includes('/reviews/')) return true;
+      return src.includes(raw) || src.includes(enc);
+    });
+  };
+
   const loadGallery = async () => {
     // Before moving to step 2, we must have at least one selection
-    const total = Object.values(scores).reduce((a, b) => a + b, 0);
+    const total = Object.values(scores).reduce((a, b) => a + (parseInt(b) || 0), 0);
     if (total === 0) {
        alert('최소 1개 이상 키워드를 선택해주세요!');
        return;
     }
-    
+
     setStep(2);
     try {
       const res = await fetch(`/api/representative_images?keyword=${encodeURIComponent(currentKeyword)}`);
       const data = await res.json();
-      setRepImages(data.images || []);
+      const raw = data.images || [];
+      const cleaned = filterImagesByKeyword(raw, currentKeyword);
+      if (raw.length !== cleaned.length) {
+        console.warn(`[GalleryStep] keyword=${currentKeyword} prefix-mismatch dropped ${raw.length - cleaned.length} images`);
+      }
+      setRepImages(cleaned);
       setSelectedImageIdx([]);
     } catch (err) {
       console.error(err);
@@ -192,7 +212,8 @@ function App() {
       )}
       
       {step === 2 && (
-         <GalleryStep 
+         <GalleryStep
+            keyword={currentKeyword}
             images={repImages}
             selectedImageIdx={selectedImageIdx}
             onImageToggle={toggleImageSelection}

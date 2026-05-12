@@ -41,7 +41,10 @@ const StampBadge = () => (
   </svg>
 );
 
-const GalleryStep = ({ images, selectedImageIdx, onImageToggle, onPrev, onSkip, onNext }) => {
+const GalleryStep = ({ keyword, images, selectedImageIdx, onImageToggle, onPrev, onSkip, onNext }) => {
+  // keyword prop preserved for compatibility, but we use the filtered images from parent
+  void keyword;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -171,13 +174,12 @@ const GalleryStep = ({ images, selectedImageIdx, onImageToggle, onPrev, onSkip, 
                     }}>🍽️</div>
                   )}
 
-                  {/* Handwritten Gaegu caption */}
+                  {/* Caption - removed fontFamily override to use Pretendard */}
                   <div style={{
                     marginTop: '12px',
                     textAlign: 'center',
                   }}>
                     <div style={{
-                      fontFamily: 'var(--font-handwritten)',
                       fontSize: '16px',
                       fontWeight: 700,
                       color: 'var(--text-dark)',
@@ -185,7 +187,6 @@ const GalleryStep = ({ images, selectedImageIdx, onImageToggle, onPrev, onSkip, 
                     }}>
                       {img.label || img.axis || '대표 이미지'}
                     </div>
-                    {/* Restaurant name removed per user request */}
                   </div>
 
                   {/* Stamp animation on selection */}

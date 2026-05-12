@@ -63,6 +63,23 @@ def ndcg_at_k(predicted: list[str], relevant: set[str], k: int) -> float:
     return dcg / idcg if idcg > 0 else 0.0
 
 
+def ndcg_at_k_graded(predicted: list[str], grade_map: dict[str, int], k: int) -> float:
+    """
+    graded NDCG. grade_map: {restaurant_name: 0~3}.
+    relevance_grade가 있는 human-label에서만 의미 있음.
+    """
+    if not grade_map:
+        return 0.0
+    dcg = 0.0
+    for i, name in enumerate(predicted[:k], start=1):
+        g = int(grade_map.get(name, 0))
+        if g > 0:
+            dcg += (2 ** g - 1) / math.log2(i + 1)
+    ideal_grades = sorted(grade_map.values(), reverse=True)[:k]
+    idcg = sum((2 ** g - 1) / math.log2(i + 1) for i, g in enumerate(ideal_grades, start=1) if g > 0)
+    return dcg / idcg if idcg > 0 else 0.0
+
+
 def fetch_predictions(api_base: str, keyword: str, prefs: dict) -> list[dict]:
     import requests
     r = requests.post(
@@ -75,8 +92,38 @@ def fetch_predictions(api_base: str, keyword: str, prefs: dict) -> list[dict]:
     return data.get("results", [])
 
 
+def axis_match_rate(predicted: list[dict], prefs: dict, k: int) -> float:
+    """
+    Axis Match Rate (TasteBridge 고유 지표).
+    Top-K 추천 식당의 top_axes union이 사용자가 선택한 축과 얼마나 겹치는지.
+
+    수식:
+      user_axes = {ax : prefs[ax] > 0 인 축들}
+      pred_axes = union of (predicted[:k] 의 top_axes)
+      rate = |user_axes ∩ pred_axes| / |user_axes|
+
+    user_axes가 비어 있으면 0.0.
+    """
+    user_axes = {ax for ax, v in (prefs or {}).items()
+                 if isinstance(v, (int, float)) and float(v) > 0}
+    if not user_axes:
+        return 0.0
+    pred_axes: set[str] = set()
+    for item in (predicted or [])[:k]:
+        for ax in (item.get("top_axes") or item.get("reasons") or [])[:5]:
+            if ax:
+                pred_axes.add(ax)
+    if not pred_axes:
+        return 0.0
+    return len(user_axes & pred_axes) / len(user_axes)
+
+
 def _detect_label_type(labels_path: str, override: str | None) -> str:
     if override:
+        # 'human' 또는 'human-label' 모두 허용
+        v = override.strip().lower()
+        if v in ("human", "human-label"): return "human-label"
+        if v in ("pseudo", "pseudo-label"): return "pseudo-label"
         return override
     base = os.path.basename(labels_path).lower()
     return "human-label" if "human" in base else "pseudo-label"
@@ -103,15 +150,23 @@ def evaluate(labels_path: str, api_base: str, k: int,
         sys.exit(1)
 
     label_type = _detect_label_type(labels_path, label_type_override)
+    has_graded = "relevance_grade" in df.columns
 
     # (keyword, user_pref_json) 기준 그룹화
-    groups: dict = defaultdict(lambda: {"prefs": None, "relevant": set(), "all": set()})
+    groups: dict = defaultdict(lambda: {"prefs": None, "relevant": set(), "all": set(), "grades": {}})
     for _, row in df.iterrows():
         key = (row["keyword"], row["user_pref_json"])
         groups[key]["prefs"] = json.loads(row["user_pref_json"])
         groups[key]["all"].add(row["restaurant"])
         if int(row["relevance"]) == 1:
             groups[key]["relevant"].add(row["restaurant"])
+        if has_graded:
+            try:
+                g = int(row["relevance_grade"])
+            except (ValueError, TypeError):
+                g = 0
+            if g > 0:
+                groups[key]["grades"][row["restaurant"]] = g
 
     metrics: dict[str, list[float]] = defaultdict(list)
     failed_queries = 0
@@ -120,6 +175,7 @@ def evaluate(labels_path: str, api_base: str, k: int,
     for (keyword, pref_str), payload in groups.items():
         prefs = payload["prefs"]
         relevant = payload["relevant"]
+        grade_map = payload.get("grades") or {}
         try:
             results = fetch_predictions(api_base, keyword, prefs)
         except Exception as e:
@@ -132,6 +188,10 @@ def evaluate(labels_path: str, api_base: str, k: int,
         metrics["recall_at_k"].append(recall_at_k(predicted, relevant, k))
         metrics["f1_at_k"].append(f1_at_k(predicted, relevant, k))
         metrics["ndcg_at_k"].append(ndcg_at_k(predicted, relevant, k))
+        # TasteBridge 고유 지표: 사용자 선택 축 ↔ 추천 식당 top_axes 일치도
+        metrics["axis_match_rate"].append(axis_match_rate(results, prefs, k))
+        if has_graded and grade_map:
+            metrics["ndcg_graded_at_k"].append(ndcg_at_k_graded(predicted, grade_map, k))
 
         # 디버깅용 per-query 기록
         per_records = []
@@ -142,7 +202,7 @@ def evaluate(labels_path: str, api_base: str, k: int,
                 "restaurant_name":  name,
                 "score":            float(item.get("similarity", 0.0)),
                 "is_relevant":      bool(name in relevant),
-                "relevance_grade":  1 if name in relevant else 0,
+                "relevance_grade":  int(grade_map.get(name, 1 if name in relevant else 0)),
             })
         per_query_records.append({
             "keyword":         keyword,
@@ -156,18 +216,23 @@ def evaluate(labels_path: str, api_base: str, k: int,
     print(f"  Evaluation @ k={k}  (queries={len(metrics['precision_at_k'])})  label={label_type}")
     print(f"{'━' * 50}")
     avg: dict[str, float] = {}
-    for name in ("precision_at_k", "recall_at_k", "f1_at_k", "ndcg_at_k"):
+    metric_keys = ["precision_at_k", "recall_at_k", "f1_at_k", "ndcg_at_k",
+                   "axis_match_rate"]
+    if metrics.get("ndcg_graded_at_k"):
+        metric_keys.append("ndcg_graded_at_k")
+    for name in metric_keys:
         vals = metrics.get(name) or []
         avg[name] = round(sum(vals) / len(vals), 4) if vals else 0.0
-        print(f"  {name:15s} = {avg[name]:.4f}")
+        print(f"  {name:18s} = {avg[name]:.4f}")
 
     # 호환용 별칭 (precision@k 등 기존 키)
     metrics_compat = dict(avg)
     metrics_compat.update({
-        "precision@k": avg["precision_at_k"],
-        "recall@k":    avg["recall_at_k"],
-        "f1@k":        avg["f1_at_k"],
-        "ndcg@k":      avg["ndcg_at_k"],
+        "precision@k":   avg["precision_at_k"],
+        "recall@k":      avg["recall_at_k"],
+        "f1@k":          avg["f1_at_k"],
+        "ndcg@k":        avg["ndcg_at_k"],
+        "axis_match@k":  avg["axis_match_rate"],
     })
 
     result = {

@@ -140,7 +140,6 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
                   }}
                 >
                   <h3 style={{
-                    fontFamily: 'var(--font-handwritten)',
                     fontSize: '18px',
                     fontWeight: 800,
                     marginBottom: '18px',
@@ -166,7 +165,6 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
                             height: '42px', boxSizing: 'border-box',
                             padding: isSelected ? '0 8px 0 16px' : '0 18px',
                             borderRadius: '999px',
-                            fontFamily: 'var(--font-handwritten)',
                             fontSize: '15px', fontWeight: 700,
                             // ── Claymorphism jelly sticker ──
                             backgroundColor: isSelected
@@ -261,10 +259,10 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
             boxShadow: '0 6px 28px rgba(0,0,0,0.08)',
             border: '1px solid rgba(0,0,0,0.06)',
           }}>
-            <h3 style={{ fontFamily: 'var(--font-handwritten)', fontSize: '20px', fontWeight: 800, letterSpacing: '-0.4px', marginBottom: '2px', color: 'var(--text-dark)' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.4px', marginBottom: '2px', color: 'var(--text-dark)' }}>
               나의 취향 프로필
             </h3>
-            <p style={{ fontFamily: 'var(--font-handwritten)', fontSize: '14px', color: 'var(--text-gray)', marginBottom: '12px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-gray)', marginBottom: '12px' }}>
               선택할수록 그래프가 변합니다.
             </p>
 
@@ -281,7 +279,6 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
                 axes={groupOrder.map(g => g.label).slice(0, 5)}
               />
               <p style={{
-                fontFamily: 'var(--font-handwritten)',
                 fontSize: '15px',
                 fontWeight: 700,
                 color: 'var(--text-gray)',
