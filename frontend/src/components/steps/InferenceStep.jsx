@@ -39,7 +39,17 @@ const CARD_ACCENTS = [
 // 프론트에서 한 번 더 자른다 (이중 방어).
 const FRONT_RESULT_LIMIT = 5;
 
-const InferenceStep = ({ results, error, onRestart }) => {
+// ── Axis Label Mapping (For UI Display Only) ──
+const AXIS_LABEL_MAP = {
+  '번식감': '빵 식감',
+  '패티육즙': '패티 육즙',
+  '혼밥': '혼밥하기 좋은'
+  // 필요한 경우 여기에 추가 매핑을 넣을 수 있습니다.
+};
+
+const getLabel = (key) => AXIS_LABEL_MAP[key] || key;
+
+const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '', onRestart }) => {
   const [expanded, setExpanded] = useState({});
   const toggle = (idx) => setExpanded(p => ({ ...p, [idx]: !p[idx] }));
 
@@ -253,7 +263,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                               borderLeft: '3px solid var(--primary-light)',
                               boxShadow: '1px 2px 4px rgba(0,0,0,0.05)',
                             }}>
-                              #{r}{pct != null ? <span style={{ color: 'var(--text-gray)', marginLeft: 4, fontSize: '13px' }}>{pct}%</span> : null}
+                              #{getLabel(r)}{pct != null ? <span style={{ color: 'var(--text-gray)', marginLeft: 4, fontSize: '13px' }}>{pct}%</span> : null}
                             </span>
                           );
                         })}
@@ -324,13 +334,32 @@ const InferenceStep = ({ results, error, onRestart }) => {
                         {(matchData.length > 0 || Object.keys(axisContribs).length > 0) && (
                           <div style={{ background: 'var(--bg-color)', borderRadius: '16px', padding: '16px 8px' }}>
                             <div style={{ textAlign: 'center', fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>취향 밸런스 분석</div>
-                            <RadarChartViz
-                              data={axisScores}
-                              axes={Array.from(new Set([
-                                ...topAxes,
-                                ...Object.keys(axisContribs).sort((a, b) => axisContribs[b] - axisContribs[a]).slice(0, 6),
-                              ])).slice(0, 7)}
-                            />
+                            {(() => {
+                              const selectedAxisKeys = Object.keys(scores).filter(ax => (scores[ax] || 0) > 0);
+                              const radarLabelMap = {
+                                ...config.axis_label_map,
+                                ...AXIS_LABEL_MAP
+                              };
+                              // TasteStep의 로컬 매핑 로직 반영
+                              const AXIS_DISPLAY_LABELS = {
+                                커피: { 온도: '따뜻함' },
+                                김밥: { 밥의간과양: '밥의 간과 양' },
+                                버거: { 번식감: '빵 식감', 패티육즙: '패티 육즙' },
+                              };
+                              selectedAxisKeys.forEach(ax => {
+                                if (AXIS_DISPLAY_LABELS[keyword]?.[ax]) {
+                                  radarLabelMap[ax] = AXIS_DISPLAY_LABELS[keyword][ax];
+                                }
+                              });
+
+                              return (
+                                <RadarChartViz
+                                  data={axisScores}
+                                  axes={selectedAxisKeys}
+                                  labelMap={radarLabelMap}
+                                />
+                              );
+                            })()}
                             <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-gray)', marginTop: '4px' }}>
                               식당의 특징 점수와 취향 기여도를 종합한 그래프입니다.
                             </div>
@@ -343,7 +372,7 @@ const InferenceStep = ({ results, error, onRestart }) => {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                               {Object.entries(evSentences).slice(0, 4).map(([ax, sents]) => (
                                 <div key={ax} style={{ fontSize: '12px', background: 'var(--bg-color)', borderRadius: '10px', padding: '8px 12px' }}>
-                                  <span style={{ fontWeight: 800, color: 'var(--btn-dark)' }}>#{ax}</span>{' '}
+                                  <span style={{ fontWeight: 800, color: 'var(--btn-dark)' }}>#{getLabel(ax)}</span>{' '}
                                   <span style={{ color: 'var(--text-gray)', fontStyle: 'italic' }}>"{(sents || [])[0]}"</span>
                                 </div>
                               ))}
@@ -356,7 +385,6 @@ const InferenceStep = ({ results, error, onRestart }) => {
                     </motion.div>
                   )}
                 </AnimatePresence>
-                {/* ⚠️ 기존 코드에 있던 불필요한 </div> 가 삭제된 부분입니다. */}
 
                 {/* Naver link */}
                 {
@@ -399,9 +427,9 @@ const InferenceStep = ({ results, error, onRestart }) => {
             <RotateCcw size={16} /> 다시 테스트하기
           </motion.button>
         </div>
-      </div>{/* ⚠️ 기존 /div> 였던 오타를 </div> 로 수정한 부분입니다. */}
+      </div>
     </motion.div>
   );
-}; // ⚠️ 기존 }; < 로 떠돌던 < 가 삭제된 부분입니다.
+};
 
 export default InferenceStep;

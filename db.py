@@ -697,8 +697,9 @@ def get_reviews_for_profiler(
             r.author          AS "Author",
             r.visit_count     AS "VisitCount",
             r.owner_reply     AS "OwnerReply",
-            COALESCE(string_agg(ri.image_url,  ' | ' ORDER BY ri.image_id), '') AS "ImageURLs",
-            COALESCE(string_agg(ri.image_path, ' | ' ORDER BY ri.image_id), '') AS "ImagePaths"
+            COALESCE(string_agg(ri.image_url,        ' | ' ORDER BY ri.image_id), '') AS "ImageURLs",
+            COALESCE(string_agg(ri.image_path,       ' | ' ORDER BY ri.image_id), '') AS "ImagePaths",
+            COALESCE(string_agg(ri.image_id::text,   ' | ' ORDER BY ri.image_id), '') AS "ImageIDs"
         FROM reviews r
         JOIN restaurants rst ON rst.restaurant_id = r.restaurant_id
         LEFT JOIN review_images ri ON ri.review_id = r.review_id
@@ -1007,6 +1008,174 @@ def get_all_rep_keywords(conn) -> list[str]:
     with conn.cursor() as cur:
         cur.execute("SELECT DISTINCT keyword FROM representative_images ORDER BY keyword")
         return [r["keyword"] for r in cur.fetchall()]
+
+
+# ──────────────────────────────────────────────
+# review_image_scores — image_id별 CLIP 판정 캐시 (2차-A)
+# ──────────────────────────────────────────────
+#
+# 같은 image_id + keyword(=resolved_category_key) 쌍의 CLIP 판정 결과를
+# review_image_scores 테이블에 저장하고, 다음 실행에서 재사용한다.
+#
+# 저장 키 정책:
+#   review_image_scores.keyword 컬럼에는 raw keyword가 아니라
+#   resolved_category_key (예: "짜장면" → "짜장")를 저장.
+#   이유: CLIP prompt가 resolved_category_key 기준으로 결정되므로 같은 prompt 결과는
+#   동일 캐시 entry를 공유할 수 있음. 짜장면/자장면/간짜장 검색이 짜장 cache를
+#   공유해 CLIP 재평가를 피한다.
+#
+# 권한 오류 처리:
+#   GRANT 없이도 Multimodal_profiler 전체가 죽지 않고 캐시만 skip 되도록
+#   psycopg2.errors.InsufficientPrivilege 를 잡아 안내 메시지만 출력.
+#   부분 SAVEPOINT로 한 row 실패가 트랜잭션을 끌고 가지 않게 한다.
+
+def _emit_score_grant_help():
+    print("[review_image_scores] 권한 없음 — 아래 SQL이 필요합니다:")
+    print("  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE review_image_scores TO tastebridge_user;")
+    print("  GRANT USAGE, SELECT, UPDATE ON SEQUENCE review_image_scores_id_seq TO tastebridge_user;")
+    print("  (캐시 저장만 skip하고 Multimodal_profiler는 계속 진행됩니다.)")
+
+
+def bulk_get_review_image_scores(conn, image_ids: list[int], keyword: str) -> dict[int, dict]:
+    """
+    image_id 목록과 keyword(=resolved_category_key)로 review_image_scores 캐시 일괄 조회.
+    반환: {image_id: row_dict}. 권한·테이블 부재 등 모든 실패에서 빈 dict + 경고.
+    """
+    if not image_ids or not keyword:
+        return {}
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT image_id, keyword, resolved_category_key,
+                       food_presence_score, category_presence_score,
+                       wrong_food_penalty, non_food_penalty, clip_debug,
+                       created_at
+                FROM review_image_scores
+                WHERE keyword = %s
+                  AND image_id = ANY(%s)
+            """, (str(keyword), [int(i) for i in image_ids]))
+            return {int(row["image_id"]): dict(row) for row in cur.fetchall()}
+    except psycopg2.errors.InsufficientPrivilege:
+        _emit_score_grant_help()
+        return {}
+    except Exception as e:
+        print(f"[review_image_scores] 조회 실패 (캐시 skip): {type(e).__name__}: {e}")
+        return {}
+
+
+def upsert_review_image_score(conn, record: dict) -> bool:
+    """
+    단건 upsert. ON CONFLICT (image_id, keyword) DO UPDATE.
+    성공/실패 bool 반환. 실패해도 예외를 호출자에게 던지지 않음.
+    """
+    if not record or not record.get("image_id") or not record.get("keyword"):
+        return False
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SAVEPOINT rims_sp")
+            try:
+                cur.execute("""
+                    INSERT INTO review_image_scores
+                        (image_id, keyword, resolved_category_key,
+                         food_presence_score, category_presence_score,
+                         wrong_food_penalty, non_food_penalty, clip_debug)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                    ON CONFLICT (image_id, keyword) DO UPDATE SET
+                        resolved_category_key   = EXCLUDED.resolved_category_key,
+                        food_presence_score     = EXCLUDED.food_presence_score,
+                        category_presence_score = EXCLUDED.category_presence_score,
+                        wrong_food_penalty      = EXCLUDED.wrong_food_penalty,
+                        non_food_penalty        = EXCLUDED.non_food_penalty,
+                        clip_debug              = EXCLUDED.clip_debug,
+                        created_at              = CURRENT_TIMESTAMP
+                """, (
+                    int(record["image_id"]),
+                    str(record["keyword"]),
+                    str(record.get("resolved_category_key") or record["keyword"]),
+                    float(record.get("food_presence_score") or 0.0),
+                    float(record.get("category_presence_score") or 0.0),
+                    float(record.get("wrong_food_penalty") or 0.0),
+                    float(record.get("non_food_penalty") or 0.0),
+                    json.dumps(record.get("clip_debug") or {}, ensure_ascii=False),
+                ))
+                cur.execute("RELEASE SAVEPOINT rims_sp")
+                return True
+            except psycopg2.errors.InsufficientPrivilege:
+                cur.execute("ROLLBACK TO SAVEPOINT rims_sp")
+                _emit_score_grant_help()
+                return False
+            except Exception as e:
+                cur.execute("ROLLBACK TO SAVEPOINT rims_sp")
+                print(f"[review_image_scores] upsert 실패 image_id="
+                      f"{record.get('image_id')}: {type(e).__name__}: {e}")
+                return False
+    except Exception as e:
+        print(f"[review_image_scores] upsert outer 실패: {type(e).__name__}: {e}")
+        return False
+
+
+def upsert_review_image_scores_bulk(conn, records: list[dict]) -> tuple[int, int]:
+    """
+    여러 score record를 batch로 upsert. SAVEPOINT로 row별 격리.
+    반환: (성공 수, 실패 수). 권한 오류 1회 안내 후 같은 batch의 나머지는 skip.
+    """
+    if not records:
+        return 0, 0
+    ok = 0
+    fail = 0
+    perm_shown = False
+    try:
+        with conn.cursor() as cur:
+            for rec in records:
+                if not rec.get("image_id") or not rec.get("keyword"):
+                    fail += 1
+                    continue
+                try:
+                    cur.execute("SAVEPOINT rims_sp")
+                    cur.execute("""
+                        INSERT INTO review_image_scores
+                            (image_id, keyword, resolved_category_key,
+                             food_presence_score, category_presence_score,
+                             wrong_food_penalty, non_food_penalty, clip_debug)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                        ON CONFLICT (image_id, keyword) DO UPDATE SET
+                            resolved_category_key   = EXCLUDED.resolved_category_key,
+                            food_presence_score     = EXCLUDED.food_presence_score,
+                            category_presence_score = EXCLUDED.category_presence_score,
+                            wrong_food_penalty      = EXCLUDED.wrong_food_penalty,
+                            non_food_penalty        = EXCLUDED.non_food_penalty,
+                            clip_debug              = EXCLUDED.clip_debug,
+                            created_at              = CURRENT_TIMESTAMP
+                    """, (
+                        int(rec["image_id"]),
+                        str(rec["keyword"]),
+                        str(rec.get("resolved_category_key") or rec["keyword"]),
+                        float(rec.get("food_presence_score") or 0.0),
+                        float(rec.get("category_presence_score") or 0.0),
+                        float(rec.get("wrong_food_penalty") or 0.0),
+                        float(rec.get("non_food_penalty") or 0.0),
+                        json.dumps(rec.get("clip_debug") or {}, ensure_ascii=False),
+                    ))
+                    cur.execute("RELEASE SAVEPOINT rims_sp")
+                    ok += 1
+                except psycopg2.errors.InsufficientPrivilege:
+                    cur.execute("ROLLBACK TO SAVEPOINT rims_sp")
+                    if not perm_shown:
+                        _emit_score_grant_help()
+                        perm_shown = True
+                    # 권한 없으면 같은 batch는 모두 실패할 것 → break로 빠른 종료
+                    fail += (len(records) - ok)
+                    break
+                except Exception as e:
+                    cur.execute("ROLLBACK TO SAVEPOINT rims_sp")
+                    fail += 1
+                    print(f"[review_image_scores] upsert 실패 image_id="
+                          f"{rec.get('image_id')}: {type(e).__name__}")
+    except Exception as e:
+        print(f"[review_image_scores] bulk upsert outer 실패: {type(e).__name__}: {e}")
+        # outer 실패면 나머지 모두 실패로 카운트
+        fail = len(records) - ok
+    return ok, fail
 
 
 # ──────────────────────────────────────────────

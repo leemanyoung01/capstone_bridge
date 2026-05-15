@@ -38,6 +38,8 @@ from db import (
     upsert_multimodal_profile,
     upsert_representative_images,
     delete_representative_images,
+    bulk_get_review_image_scores,
+    upsert_review_image_scores_bulk,
 )
 
 IMAGE_MODE = "clip"     # "clip" | "simple"
@@ -583,10 +585,14 @@ def _image_url_matches_keyword(image_url: str, keyword: str) -> tuple[bool, str]
 def _expand_images_per_review(df) -> list[dict]:
     """
     DataFrame의 각 row(리뷰)를 image_id 단위로 펼친다.
-    DB get_reviews_for_profiler는 'ImageURLs', 'ImagePaths'를 ' | ' join으로 내려줌.
-    같은 review_id의 i번째 path/url을 image_id 식별자로 사용 (review_id*100+i).
+    DB get_reviews_for_profiler는 'ImageURLs'·'ImagePaths'·'ImageIDs'를 ' | ' join으로 내려준다.
+
+    2차-A: 실제 review_images.image_id를 끝까지 유지한다 (review_image_scores 캐시
+    키로 사용). ImageIDs 컬럼이 비어 있는 옛 데이터에서는 fallback id를 만들고
+    fake_image_id_used=True 플래그로 표시 → 캐시 조회/저장을 skip한다.
     """
-    out = []
+    out: list[dict] = []
+    fake_count = 0
     for _, row in df[df.get("HasPicture") == 1].iterrows():
         rest = str(row.get("Restaurant", "") or "")
         rid_raw = row.get("review_id") if "review_id" in row else None
@@ -598,8 +604,18 @@ def _expand_images_per_review(df) -> list[dict]:
 
         urls_str = str(row.get("ImageURLs", "") or "")
         paths_str = str(row.get("ImagePaths", "") or "")
+        ids_str = str(row.get("ImageIDs", "") or "")
         urls = [u.strip() for u in urls_str.split(" | ") if u.strip() and u.strip() != "nan"]
         paths = [p.strip() for p in paths_str.split(" | ") if p.strip() and p.strip() != "nan"]
+        real_ids: list[int] = []
+        for tok in ids_str.split(" | "):
+            tok = tok.strip()
+            if not tok or tok == "nan":
+                continue
+            try:
+                real_ids.append(int(tok))
+            except (TypeError, ValueError):
+                pass
 
         n = max(len(urls), len(paths))
         for i in range(n):
@@ -607,21 +623,209 @@ def _expand_images_per_review(df) -> list[dict]:
             path = paths[i] if i < len(paths) else ""
             if not url and not path:
                 continue
+            if i < len(real_ids):
+                img_id = real_ids[i]
+                fake = False
+            else:
+                img_id = (rid * 100 + i) if rid else (len(out) + 1)
+                fake = True
+                fake_count += 1
             out.append({
-                "image_id":     (rid * 100 + i) if rid else (len(out) + 1),
-                "review_id":    rid,
-                "restaurant":   rest,
-                "review_text":  text,
-                "image_url":    url,
-                "image_path":   path,
-                "source_order": i,
+                "image_id":            img_id,
+                "review_id":           rid,
+                "restaurant":          rest,
+                "review_text":         text,
+                "image_url":           url,
+                "image_path":          path,
+                "source_order":        i,
+                "fake_image_id_used":  fake,
             })
+    if fake_count and out:
+        print(f"  ⚠️  ImageIDs 컬럼이 비어 있어 {fake_count}장에 fake image_id 사용 "
+              f"(review_image_scores 캐시는 fake id에 대해 skip)")
     return out
+
+
+JJAMPPONG_IMAGE_POLICY_KEYWORDS = {"짬뽕", "해물짬뽕", "불짬뽕", "고기짬뽕"}
+JJAMPPONG_IMAGE_POLICY_KEY = "짬뽕"
+
+JAJANG_IMAGE_POLICY_KEYWORDS = {
+    "짜장", "짜장면", "자장면", "간짜장", "유니짜장", "해물짜장", "쟁반짜장",
+}
+JAJANG_IMAGE_POLICY_KEY = "짜장"
+
+# per-keyword strict image policy mapping. key → (debug_slug, alias_set)
+# 새 keyword 추가 시 여기와 stand_rules.json 양쪽을 채우면 동일한 gate가 적용된다.
+PER_KEYWORD_IMAGE_POLICY_MAP = {
+    JJAMPPONG_IMAGE_POLICY_KEY: ("jjamppong", JJAMPPONG_IMAGE_POLICY_KEYWORDS),
+    JAJANG_IMAGE_POLICY_KEY:    ("jajang",    JAJANG_IMAGE_POLICY_KEYWORDS),
+}
+PER_KEYWORD_IMAGE_POLICY_KEYS = set(PER_KEYWORD_IMAGE_POLICY_MAP.keys())
+
+# 불맛 계열 축은 reject_score가 required+0.02 이상일 때만 컷오프 (시각적으로
+# 다른 음식과 혼동되기 쉬워 일반 0.20 lower-bound로는 너무 자주 잘림).
+_WOK_LIKE_AXES = {"온도", "불맛", "불맛웍향"}
+
+
+def _representative_image_policy_key(keyword: str) -> str:
+    """대표 이미지 선정에만 쓰는 이미지 정책 key."""
+    keyword = str(keyword or "")
+    for policy_key, (_slug, members) in PER_KEYWORD_IMAGE_POLICY_MAP.items():
+        if keyword == policy_key or keyword in members:
+            return policy_key
+    return keyword
+
+
+def _representative_image_policy_slug(policy_key: str) -> str:
+    """debug JSON에서 keyword별 reject 카운터를 구분하기 위한 영문 slug."""
+    info = PER_KEYWORD_IMAGE_POLICY_MAP.get(policy_key)
+    return info[0] if info else str(policy_key or "")
+
+
+def _policy_entry(block: dict, keyword: str, policy_key: str, default=None):
+    if not isinstance(block, dict):
+        return default
+    if keyword in block:
+        return block.get(keyword) or default
+    if policy_key and policy_key in block:
+        return block.get(policy_key) or default
+    return block.get("_default", default) or default
+
+
+def _policy_list(block: dict, keyword: str, policy_key: str) -> list:
+    value = _policy_entry(block, keyword, policy_key, [])
+    return list(value) if isinstance(value, list) else []
+
+
+def _policy_dict(block: dict, keyword: str, policy_key: str) -> dict:
+    value = _policy_entry(block, keyword, policy_key, {})
+    return dict(value) if isinstance(value, dict) else {}
+
+
+_DEFAULT_REPRESENTATIVE_GATE_THRESHOLDS = {
+    "min_food_presence":               0.15,
+    "min_category_presence":           0.15,
+    "max_non_food_penalty":            0.22,
+    "min_category_margin":             0.03,
+    "wrong_food_threshold":            0.20,
+    "wrong_food_margin_threshold":     0.08,
+    "non_food_strict_threshold":       1.0,
+    "non_food_strict_margin_threshold": 0.0,
+    "required_score_min":              0.15,
+    "required_weak_threshold":         0.17,
+    "category_weak_threshold":         0.17,
+    "logo_text_threshold":             0.20,
+    "logo_text_category_weak":         0.20,
+    "logo_text_non_food_min":          0.15,
+    # 축별 preference override — axis_required/reject score를 final_score에 가산/감산.
+    # 0.0이면 기존 동작 (final_score는 axis_clip + category - non_food - wrong 만 사용).
+    "axis_required_bonus_weight":      0.0,
+    "axis_reject_penalty_weight":      0.0,
+}
+
+
+def _resolve_gate_thresholds(image_filtering: dict, policy_key: str) -> dict:
+    """policy_key 단위 representative gate 임계값 dict (없으면 _default)."""
+    block = (image_filtering or {}).get("representative_gate_thresholds") or {}
+    merged = dict(_DEFAULT_REPRESENTATIVE_GATE_THRESHOLDS)
+    base = block.get("_default")
+    if isinstance(base, dict):
+        merged.update({k: v for k, v in base.items() if not str(k).startswith("_")})
+    override = block.get(policy_key) if policy_key else None
+    if isinstance(override, dict):
+        merged.update({k: v for k, v in override.items() if not str(k).startswith("_")})
+    return merged
+
+
+def _per_keyword_representative_reject_reason(food: float, category: float,
+                                              wrong: float, non_food: float,
+                                              required_score: float,
+                                              reject_group_scores: dict,
+                                              low_required_key: str = "rejected_low_required",
+                                              gate_thresholds: dict | None = None) -> str | None:
+    """
+    per-keyword 대표 이미지 후보 gate (짬뽕/짜장 공통).
+    gate_thresholds로 keyword별 임계값을 주입한다 (짬뽕은 _default, 짜장은 더 엄격).
+    """
+    gt = dict(_DEFAULT_REPRESENTATIVE_GATE_THRESHOLDS)
+    if gate_thresholds:
+        gt.update({k: v for k, v in gate_thresholds.items() if not str(k).startswith("_")})
+
+    min_food          = float(gt["min_food_presence"])
+    min_cat           = float(gt["min_category_presence"])
+    max_non           = float(gt["max_non_food_penalty"])
+    min_margin        = float(gt["min_category_margin"])
+    wrong_thr         = float(gt["wrong_food_threshold"])
+    wrong_margin_thr  = float(gt["wrong_food_margin_threshold"])
+    non_strict_thr    = float(gt["non_food_strict_threshold"])
+    non_strict_marg   = float(gt["non_food_strict_margin_threshold"])
+    required_min      = float(gt["required_score_min"])
+    required_weak     = float(gt["required_weak_threshold"])
+    category_weak     = float(gt["category_weak_threshold"])
+    logo_thr          = float(gt["logo_text_threshold"])
+    logo_cat_weak     = float(gt["logo_text_category_weak"])
+    logo_non_min      = float(gt["logo_text_non_food_min"])
+
+    category_margin = float(category) - float(wrong)
+    required_is_weak = float(required_score) < required_weak
+
+    empty_score = float(reject_group_scores.get("empty_bowl_or_leftover", 0.0))
+    side_score = float(reject_group_scores.get("side_dish_only", 0.0))
+    table_score = float(reject_group_scores.get("table_or_drinks", 0.0))
+    wrong_group_score = float(reject_group_scores.get("wrong_food", 0.0))
+    logo_score = float(reject_group_scores.get("logo_or_text", 0.0))
+
+    # 로고/메뉴/포장지 우세 — 음식이 약하거나 비음식 점수가 높으면 우선 컷.
+    if logo_score >= logo_thr and (
+        required_is_weak or category < logo_cat_weak or non_food >= logo_non_min
+    ):
+        return "rejected_logo_or_text"
+
+    if empty_score >= 0.20 and (required_is_weak or category < category_weak):
+        return "rejected_empty_bowl_or_leftover"
+    if side_score >= 0.20 and (required_is_weak or category < category_weak):
+        return "rejected_side_dish_only"
+    if table_score >= 0.20 and (required_is_weak or non_food > 0.20):
+        return "rejected_table_or_drinks"
+    if max(float(wrong), wrong_group_score) >= wrong_thr and category_margin < wrong_margin_thr:
+        return "rejected_wrong_food"
+
+    # non_food strict (짜장 등): non_food>=non_strict_thr AND margin<non_strict_marg → 비음식
+    if non_food >= non_strict_thr and category_margin < non_strict_marg:
+        if logo_score >= 0.15:
+            return "rejected_logo_or_text"
+        return "rejected_table_or_drinks" if table_score >= 0.18 else "rejected_non_food"
+
+    if non_food > max_non:
+        if logo_score >= 0.15:
+            return "rejected_logo_or_text"
+        return "rejected_table_or_drinks" if table_score >= 0.18 else "rejected_non_food"
+    if food < min_food or category < min_cat or category_margin < min_margin:
+        return low_required_key
+    if required_score < required_min:
+        return low_required_key
+    return None
+
+
+def _per_keyword_axis_reject_reason(axis_name: str, required_score: float,
+                                    reject_score: float,
+                                    has_required_prompts: bool) -> str | None:
+    if has_required_prompts and required_score < 0.15:
+        return f"rejected_axis_required_{axis_name}"
+    if reject_score >= 0.20:
+        if axis_name in _WOK_LIKE_AXES:
+            if reject_score >= max(required_score + 0.02, 0.20):
+                return f"rejected_axis_reject_{axis_name}"
+        elif (not has_required_prompts) or required_score < 0.17:
+            return f"rejected_axis_reject_{axis_name}"
+    return None
 
 
 def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                         rules: dict, top_n: int = 6, use_cache: bool = True,
-                        debug_dump: dict | None = None):
+                        debug_dump: dict | None = None,
+                        refresh_image_scores: bool = False,
+                        max_score_candidates: int = 0):
     """
     대표 이미지 선정 v3 — image_id 단위 평가 + category/wrong_food/duplicate.
 
@@ -633,8 +837,70 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     non_food_prompts = image_filtering.get("non_food_penalty_prompts") or []
     cat_map = image_filtering.get("category_presence_prompts") or {}
     wrong_map = image_filtering.get("wrong_food_prompts") or {}
-    cat_prompts = cat_map.get(keyword) or cat_map.get("_default") or []
-    wrong_prompts = wrong_map.get(keyword) or wrong_map.get("_default") or []
+    image_policy_key = _representative_image_policy_key(keyword)
+    uses_per_keyword_image_policy = image_policy_key in PER_KEYWORD_IMAGE_POLICY_KEYS
+    policy_slug = _representative_image_policy_slug(image_policy_key)
+    low_required_key = f"rejected_low_{policy_slug}_required" if policy_slug else "rejected_low_required"
+    gate_thresholds_for_kw = _resolve_gate_thresholds(image_filtering, image_policy_key)
+    cat_prompts = _policy_list(cat_map, keyword, image_policy_key) or cat_map.get("_default") or []
+    wrong_prompts = _policy_list(wrong_map, keyword, image_policy_key) or wrong_map.get("_default") or []
+
+    # 짬뽕/짜장처럼 사진 특화 prompt가 필요한 keyword를 위해 image_axis_visual_prompts /
+    # image_axis_priority / image_axis_fallback 을 읽어둔다. 미정의 keyword는 기존
+    # 동작(stand_lexicon clip_prompt_pos/neg + 점수 기반 정렬) 그대로.
+    visual_prompts_map = _policy_dict(
+        image_filtering.get("image_axis_visual_prompts") or {}, keyword, image_policy_key
+    )
+    priority_axes_for_kw = _policy_list(
+        image_filtering.get("image_axis_priority") or {}, keyword, image_policy_key
+    )
+    fallback_axes_for_kw = _policy_list(
+        image_filtering.get("image_axis_fallback") or {}, keyword, image_policy_key
+    )
+    blocked_axes_for_kw = set()
+    for block_name in ("representative_blocked_axes", "image_axis_blocked", "image_axis_blocked_axes"):
+        blocked_axes_for_kw.update(_policy_list(image_filtering.get(block_name) or {}, keyword, image_policy_key))
+    required_prompts_for_kw = (
+        _policy_list(image_filtering.get("representative_required_prompts") or {}, keyword, image_policy_key)
+        or _policy_list(image_filtering.get("image_candidate_required_prompts") or {}, keyword, image_policy_key)
+    )
+    reject_prompts_for_kw = (
+        _policy_list(image_filtering.get("representative_reject_prompts") or {}, keyword, image_policy_key)
+        or _policy_list(image_filtering.get("image_candidate_reject_prompts") or {}, keyword, image_policy_key)
+    )
+    reject_prompt_groups_for_kw = _policy_dict(
+        image_filtering.get("representative_reject_prompt_groups") or {}, keyword, image_policy_key
+    )
+    axis_required_prompts_for_kw = _policy_dict(
+        image_filtering.get("representative_axis_required_prompts") or {}, keyword, image_policy_key
+    )
+    axis_reject_prompts_for_kw = _policy_dict(
+        image_filtering.get("representative_axis_reject_prompts") or {}, keyword, image_policy_key
+    )
+    safe_axes_for_kw = []
+    if uses_per_keyword_image_policy:
+        for ax in list(priority_axes_for_kw) + list(fallback_axes_for_kw):
+            if ax not in blocked_axes_for_kw and ax not in safe_axes_for_kw:
+                safe_axes_for_kw.append(ax)
+    image_axis_policy_debug = {
+        "image_axis_policy_key": image_policy_key,
+        "image_axis_preferred_axes": list(priority_axes_for_kw),
+        "image_axis_fallback_axes": list(fallback_axes_for_kw),
+        "image_axis_blocked_axes": sorted(blocked_axes_for_kw),
+        "image_axis_gate_thresholds": dict(gate_thresholds_for_kw),
+        "rep_score_gate_total": 0,
+        "rep_score_gate_passed": 0,
+        "rejected_logo_or_text": 0,
+        "rejected_empty_bowl_or_leftover": 0,
+        "rejected_side_dish_only": 0,
+        "rejected_table_or_drinks": 0,
+        "rejected_wrong_food": 0,
+        "rejected_non_food": 0,
+        low_required_key: 0,
+        "rejected_blocked_axis": 0,
+        "selected_safe_axes": [],
+        "selected_count": 0,
+    }
 
     th = image_filtering.get("thresholds", {}) or {}
     min_food   = float(th.get("min_food_presence", 0.18))
@@ -655,9 +921,16 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     fallback_target = int(th.get("fallback_target_count", top_n))
     fallback_min_combined = float(th.get("fallback_min_combined", 0.10))
 
+    # per-keyword axis preference 가중치 (짜장의 면컨디션↔불맛웍향 같은 혼동 방지용).
+    # _default는 0.0이므로 짬뽕 등 기존 keyword는 영향 없음.
+    w_axis_req = float(gate_thresholds_for_kw.get("axis_required_bonus_weight", 0.0))
+    w_axis_rej = float(gate_thresholds_for_kw.get("axis_reject_penalty_weight", 0.0))
+
     # image_id 단위로 펼치기
     images_all = _expand_images_per_review(df)
     if not images_all:
+        if debug_dump is not None:
+            debug_dump.update(image_axis_policy_debug)
         return []
 
     # ── (0) keyword 경계 강제: S3 prefix `/reviews/<keyword>/` 검사 ──
@@ -682,21 +955,74 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
 
     if skipped_keyword_mismatch:
         print(f"  🚧 keyword 경계 컷오프(다른 폴더의 S3 이미지): {len(skipped_keyword_mismatch)}장")
+    image_axis_policy_debug["rep_score_gate_total"] = len(images)
     if not images:
         if debug_dump is not None:
             debug_dump["skipped_keyword_mismatch_count"] = len(skipped_keyword_mismatch)
             debug_dump["skipped_keyword_mismatch"] = skipped_keyword_mismatch[:200]
+            debug_dump.update(image_axis_policy_debug)
         return []
 
+    # ── (0.7) 후보 상한 (옵션 --max-score-candidates) ──
+    # 기본 0 = 무제한 → 기존 동작 유지. 사용자가 양수를 주면 식당 round-robin sampling.
+    if max_score_candidates and len(images) > max_score_candidates > 0:
+        from collections import defaultdict as _dd
+        by_rest: dict = _dd(list)
+        for im in images:
+            by_rest[im.get("restaurant", "") or "(unknown)"].append(im)
+        sampled: list[dict] = []
+        rest_keys = list(by_rest.keys())
+        iters = {r: iter(lst) for r, lst in by_rest.items()}
+        while len(sampled) < max_score_candidates and rest_keys:
+            still: list = []
+            for r in rest_keys:
+                try:
+                    sampled.append(next(iters[r]))
+                    still.append(r)
+                    if len(sampled) >= max_score_candidates:
+                        break
+                except StopIteration:
+                    continue
+            rest_keys = still
+        print(f"  ✂️  --max-score-candidates 적용: {len(images)}장 → {len(sampled)}장")
+        images = sampled
+        image_axis_policy_debug["rep_score_gate_total"] = len(images)
+
     # ── (1) image_id 단위로 keyword-level CLIP 점수 1회 캐시 ──
+    # 2차-A: review_image_scores에서 (image_id, keyword) 캐시를 bulk 조회.
+    # 캐시 hit이면 CLIP prompt 호출을 skip하고 저장된 score를 그대로 사용.
+    # fake_image_id_used 인 행은 캐시 키로 부적합 (review_images.image_id가 실제가 아님) → 항상 miss.
+    cache_keyword = str(keyword)  # 이번 단계는 raw keyword를 캐시 키로 사용
+    cache_hits = 0
+    cache_misses = 0
+    score_cache: dict[int, dict] = {}
+    candidate_image_ids = [im["image_id"] for im in images
+                            if not im.get("fake_image_id_used")]
+    if not refresh_image_scores and candidate_image_ids:
+        try:
+            with get_conn() as conn:
+                score_cache = bulk_get_review_image_scores(conn, candidate_image_ids, cache_keyword)
+            print(f"  🧠 review_image_scores cache: hit={len(score_cache)} miss={len(candidate_image_ids) - len(score_cache)} refresh={refresh_image_scores}")
+        except Exception as e:
+            print(f"  ⚠️  review_image_scores 조회 실패 (캐시 skip): {type(e).__name__}: {e}")
+            score_cache = {}
+    elif refresh_image_scores:
+        print(f"  🔄 review_image_scores cache: refresh=True (캐시 무시하고 모두 재평가)")
+
     print(f"  🔍 후보 이미지 {len(images)}장 (image_id 단위 평가) "
           f"| keyword 경계 컷오프 {len(skipped_keyword_mismatch)}장")
     img_keyword_meta: dict[int, dict] = {}
     img_embeddings: dict[int, "np.ndarray"] = {}
     download_count = 0
+    new_score_records: list[dict] = []   # 캐시 miss → bulk upsert 대상
 
     for im in images:
-        # 로컬 파일 보장 — image_path → 없으면 image_url에서 다운로드
+        img_id = im["image_id"]
+        is_fake = bool(im.get("fake_image_id_used"))
+        cached_row = None if is_fake else score_cache.get(img_id)
+
+        # 로컬 파일 보장 — image_path → 없으면 image_url에서 다운로드.
+        # 캐시 hit이라도 embedding(dup 검출용)을 위해 로컬 파일은 필요.
         resolved_path, downloaded, err = _ensure_local_image(
             im.get("image_path", ""), im.get("image_url", ""), im.get("image_id", 0)
         )
@@ -706,54 +1032,219 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
             download_count += 1
 
         if not resolved_path:
-            img_keyword_meta[im["image_id"]] = {
+            img_keyword_meta[img_id] = {
                 "food": 0.0, "non_food": 0.0, "category": 0.0, "wrong": 0.0,
+                "category_margin": 0.0,
+                "required": 0.0,
+                "reject": 0.0,
+                "reject_group_scores": {},
                 "ok": False, "excluded_reason": err or "no_image_source",
             }
             continue
 
-        food = clip_prompt_score(resolved_path, food_prompts, use_cache=use_cache) if food_prompts else 0.0
-        non_food = clip_prompt_score(resolved_path, non_food_prompts, use_cache=use_cache) if non_food_prompts else 0.0
-        category = clip_prompt_score(resolved_path, cat_prompts, use_cache=use_cache) if cat_prompts else 1.0
-        wrong = clip_prompt_score(resolved_path, wrong_prompts, use_cache=use_cache) if wrong_prompts else 0.0
+        if cached_row is not None and not refresh_image_scores:
+            # 캐시 hit — CLIP prompt 호출 skip, 저장된 점수 사용
+            food = float(cached_row.get("food_presence_score") or 0.0)
+            non_food = float(cached_row.get("non_food_penalty") or 0.0)
+            category = float(cached_row.get("category_presence_score") or 0.0)
+            wrong = float(cached_row.get("wrong_food_penalty") or 0.0)
+            cache_hits += 1
+            is_cache_hit = True
+        else:
+            # 캐시 miss — 기존 CLIP prompt 평가
+            food = clip_prompt_score(resolved_path, food_prompts, use_cache=use_cache) if food_prompts else 0.0
+            non_food = clip_prompt_score(resolved_path, non_food_prompts, use_cache=use_cache) if non_food_prompts else 0.0
+            category = clip_prompt_score(resolved_path, cat_prompts, use_cache=use_cache) if cat_prompts else 1.0
+            wrong = clip_prompt_score(resolved_path, wrong_prompts, use_cache=use_cache) if wrong_prompts else 0.0
+            cache_misses += 1
+            is_cache_hit = False
+
+        category_margin = float(category) - float(wrong)
+        required_score = 0.0
+        reject_score = 0.0
+        reject_group_scores: dict[str, float] = {}
+        if uses_per_keyword_image_policy:
+            if required_prompts_for_kw:
+                required_score = clip_prompt_score(
+                    resolved_path, required_prompts_for_kw, use_cache=use_cache
+                )
+            else:
+                required_score = float(category)
+            if reject_prompt_groups_for_kw:
+                for group_name, prompts in reject_prompt_groups_for_kw.items():
+                    if isinstance(prompts, list) and prompts:
+                        reject_group_scores[group_name] = clip_prompt_score(
+                            resolved_path, prompts, use_cache=use_cache
+                        )
+                reject_score = max(reject_group_scores.values(), default=0.0)
+            elif reject_prompts_for_kw:
+                reject_score = clip_prompt_score(
+                    resolved_path, reject_prompts_for_kw, use_cache=use_cache
+                )
 
         # excluded_reason 표준 명칭 (debug JSON / API 응답 일관성):
         #   rejected_non_food            — 메뉴판/영수증/매장 외관/사람 등 음식이 아닌 사진
         #   rejected_low_foodness        — 음식 자체가 거의 보이지 않음 (food/category 둘 다 낮음)
         #   rejected_wrong_visual        — 현재 keyword와 다른 음식이 잡힘
         ok, excluded = True, None
-        if non_food > max_non:
-            ok, excluded = False, "rejected_non_food"
-        elif food < min_food:
-            ok, excluded = False, "rejected_low_foodness"
-        elif wrong > max_wrong:
-            ok, excluded = False, "rejected_wrong_visual"
-        elif category < min_cat:
-            ok, excluded = False, "rejected_low_foodness"
+        if uses_per_keyword_image_policy:
+            excluded = _per_keyword_representative_reject_reason(
+                food, category, wrong, non_food, required_score, reject_group_scores,
+                low_required_key=low_required_key,
+                gate_thresholds=gate_thresholds_for_kw,
+            )
+            ok = excluded is None
+            if ok:
+                image_axis_policy_debug["rep_score_gate_passed"] += 1
+            elif excluded == "rejected_logo_or_text":
+                image_axis_policy_debug["rejected_logo_or_text"] += 1
+            elif excluded == "rejected_empty_bowl_or_leftover":
+                image_axis_policy_debug["rejected_empty_bowl_or_leftover"] += 1
+            elif excluded == "rejected_side_dish_only":
+                image_axis_policy_debug["rejected_side_dish_only"] += 1
+            elif excluded == "rejected_table_or_drinks":
+                image_axis_policy_debug["rejected_table_or_drinks"] += 1
+            elif excluded == "rejected_wrong_food":
+                image_axis_policy_debug["rejected_wrong_food"] += 1
+            elif excluded == "rejected_non_food":
+                image_axis_policy_debug["rejected_non_food"] += 1
+            elif excluded == low_required_key:
+                image_axis_policy_debug[low_required_key] += 1
+        else:
+            if non_food > max_non:
+                ok, excluded = False, "rejected_non_food"
+            elif food < min_food:
+                ok, excluded = False, "rejected_low_foodness"
+            elif wrong > max_wrong:
+                ok, excluded = False, "rejected_wrong_visual"
+            elif category < min_cat:
+                ok, excluded = False, "rejected_low_foodness"
 
-        img_keyword_meta[im["image_id"]] = {
+        img_keyword_meta[img_id] = {
             "food": food, "non_food": non_food, "category": category, "wrong": wrong,
+            "category_margin": category_margin,
+            "required": required_score,
+            "reject": reject_score,
+            "reject_group_scores": reject_group_scores,
             "ok": ok, "excluded_reason": excluded,
         }
+
+        # 캐시 miss는 새 record로 큐에 추가 (fake image_id는 캐시 키 부적합 → skip)
+        if (not is_cache_hit) and (not is_fake):
+            new_score_records.append({
+                "image_id": int(img_id),
+                "keyword":  cache_keyword,
+                "resolved_category_key": cache_keyword,
+                "food_presence_score":     float(food),
+                "category_presence_score": float(category),
+                "wrong_food_penalty":      float(wrong),
+                "non_food_penalty":        float(non_food),
+                "clip_debug": {
+                    "image_url":               im.get("image_url", ""),
+                    "image_path":              im.get("image_path", ""),
+                    "review_id":               im.get("review_id"),
+                    "restaurant_name":         im.get("restaurant", ""),
+                    "raw_keyword":             str(keyword),
+                    "resolved_category_key":   cache_keyword,
+                    "food_presence_score":     round(float(food), 4),
+                    "category_presence_score": round(float(category), 4),
+                    "wrong_food_penalty":      round(float(wrong), 4),
+                    "non_food_penalty":        round(float(non_food), 4),
+                    "category_margin":         round(category_margin, 4),
+                    "representative_required_score": round(float(required_score), 4),
+                    "representative_reject_score":   round(float(reject_score), 4),
+                    "representative_reject_group_scores": {
+                        k: round(float(v), 4) for k, v in reject_group_scores.items()
+                    },
+                    "excluded_reason":         excluded or "",
+                    "used_category_prompts_count": len(cat_prompts or []),
+                    "used_wrong_prompts_count":    len(wrong_prompts or []),
+                    "fake_image_id_used":      False,
+                    "created_by":              "Multimodal_profiler",
+                },
+            })
+
         if ok:
             emb = image_embedding_np(resolved_path, use_cache=use_cache)
             if emb is not None:
-                img_embeddings[im["image_id"]] = emb
+                img_embeddings[img_id] = emb
 
     if download_count:
         print(f"  ⬇️  S3/URL 다운로드: {download_count}장 (cache={IMAGE_CACHE_DIR})")
+
+    # ── (1.5) 신규 score record bulk upsert ──
+    score_upserted = 0
+    score_upsert_failed = 0
+    if new_score_records:
+        try:
+            with get_conn() as conn:
+                score_upserted, score_upsert_failed = upsert_review_image_scores_bulk(
+                    conn, new_score_records
+                )
+            print(f"  💾 review_image_scores upsert: {score_upserted}개 저장 "
+                  f"(실패 {score_upsert_failed}개)")
+        except Exception as e:
+            # 권한·연결 등 outer 실패 — 전체 Multimodal_profiler는 계속 진행.
+            print(f"  ⚠️  review_image_scores upsert 실패 (캐시 저장 skip): "
+                  f"{type(e).__name__}: {e}")
+            score_upsert_failed = len(new_score_records)
+
+    # ── debug_dump에 캐시 통계 노출 ──
+    if debug_dump is not None:
+        debug_dump["score_cache"] = {
+            "total_image_candidates":   len(images),
+            "candidate_image_ids":      len(candidate_image_ids),
+            "score_cache_hits":         cache_hits,
+            "score_cache_misses":       cache_misses,
+            "newly_scored_images":      len(new_score_records),
+            "score_upserted_images":    score_upserted,
+            "score_upsert_failed_images": score_upsert_failed,
+            "fake_image_id_used_count": sum(1 for im in images if im.get("fake_image_id_used")),
+            "refresh_image_scores":     bool(refresh_image_scores),
+            "cache_keyword":            cache_keyword,
+        }
 
     # ── (2) image × axis 평가 ──
     candidates_per_axis: dict[str, list[dict]] = defaultdict(list)
     all_records: list[dict] = []   # debug 풀 기록
 
-    taste_axes_only = [(n, info) for n, info in axes_config.items() if not info.get("is_meta")]
+    if uses_per_keyword_image_policy:
+        fallback_axis_set = set(fallback_axes_for_kw)
+        taste_axes_only = [
+            (n, info) for n, info in axes_config.items()
+            if (not info.get("is_meta")) or n in fallback_axis_set
+        ]
+    else:
+        taste_axes_only = [(n, info) for n, info in axes_config.items() if not info.get("is_meta")]
     print(f"  ⚙️  축 {len(taste_axes_only)}개 × 이미지 {sum(1 for m in img_keyword_meta.values() if m['ok'])}장 평가")
 
+    blocked_axis_names_seen: set[str] = set()
     for ax_name, ax_info in taste_axes_only:
+        if uses_per_keyword_image_policy and ax_name in blocked_axes_for_kw:
+            if ax_name not in blocked_axis_names_seen:
+                image_axis_policy_debug["rejected_blocked_axis"] += 1
+                blocked_axis_names_seen.add(ax_name)
+            continue
+        if uses_per_keyword_image_policy and safe_axes_for_kw and ax_name not in safe_axes_for_kw:
+            continue
+
         ax_pos = ax_info.get("clip_prompt_pos") or []
         ax_neg = ax_info.get("clip_prompt_neg") or []
         ax_label = ax_info.get("label") or ax_name
+        axis_required_prompts = []
+        axis_reject_prompts = []
+        if uses_per_keyword_image_policy:
+            axis_required_prompts = axis_required_prompts_for_kw.get(ax_name) or []
+            axis_reject_prompts = axis_reject_prompts_for_kw.get(ax_name) or []
+
+        # image_axis_visual_prompts override — keyword × axis 사진 특화 prompt가 있으면
+        # stand_lexicon의 일반 axis prompt 대신 사용. neg를 정의 안 했으면 기존 neg 유지.
+        _vp = visual_prompts_map.get(ax_name) if isinstance(visual_prompts_map, dict) else None
+        if isinstance(_vp, dict):
+            if _vp.get("pos"):
+                ax_pos = list(_vp.get("pos") or [])
+            if _vp.get("neg"):
+                ax_neg = list(_vp.get("neg") or [])
 
         for im in images:
             meta = img_keyword_meta[im["image_id"]]
@@ -771,6 +1262,13 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                         "downloaded_from_url": bool(im.get("downloaded_from_url", False)),
                         "food_presence_score": round(meta["food"], 4),
                         "category_presence_score": round(meta["category"], 4),
+                        "category_margin": round(meta.get("category_margin", 0.0), 4),
+                        "representative_required_score": round(meta.get("required", 0.0), 4),
+                        "representative_reject_score": round(meta.get("reject", 0.0), 4),
+                        "representative_reject_group_scores": {
+                            k: round(float(v), 4)
+                            for k, v in (meta.get("reject_group_scores") or {}).items()
+                        },
                         "image_axis_clip_score": 0.0,
                         "axis_match_score": 0.0,
                         "linked_review_axis_score": 0.0,
@@ -785,6 +1283,52 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
 
             # 이미지×축 CLIP — resolved_image_path 사용
             local = im.get("resolved_image_path", "")
+            axis_required_score = 0.0
+            axis_reject_score = 0.0
+            axis_gate_reason = None
+            if uses_per_keyword_image_policy and (axis_required_prompts or axis_reject_prompts):
+                if axis_required_prompts:
+                    axis_required_score = clip_prompt_score(
+                        local, axis_required_prompts, use_cache=use_cache
+                    )
+                if axis_reject_prompts:
+                    axis_reject_score = clip_prompt_score(
+                        local, axis_reject_prompts, use_cache=use_cache
+                    )
+                axis_gate_reason = _per_keyword_axis_reject_reason(
+                    ax_name, axis_required_score, axis_reject_score, bool(axis_required_prompts)
+                )
+            if axis_gate_reason:
+                all_records.append({
+                    "image_id": im["image_id"], "review_id": im["review_id"],
+                    "restaurant_name": im["restaurant"], "source_order": im["source_order"],
+                    "axis": ax_name, "axis_label": ax_label,
+                    "image_url": im["image_url"],
+                    "original_image_path": im.get("image_path", ""),
+                    "resolved_image_path": local,
+                    "downloaded_from_url": bool(im.get("downloaded_from_url", False)),
+                    "food_presence_score": round(meta["food"], 4),
+                    "category_presence_score": round(meta["category"], 4),
+                    "category_margin": round(meta.get("category_margin", 0.0), 4),
+                    "representative_required_score": round(meta.get("required", 0.0), 4),
+                    "representative_reject_score": round(meta.get("reject", 0.0), 4),
+                    "representative_reject_group_scores": {
+                        k: round(float(v), 4)
+                        for k, v in (meta.get("reject_group_scores") or {}).items()
+                    },
+                    "axis_required_score": round(axis_required_score, 4),
+                    "axis_reject_score": round(axis_reject_score, 4),
+                    "image_axis_clip_score": 0.0,
+                    "axis_match_score": 0.0,
+                    "linked_review_axis_score": 0.0,
+                    "non_food_penalty": round(meta["non_food"], 4),
+                    "wrong_food_penalty": round(meta["wrong"], 4),
+                    "duplicate_penalty": 0.0,
+                    "final_score": None,
+                    "selected": False,
+                    "excluded_reason": axis_gate_reason,
+                })
+                continue
             if ax_pos or ax_neg:
                 axis_clip = analyze_clip(local, ax_pos[:3], ax_neg[:3], use_cache=use_cache)
             else:
@@ -794,12 +1338,19 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
             linked_dict = _compute_linked_text(im["review_text"], axes_config, rules)
             linked_score = float(linked_dict.get(ax_name, 0.0))
 
+            # axis_required/reject bonus — 짜장의 면컨디션↔불맛웍향 같은 축 혼동 방지용.
+            # _default(=짬뽕 등)는 가중치 0이라 영향 없음.
+            axis_req_bonus = (w_axis_req * axis_required_score) if uses_per_keyword_image_policy else 0.0
+            axis_rej_penalty = (w_axis_rej * axis_reject_score) if uses_per_keyword_image_policy else 0.0
+
             final_score = (
                 axis_clip
                 + w_cat   * meta["category"]
                 + w_link  * abs(linked_score)
                 - w_non   * meta["non_food"]
                 - w_wrong * meta["wrong"]
+                + axis_req_bonus
+                - axis_rej_penalty
             )
 
             cand = {
@@ -820,6 +1371,13 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                 "_food":         round(meta["food"], 4),
                 "_non_food":     round(meta["non_food"], 4),
                 "_wrong":        round(meta["wrong"], 4),
+                "_category_margin": round(meta.get("category_margin", 0.0), 4),
+                "_required":     round(meta.get("required", 0.0), 4),
+                "_reject":       round(meta.get("reject", 0.0), 4),
+                "_axis_required": round(axis_required_score, 4),
+                "_axis_reject":  round(axis_reject_score, 4),
+                "_axis_req_bonus": round(axis_req_bonus, 4),
+                "_axis_rej_penalty": round(axis_rej_penalty, 4),
                 "_linked":       round(linked_score, 4),
             }
             candidates_per_axis[ax_name].append(cand)
@@ -834,6 +1392,15 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                 "downloaded_from_url": bool(im.get("downloaded_from_url", False)),
                 "food_presence_score": round(meta["food"], 4),
                 "category_presence_score": round(meta["category"], 4),
+                "category_margin": round(meta.get("category_margin", 0.0), 4),
+                "representative_required_score": round(meta.get("required", 0.0), 4),
+                "representative_reject_score": round(meta.get("reject", 0.0), 4),
+                "representative_reject_group_scores": {
+                    k: round(float(v), 4)
+                    for k, v in (meta.get("reject_group_scores") or {}).items()
+                },
+                "axis_required_score": round(axis_required_score, 4),
+                "axis_reject_score": round(axis_reject_score, 4),
                 "image_axis_clip_score": round(axis_clip, 4),
                 "axis_match_score": round(axis_clip, 4),
                 "linked_review_axis_score": round(linked_score, 4),
@@ -873,8 +1440,31 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     # phase: "primary" | "fallback" | "fallback_relaxed"
     selection_rejections: list[dict] = []
 
-    axis_order = sorted(candidates_per_axis.keys(),
-                        key=lambda a: -sum(c["score"] for c in candidates_per_axis[a][:3]))
+    # axis_order: image_axis_priority가 정의된 keyword면 그 순서를 먼저 쓰고,
+    # 그다음 image_axis_fallback, 마지막으로 점수 기반 정렬 (나머지 축).
+    # 짬뽕처럼 짠맛은 priority/fallback에 없어 후순위로 밀린다 (사진으로 직접 보이지 않으므로).
+    _score_sorted_axes = sorted(candidates_per_axis.keys(),
+                                key=lambda a: -sum(c["score"] for c in candidates_per_axis[a][:3]))
+    if uses_per_keyword_image_policy:
+        axis_order: list[str] = []
+        for a in list(priority_axes_for_kw) + list(fallback_axes_for_kw):
+            if a in candidates_per_axis and a not in blocked_axes_for_kw and a not in axis_order:
+                axis_order.append(a)
+        print(f"  📐 axis priority 적용 ({keyword}→{image_policy_key}): {axis_order[:6]}")
+    elif priority_axes_for_kw or fallback_axes_for_kw:
+        axis_order: list[str] = []
+        for a in priority_axes_for_kw:
+            if a in candidates_per_axis and a not in axis_order:
+                axis_order.append(a)
+        for a in fallback_axes_for_kw:
+            if a in candidates_per_axis and a not in axis_order:
+                axis_order.append(a)
+        for a in _score_sorted_axes:
+            if a not in axis_order:
+                axis_order.append(a)
+        print(f"  📐 axis priority 적용 ({keyword}): {axis_order[:6]}")
+    else:
+        axis_order = _score_sorted_axes
 
     def _try_select(cand, fallback: bool, allow_relax_restaurant: bool = False) -> tuple[bool, str | None]:
         """선정 시도. 통과하면 rep에 추가하고 (True, None) 반환, 차단되면 (False, reason)."""
@@ -912,6 +1502,8 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
         cand["clip_vector"] = img_vecs.get(cand["restaurant"], {})
         cand["reason"] = (f"axis={cand['_axis_clip']:+.2f} cat={cand['_category']:.2f} "
                           f"non_food={cand['_non_food']:.2f} wrong={cand['_wrong']:.2f} "
+                          f"ax_req={cand.get('_axis_req_bonus', 0.0):+.2f} "
+                          f"ax_rej={cand.get('_axis_rej_penalty', 0.0):+.2f} "
                           f"linked={cand['_linked']:+.2f} dup={dup_pen:.2f}"
                           f"{' [fallback]' if fallback else ''}")
         cand["selected_fallback"] = bool(fallback)
@@ -956,8 +1548,9 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     if len(rep) < fallback_target:
         # 모든 (image × axis) 후보를 flat하게 모아 점수 순으로 정렬
         all_cands_flat: list[dict] = []
-        for cs in candidates_per_axis.values():
-            all_cands_flat.extend(cs)
+        fallback_axis_source = axis_order if uses_per_keyword_image_policy else list(candidates_per_axis.keys())
+        for ax in fallback_axis_source:
+            all_cands_flat.extend(candidates_per_axis.get(ax, []))
         all_cands_flat.sort(key=lambda c: -c["score"])
 
         # foodness 결합 점수 — meta gate를 한 번 더 보수적으로 확인
@@ -1007,7 +1600,11 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                         "score": cand["score"], "reason": sel_reason,
                     })
 
-    rep.sort(key=lambda x: -x["score"])
+    if uses_per_keyword_image_policy:
+        axis_rank = {ax: i for i, ax in enumerate(axis_order)}
+        rep.sort(key=lambda x: (axis_rank.get(x["axis"], 999), -x["score"]))
+    else:
+        rep.sort(key=lambda x: -x["score"])
 
     # ── (6) 요약 로그 ──
     cutoff_count = sum(1 for r in all_records if r.get("excluded_reason"))
@@ -1017,6 +1614,22 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     print(f"  🖼️  대표 이미지 {len(rep)}장 "
           f"(축별 {base_selected} + fallback {fallback_added}) "
           f"| 후보 {raw_candidate_count}장 → meta-OK {meta_ok_count}장 → 컷오프 {cutoff_count}건")
+    if uses_per_keyword_image_policy:
+        selected_safe_axes = [str(r.get("axis", "")) for r in rep]
+        image_axis_policy_debug["selected_safe_axes"] = selected_safe_axes
+        image_axis_policy_debug["selected_count"] = len(rep)
+        print(f"  🛂 {policy_slug} representative gate: "
+              f"total={image_axis_policy_debug['rep_score_gate_total']} "
+              f"passed={image_axis_policy_debug['rep_score_gate_passed']} "
+              f"logo={image_axis_policy_debug['rejected_logo_or_text']} "
+              f"non_food={image_axis_policy_debug['rejected_non_food']} "
+              f"wrong={image_axis_policy_debug['rejected_wrong_food']} "
+              f"empty={image_axis_policy_debug['rejected_empty_bowl_or_leftover']} "
+              f"side={image_axis_policy_debug['rejected_side_dish_only']} "
+              f"table={image_axis_policy_debug['rejected_table_or_drinks']} "
+              f"low_required={image_axis_policy_debug.get(low_required_key, 0)} "
+              f"blocked_axis={image_axis_policy_debug['rejected_blocked_axis']}")
+        print(f"  🖼️ selected axes: {', '.join(selected_safe_axes) if selected_safe_axes else '(none)'}")
     if fallback_relaxed_restaurant:
         print(f"    ↪️ per_restaurant cap 완화 적용 (한 식당이 {max_per_restaurant + 1}장까지)")
     if len(rep) < fallback_target:
@@ -1041,6 +1654,7 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     if debug_dump is not None:
         debug_dump["skipped_keyword_mismatch_count"] = len(skipped_keyword_mismatch)
         debug_dump["skipped_keyword_mismatch"] = skipped_keyword_mismatch[:200]
+        debug_dump.update(image_axis_policy_debug)
         debug_dump["image_axis_evaluations"] = all_records
         debug_dump["selection_rejections"] = selection_rejections[:400]
         debug_dump["selection_summary"] = {
@@ -1108,6 +1722,10 @@ def main():
     parser.add_argument("--source", choices=["db", "csv", "auto"], default="auto")
     parser.add_argument("--purge-rep", action="store_true",
                         help="해당 keyword의 representative_images를 DB에서 삭제 후 재선정")
+    parser.add_argument("--refresh-image-scores", action="store_true",
+                        help="review_image_scores 기존 캐시를 무시하고 CLIP 재평가 후 갱신")
+    parser.add_argument("--max-score-candidates", type=int, default=0,
+                        help="이미지 후보 상한 (0=무제한, 기존 동작 유지)")
     args = parser.parse_args()
 
     keyword = args.keyword or input("키워드: ").strip()
@@ -1183,7 +1801,9 @@ def main():
     print(f"\n🖼️  대표 이미지...")
     rep = extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                              rules=rules, top_n=6, use_cache=use_cache,
-                             debug_dump=debug_dump)
+                             debug_dump=debug_dump,
+                             refresh_image_scores=args.refresh_image_scores,
+                             max_score_candidates=args.max_score_candidates)
 
     # --purge-rep는 새 후보가 1장 이상일 때만 적용 (0장이면 기존 유지)
     if args.purge_rep:

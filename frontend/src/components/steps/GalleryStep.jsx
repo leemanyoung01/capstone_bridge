@@ -49,6 +49,10 @@ const IMAGE_AXIS_DISPLAY_LABELS = {
   김밥: {
     밥과양: '밥과 양',
   },
+  버거: {
+    번식감: '빵 식감',
+    패티육즙: '패티 육즙',
+  },
 };
 
 const getImageAxisDisplayName = (keyword, axis) => {

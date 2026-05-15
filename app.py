@@ -32,7 +32,6 @@ from db import (
     get_all_rep_keywords,
     get_best_restaurant_image,
 )
-
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
 FRONTEND_DIST = os.environ.get(
@@ -258,6 +257,114 @@ def _filter_axes_config_by_policy(axes_config_raw: dict, policy: dict) -> dict:
     return out
 
 
+# ── 표시(display) 축 필터 ──────────────────────────────────────────
+# stand_axes.json의 display_axis_policy를 읽어 API 응답에서만 노출 축을 좁힌다.
+# 추천 점수·cosine·match_percent·벡터 계산에는 전혀 영향이 없으며,
+# top_axes/axis_scores/axis_contributions/evidence_sentences/representative_image
+# 처럼 화면에 노출되는 부분만 whitelist로 거른다. 정책이 없는 keyword는 통과.
+
+def _resolve_display_axis_policy(kw: str) -> dict:
+    """
+    keyword(또는 그 resolved category) 기준 display_axis_policy를 lookup.
+    반환은 정책 dict (allowed 키 등) 또는 빈 dict — 빈 dict면 필터링 없음.
+    """
+    stand = _load_stand_axes()
+    if not stand:
+        return {}
+    block = (stand.get("display_axis_policy") or {})
+    if not block:
+        return {}
+    # 1) raw keyword 그대로
+    if kw in block:
+        return block[kw] or {}
+    # 2) alias resolve된 category
+    cat = _resolve_keyword_category(kw)
+    if cat and cat in block:
+        return block[cat] or {}
+    return {}
+
+
+def _display_allowed_set(kw: str) -> set[str] | None:
+    """
+    keyword의 표시 허용 축 set 반환. 정책 미정의면 None — 호출부에서 필터링 skip.
+    /api/config·/api/recommend의 top_axes·radar·evidence에만 사용.
+    """
+    pol = _resolve_display_axis_policy(kw)
+    allowed = pol.get("allowed") if isinstance(pol, dict) else None
+    if not allowed:
+        return None
+    return set(allowed)
+
+
+def _display_image_blocked_set(kw: str) -> set[str]:
+    """
+    keyword의 이미지 선택 화면 차단(blacklist) 축 set 반환.
+    /api/representative_images에만 사용. allowed whitelist를 적용하면 6장이
+    2장으로 줄어드는 문제를 막기 위해 분리. 정책 미정의 또는 image_blocked가
+    없으면 빈 set — 모든 이미지 통과.
+    """
+    pol = _resolve_display_axis_policy(kw)
+    blocked = pol.get("image_blocked") if isinstance(pol, dict) else None
+    if not blocked:
+        return set()
+    return set(blocked)
+
+
+def _filter_display_axes(kw: str, axes: list[str]) -> list[str]:
+    """list[str]에서 display whitelist 통과하는 항목만 순서 보존하여 반환."""
+    allowed = _display_allowed_set(kw)
+    if allowed is None or not axes:
+        return list(axes or [])
+    return [a for a in axes if a in allowed]
+
+
+def _filter_axis_dict(kw: str, axis_dict: dict) -> dict:
+    """{axis: value} 형태 dict에서 disallowed key를 제거."""
+    allowed = _display_allowed_set(kw)
+    if allowed is None or not isinstance(axis_dict, dict):
+        return dict(axis_dict or {})
+    return {a: v for a, v in axis_dict.items() if a in allowed}
+
+
+# evidence 표시용 비-맛(매장/실내/서비스/배달 등) 문장을 거르기 위한 term 목록.
+# 추천 점수 계산에는 사용하지 않는다 — 화면의 '맛 근거' 문장이 매장/실내 화제로
+# 채워지는 것만 방지.
+EVIDENCE_NON_TASTE_TERMS = (
+    "실내", "매장", "인테리어", "직원", "서비스", "친절", "분위기",
+    "포장", "배달", "주차",
+)
+
+
+def _is_non_taste_evidence_sentence(sentence: str) -> bool:
+    if not isinstance(sentence, str):
+        return False
+    return any(term in sentence for term in EVIDENCE_NON_TASTE_TERMS)
+
+
+def _filter_evidence_by_display_axes(kw: str, evidence_map: dict) -> dict:
+    """
+    evidence_sentences 전용 필터.
+    - display_axis_policy.allowed whitelist 는 더 이상 적용하지 않는다.
+      (맛 그래프/레이더 다양성 유지가 우선)
+    - 실제 문장이 비어 있거나 공백뿐인 축은 제외 — '근거 없는데 다른 리뷰 가져오기' 방지.
+    - 매장/실내/서비스/배달 등 비-맛 화제 문장은 evidence에서만 제거.
+      (추천 점수 계산에는 영향 없음)
+    """
+    if not isinstance(evidence_map, dict):
+        return {}
+    out: dict = {}
+    for axis, sents in evidence_map.items():
+        clean = [
+            s for s in (sents or [])
+            if isinstance(s, str) and s.strip()
+            and not _is_non_taste_evidence_sentence(s)
+        ]
+        if not clean:
+            continue
+        out[axis] = clean
+    return out
+
+
 def _split_axes(bundle: dict) -> tuple[list[str], list[str]]:
     """axes_config의 is_meta로 taste/meta 분리. 없으면 모두 taste."""
     cfg = bundle.get("axes_config") or {}
@@ -441,6 +548,11 @@ def api_config():
     if not filtered_axes_config:
         filtered_axes_config = raw_axes_config
 
+    # ── display_axis_policy.allowed 화면용 whitelist 적용 안 함 ──
+    # 1단계 맛 선택/레이더 차트가 2~3축으로 줄어드는 문제를 막기 위해
+    # 화면 노출 축은 axis_policy(_filter_axes_config_by_policy)까지만 좁힌다.
+    # display_axis_policy.image_blocked 는 /api/representative_images 에서만 사용.
+
     from collections import defaultdict
     groups = defaultdict(list)
     for name, info in filtered_axes_config.items():
@@ -502,33 +614,46 @@ def api_rep_images():
         # (restaurant, axis) 단위 dedup 안전망 — DB 단에서도 보장하지만 API에서 한 번 더.
         # 동일 image_src 반복도 제거해 같은 사진이 여러 축을 차지하지 않게 함.
         # 추가로: image_src의 S3 prefix가 현재 keyword와 어긋나면 차단 (DB 오염 방어).
+        #
+        # 이미지 선택 화면 정책 (1차 보정):
+        #   이전엔 display_axis_policy.allowed whitelist를 적용해 짬뽕에서 2장만 남는
+        #   문제 발생. 이제는 image_blocked blacklist만 사용 — blocked에 들어간 축만
+        #   제외하고 안전한 공통축/메타축 이미지는 가능한 모두 통과시켜 6장에 가깝게 유지.
         seen_pair: set = set()
         seen_src: set = set()
         out: list = []
         skipped_mismatch = 0
+        skipped_blocked_axis = 0
+        image_blocked = _display_image_blocked_set(target_kw)
         for img in raw_imgs:
             src = img.get("image_src", "")
             if not _image_src_matches_keyword(src, target_kw):
                 skipped_mismatch += 1
                 continue
-            pair = (img.get("restaurant", ""), img.get("axis", ""))
+            ax = img.get("axis", "")
+            # 블랙리스트만 적용 (allowed whitelist는 이미지 선택 화면에선 사용 안 함)
+            if image_blocked and ax and ax in image_blocked:
+                skipped_blocked_axis += 1
+                continue
+            pair = (img.get("restaurant", ""), ax)
             if pair in seen_pair or (src and src in seen_src):
                 continue
             seen_pair.add(pair)
             if src:
                 seen_src.add(src)
-            ax = img.get("axis", "")
             if ax and "axis_label" not in img:
                 img["axis_label"] = label_map.get(ax) or img.get("label") or ax
             out.append(img)
 
         returned_count = len(out)
-        regeneration_needed = (returned_count == 0)
+        # 필터링 후 0장이어도 빈 응답이 정답 (blocked 축을 억지로 되살리지 않음).
+        # regeneration_needed는 _augment 입력이 0일 때만 True로 유지.
+        regeneration_needed = (db_loaded_count == 0)
 
         # 진단 로그 (CLIP 등 무거운 연산은 안 함 — 카운트만)
         print(f"[api_rep_images] keyword={target_kw} "
               f"db_loaded={db_loaded_count} returned={returned_count} "
-              f"prefix-skipped={skipped_mismatch}")
+              f"prefix-skipped={skipped_mismatch} blocked-axis-skipped={skipped_blocked_axis}")
         if regeneration_needed:
             print(f"[api_rep_images] representative_images regeneration needed "
                   f"for keyword={target_kw}")
@@ -540,6 +665,7 @@ def api_rep_images():
             "db_loaded_count": db_loaded_count,
             "returned_count": returned_count,
             "skipped_keyword_mismatch_count": skipped_mismatch,
+            "skipped_blocked_axis_count":     skipped_blocked_axis,
             "regeneration_needed": regeneration_needed,
         }
 
@@ -758,25 +884,47 @@ def api_recommend():
         top_axes = sorted(axis_contributions.items(), key=lambda x: -x[1])[:5]
         top_axes_names = [ax for ax, _ in top_axes]
 
+        # ── display_axis_policy.allowed 는 top_axes·axis_contributions 에 적용 안 함 ──
+        # 레이더 차트/추천 카드 top tag 의 맛축 다양성을 유지하기 위해 whitelist 컷오프 제거.
+        # 점수 계산(cosine/similarity/match_percent)은 위에서 이미 끝났고 영향 없음.
+        # 화면의 '근거' 영역만 evidence_sentences 필터로 따로 다룬다.
+
         # confidence
         text_conf = _confidence(text_vec, taste_axes)
         img_conf  = _confidence(img_vec, taste_axes) if info.get("has_image_data") else 0.0
         total_conf = text_conf + img_conf
-        if total_conf > 1e-6:
-            text_w = round(text_conf / total_conf, 3)
-            img_w  = round(1.0 - text_w, 3)
+
+        # raw confidence 비율은 그대로 계산해 raw_fusion_weights 로 노출.
+        # 화면 표시용 fusion_weights / text_evidence_ratio / image_evidence_ratio 는
+        # TasteBridge가 리뷰 기반 추천 시스템이라는 점을 반영해 raw image 비율을
+        # [0, 0.4] 범위로 선형 매핑한다 — 텍스트가 항상 이미지보다 높게 보이지만
+        # 식당별 raw confidence 차이(7:93 vs 30:70 등)는 그대로 보존된다.
+        # 추천 점수 계산(cosine/similarity/match_percent)에는 영향이 없다.
+        if total_conf > 1e-6 and img_conf > 0:
+            raw_text_w = text_conf / total_conf
+            raw_img_w  = 1.0 - raw_text_w
+            img_w  = round(raw_img_w * 0.4, 3)
+            text_w = round(1.0 - img_w, 3)
         else:
+            raw_text_w, raw_img_w = 1.0, 0.0
             text_w, img_w = 1.0, 0.0
 
-        # axis별 evidence
+        # ── axis별 evidence ──
+        # display_axis_policy 허용 + 실제 문장이 있는 축만 통과.
+        # 비어있는 축에 다른 리뷰 문장을 억지로 끌어오지 않는다.
         evidence_map = info.get("evidence") or {}
-        evidence_sentences = {ax: evidence_map.get(ax, [])[:2]
-                              for ax in top_axes_names if evidence_map.get(ax)}
+        evidence_sentences = _filter_evidence_by_display_axes(
+            kw,
+            {ax: evidence_map.get(ax, []) for ax in top_axes_names},
+        )
+        # top_axes_names 중 실제 evidence_sentences에 살아남은 축만 최대 2문장.
+        evidence_sentences = {ax: (sents or [])[:2]
+                              for ax, sents in evidence_sentences.items()}
 
-        # flat evidence (fallback 호환)
-        flat_evidence = []
+        # flat evidence (fallback 호환) — 살아남은 evidence_sentences만 평탄화.
+        flat_evidence: list = []
         for ax in top_axes_names:
-            for s in evidence_map.get(ax, []):
+            for s in evidence_sentences.get(ax, []):
                 if s and s not in flat_evidence:
                     flat_evidence.append(s)
                 if len(flat_evidence) >= 3:
@@ -784,14 +932,18 @@ def api_recommend():
             if len(flat_evidence) >= 3:
                 break
 
-        # axis_scores (식당의 taste 축별 점수)
-        axis_scores = {ax: round(float(vec_dict.get(ax, 0.0)), 4) for ax in taste_axes}
+        # axis_scores (식당의 모든 축별 점수 - 맛 + 메타)
+        # 추천 점수/기여도 계산은 taste_axes 중심으로 유지하되,
+        # 결과 카드 레이더는 사용자가 선택한 축을 그대로 그릴 수 있게 all_axes를 내려준다.
+        axis_scores = {ax: round(float(vec_dict.get(ax, 0.0)), 4) for ax in all_axes}
 
         ri = _rest_info(name)
         naver_url = ri.get("naver_url", "") or ""
         fallback_url = _build_fallback_url(name, kw)
 
         # 대표 이미지 — Gallery 6장에 없으면 식당 단위 clean image fallback (db lookup)
+        # 추천 카드의 대표 썸네일은 "축 선택 카드"가 아닌 "식당 대표 사진"이므로
+        # display_axis_policy로 필터링하지 않는다. _rep_image_for() 결과를 그대로 사용.
         rep_img = _rep_image_for(kw, name, top_axes=top_axes_names[:3])
 
         # debug_reason
@@ -830,6 +982,8 @@ def api_recommend():
             "text_confidence":    round(text_conf, 3),
             "image_confidence":   round(img_conf, 3),
             "fusion_weights":     {"text": text_w, "image": img_w},
+            "raw_fusion_weights": {"text": round(float(raw_text_w), 3),
+                                    "image": round(float(raw_img_w), 3)},
             "text_evidence_ratio":  text_w,
             "image_evidence_ratio": img_w,
             "evidence_sentences": evidence_sentences,

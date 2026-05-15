@@ -56,11 +56,16 @@ const AXIS_DISPLAY_LABELS = {
   김밥: {
     밥의간과양: '밥의 간과 양',
   },
+  버거: {
+    번식감: '빵 식감',
+    패티육즙: '패티 육즙',
+  },
 };
 
 const GROUP_DISPLAY_LABELS = {
   김밥특화: '김밥 특화',
   커피특화: '커피 특화',
+  버거특화: '버거 특화',
 };
 
 const getAxisDisplayName = (keyword, axis) => {
@@ -102,11 +107,16 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
   const hasGenericTaste = Boolean(groups['맛'] || groups['식감']);
   const headingSuffix = hasGenericTaste ? '맛 취향 탐색' : '취향 탐색';
 
-  const radarData = groupOrder.reduce((acc, group) => {
-    const selectedAxes = group.axes.filter(ax => (scores[ax] || 0) > 0);
-    const sum = selectedAxes.reduce((s, ax) => s + scores[ax], 0);
-    // 선택된 항목들의 평균 + 갯수에 따른 약간의 가중치로 시각적 불균형 해소
-    acc[group.label] = selectedAxes.length > 0 ? (sum / selectedAxes.length) + (selectedAxes.length * 1.5) : 0;
+  // Radar chart: Show individual selected axes
+  const selectedAxisKeys = Object.keys(scores).filter(ax => (scores[ax] || 0) > 0);
+  
+  const radarData = selectedAxisKeys.reduce((acc, ax) => {
+    acc[ax] = scores[ax] || 0;
+    return acc;
+  }, {});
+
+  const radarLabelMap = selectedAxisKeys.reduce((acc, ax) => {
+    acc[ax] = getAxisDisplayName(keyword, ax);
     return acc;
   }, {});
 
@@ -322,7 +332,8 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
             }}>
               <RadarChartViz
                 data={radarData}
-                axes={groupOrder.map(g => g.label).slice(0, 5)}
+                axes={selectedAxisKeys}
+                labelMap={radarLabelMap}
               />
               <p style={{
                 fontSize: '15px',

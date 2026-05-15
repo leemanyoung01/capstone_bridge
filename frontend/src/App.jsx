@@ -227,6 +227,9 @@ function App() {
          <InferenceStep 
             results={inferenceResults}
             error={inferenceError}
+            scores={scores}
+            config={config}
+            keyword={currentKeyword}
             onRestart={handleRestart}
          />
       )}
