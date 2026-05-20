@@ -243,6 +243,76 @@
         "a Korean home-style full table with various side dishes",
         "a tray of Korean meal courses arranged together"
       ],
+      "라멘": [
+        "a bowl of japanese ramen with thick broth chashu pork and ramen noodles",
+        "tonkotsu ramen with soft-boiled egg and scallions in a deep bowl",
+        "close-up of ramen noodles being lifted with chopsticks above broth"
+      ],
+      "딤섬": [
+        "a bamboo steamer basket filled with chinese dim sum dumplings",
+        "close-up of xiaolongbao soup dumplings with thin pleated wrappers",
+        "an assortment of chinese dim sum varieties on a serving plate"
+      ],
+      "콩나물국밥": [
+        "a stone bowl of korean bean sprout soup with rice and red broth",
+        "a steaming bowl of kongnamul gukbap topped with poached egg",
+        "korean bean sprout hangover soup with chopped scallion garnish"
+      ],
+      "뼈해장국": [
+        "a steaming bowl of korean pork bone hangover soup with meaty bones",
+        "spicy red pork bone soup with perilla seed powder on top",
+        "a deep bowl of pork backbone meaty pieces in spicy broth"
+      ],
+      "순대국": [
+        "a bowl of korean sundae blood sausage soup with offal and rice",
+        "milky pork-based broth with sundae slices and chopped scallion",
+        "korean sundae gukbap served with side dishes and rice"
+      ],
+      "소고기": [
+        "a plate of premium korean hanwoo beef slices ready to grill",
+        "grilled korean beef with visible marbling on a hot plate",
+        "a cut of seared beef showing pink medium interior"
+      ],
+      "닭갈비": [
+        "sizzling korean dakgalbi stir-fried in red gochujang sauce on a hot iron pan",
+        "a hot iron pan with red dakgalbi chicken vegetables and rice cakes",
+        "korean dakgalbi mixed with cabbage and sweet potato in red sauce"
+      ],
+      "곱창": [
+        "a grill plate of korean gopchang pork intestines being cooked",
+        "korean gopchang grilled to golden brown with charred edges",
+        "close-up of grilled intestines showing creamy gop filling"
+      ],
+      "훠궈": [
+        "a chinese hotpot table with bubbling red mala broth and white broth",
+        "a yin-yang divided hotpot pan with sliced meat and vegetables",
+        "an assortment of raw ingredients arranged around a chinese hotpot"
+      ],
+      "마라탕": [
+        "a bowl of chinese malatang noodle soup with red broth and sichuan peppercorns",
+        "spicy malatang with assorted vegetables and meat in a single deep bowl",
+        "close-up of malatang ingredients in red mala broth"
+      ],
+      "우동": [
+        "a bowl of japanese udon thick noodles in light amber dashi broth",
+        "kake udon with sliced scallion and tempura piece on top",
+        "udon noodles being lifted from a clear dashi broth"
+      ],
+      "스시": [
+        "a wooden board of sushi nigiri with fresh fish slices on vinegared rice",
+        "an omakase sushi platter with assorted nigiri pieces in a row",
+        "close-up of sushi nigiri with bright glossy fish on rice"
+      ],
+      "소바": [
+        "a bamboo tray of cold soba buckwheat noodles with tsuyu dipping sauce",
+        "close-up of buckwheat soba noodles arranged on a bamboo mat",
+        "zaru soba with shredded nori on top served with cold broth"
+      ],
+      "덮밥": [
+        "a deep bowl of japanese donburi with savory toppings over rice",
+        "gyudon beef bowl with rice and sliced onions in dark sauce",
+        "katsudon pork cutlet donburi with egg and onion on rice"
+      ],
       "커피": [
         "a photo of a cup of black coffee on a table",
         "a close-up photo of an espresso shot with crema",
@@ -480,7 +550,134 @@
       ],
       "삼겹살": [
         "a photo of raw fish sashimi",
-        "a photo of a hamburger"
+        "a photo of a hamburger",
+        "a photo of grilled clams or shellfish only",
+        "a photo of korean stew or soup",
+        "a photo of a paper menu filled with text"
+      ],
+      "라멘": [
+        "a photo of korean instant ramyeon in a tin pot",
+        "a photo of korean kalguksu noodle soup",
+        "a photo of udon thick noodles in clear broth",
+        "a photo of pho vietnamese noodle soup",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "딤섬": [
+        "a photo of korean fried dumplings or mandu only",
+        "a photo of sushi or sashimi",
+        "a photo of a bowl of soup without dumplings",
+        "a photo of dessert or cake",
+        "a photo of a paper menu filled with text"
+      ],
+      "콩나물국밥": [
+        "a photo of korean pork bone hangover soup",
+        "a photo of sundae blood sausage soup",
+        "a photo of malatang chinese hotpot",
+        "a photo of grilled meat or barbecue",
+        "a photo of a paper menu filled with text"
+      ],
+      "뼈해장국": [
+        "a photo of korean bean sprout soup",
+        "a photo of sundae blood sausage soup",
+        "a photo of pork belly samgyeopsal grill",
+        "a photo of a salad bowl",
+        "a photo of a paper menu filled with text"
+      ],
+      "순대국": [
+        "a photo of korean pork bone hangover soup",
+        "a photo of korean bean sprout soup",
+        "a photo of grilled pork belly",
+        "a photo of a salad bowl",
+        "a photo of a paper menu filled with text"
+      ],
+      "소고기": [
+        "a photo of grilled pork belly samgyeopsal",
+        "a photo of fried chicken pieces",
+        "a photo of raw fish sashimi",
+        "a photo of korean stew or soup",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "닭갈비": [
+        "a photo of fried chicken only",
+        "a photo of korean stir-fried pork jeyuk",
+        "a photo of korean tteokbokki",
+        "a photo of malatang chinese hotpot",
+        "a photo of a paper menu filled with text"
+      ],
+      "곱창": [
+        "a photo of grilled pork belly samgyeopsal",
+        "a photo of korean fried chicken",
+        "a photo of raw fish sashimi",
+        "a photo of a salad bowl",
+        "a photo of a paper menu filled with text"
+      ],
+      "훠궈": [
+        "a photo of korean spicy stew kimchi jjigae",
+        "a photo of korean grilled meat",
+        "a photo of japanese ramen noodle bowl",
+        "a photo of pho vietnamese noodle soup",
+        "a photo of yellow deep fried pork guobaorou",
+        "a photo of meat skewers on a grill",
+        "a photo of raw spices or dry seasonings in a plastic container",
+        "a photo of stir-fried tomato and scrambled eggs",
+        "a photo of fried rice on a plate",
+        "a photo of deep fried shrimp",
+        "a photo of raw ingredients in a bowl before cooking",
+        "a photo of raw ingredients in a transparent plastic bowl for weighing",
+        "a photo of raw vegetables and meat in a metal bowl before cooking",
+        "a photo of lamb skewers on a metal rack or grill",
+        "a photo of raw meat on skewers",
+        "a photo of grilled meat sticks",
+        "a photo of raw ingredients in a buffet tray or self-serve bar",
+        "a photo of burning charcoal in a brazier or grill",
+        "a photo of red hot coals"
+      ],
+      "마라탕": [
+        "a photo of korean instant ramyeon",
+        "a photo of japanese ramen with chashu",
+        "a photo of korean kimchi stew",
+        "a photo of pho vietnamese noodle soup",
+        "a photo of dry stir-fried sichuan dish without broth",
+        "a photo of yellow deep fried pork guobaorou",
+        "a photo of meat skewers on a grill",
+        "a photo of raw spices or dry seasonings in a plastic container",
+        "a photo of stir-fried tomato and scrambled eggs",
+        "a photo of fried rice on a plate",
+        "a photo of deep fried shrimp",
+        "a photo of raw ingredients in a bowl before cooking",
+        "a photo of raw ingredients in a transparent plastic bowl for weighing",
+        "a photo of raw vegetables and meat in a metal bowl before cooking"
+      ],
+      "우동": [
+        "a photo of japanese ramen with chashu pork",
+        "a photo of buckwheat soba noodles cold",
+        "a photo of korean kalguksu noodle soup",
+        "a photo of pho vietnamese noodle soup",
+        "a photo of a paper menu filled with text"
+      ],
+      "스시": [
+        "a photo of sliced raw fish sashimi without rice",
+        "a photo of fried tempura without sushi",
+        "a photo of japanese ramen",
+        "a photo of dim sum dumplings",
+        "a photo of donburi rice bowl with cooked toppings",
+        "a photo of a paper menu filled with text"
+      ],
+      "소바": [
+        "a photo of japanese udon thick noodles",
+        "a photo of japanese ramen with chashu",
+        "a photo of mazesoba dry mixed noodles",
+        "a photo of korean kalguksu",
+        "a photo of a paper menu filled with text"
+      ],
+      "덮밥": [
+        "a photo of sushi nigiri pieces only",
+        "a photo of a bowl of plain rice without toppings",
+        "a photo of japanese ramen noodle bowl",
+        "a photo of buckwheat soba noodles",
+        "a photo of a paper menu filled with text"
       ],
       "커피": [
         "a photo of a slice of cake or dessert without coffee",
@@ -639,12 +836,12 @@
       "min_food_presence": 0.18,
       "max_non_food_penalty": 0.18,
       "min_category_presence": 0.15,
-      "max_wrong_food_penalty": 0.2,
-      "food_presence_weight": 0.0,
+      "max_wrong_food_penalty": 0.20,
+      "food_presence_weight": 1.0,
       "non_food_penalty_weight": 0.6,
       "category_bonus_weight": 0.3,
       "wrong_food_weight": 0.7,
-      "linked_text_weight": 0.15,
+      "linked_text_weight": 0.0,
       "duplicate_threshold": 0.92,
       "duplicate_penalty_weight": 0.3,
       "max_per_review": 1,

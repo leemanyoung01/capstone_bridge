@@ -72,3 +72,7 @@ htmlcov/
 
 # ── Misc ─────────────────────────────────────────────
 tempCodeRunnerFile.py
+
+.claude/
+*.zip
+*.db

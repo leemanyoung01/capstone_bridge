@@ -796,6 +796,7 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
 
             final_score = (
                 axis_clip
+                + w_food  * meta["food"]
                 + w_cat   * meta["category"]
                 + w_link  * abs(linked_score)
                 - w_non   * meta["non_food"]

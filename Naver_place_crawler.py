@@ -59,9 +59,20 @@ def _is_review_image(url: str) -> bool:
 
 # ── 크롤링 대상 ───────────────────────────────────────────────
 restaurants = {
-    "돈카와치 미아사거리점": "1835926545","동동 냉면 돈까스": "1625855671","도쿄커틀릿 성신여대점": "130074875",
-    "상미규카츠": "37261519","온달왕돈까스치킨호프": "1566182638","정돈 현대백화점 미아점": "1261268513","금왕돈까스 본점": "11591181","엘리카츠": "1382545547",
-    "이세돈가스 고려대점": "118302079","오박사네왕돈까스 본점": "11710935","소바의온도 고대점": "2087403289","밀튼가츠멘": "1175689621","토라카츠": "1777684468",
+    "삼성통닭 본점" : "11706836",
+    "금산닭집" : "1887953794",
+    "삼거리치킨0922 성신여대점" : "1020013055",
+    "순살숯불구이치킨 상륙이닭 본점" : "1478849519",
+    "예술치킨 종암점" : "1515791229",
+    "마마치킨 고려대점" : "2007386876",
+    "치킨쌀롱" : "1467577785",
+    "깐부치킨 길음역점" : "1264028382",
+    "세븐나잇치킨한예종점" : "38252409",
+    "대한맥주집 성신여대본점" : "1876904737",
+    "치킨매니아 플러스 길음점" : "1143192572",
+    "두레통닭 길음뉴타운점" : "1927262714",
+    "삼통치킨 본점": "12852337",
+    "오늘통닭&77맥주 고대안암점" : "1006089111"
 }
 
 
@@ -72,7 +83,7 @@ SAVE_CSV = True
 CSV_PATH = "naver_reviews.csv"
 
 # 테스트할 때는 50 또는 100 추천. 전체 수집하려면 None.
-MAX_REVIEWS_PER_RESTAURANT = 350
+MAX_REVIEWS_PER_RESTAURANT = 200
 
 DELAY_PAGE_MIN = 1.8
 DELAY_PAGE_MAX = 3.0
@@ -157,6 +168,8 @@ GRAPHQL_QUERY = """query getVisitorReviews($input: VisitorReviewsInput) {
 
 def get_headers(place_id: str) -> dict:
     cookie = os.environ.get("NAVER_COOKIE", "").strip()
+    if not cookie:
+        cookie = "NNB=6DOJOLGB5Z2V4; NID_AUT=C+jS2subZMFRKsFcCRqfHumav4MV9nZW8OFLpN1H0xzlohJWtxlRGuEB2JCND/jf; NID_SES=AAAB29Ls93xxAh+tyBd7PR/cvfHDjFeHUrehDDiAsqGdQeX1yZ5XcCLbEA/a77ssDBFoIAen72ASBmu1O/IFmx/5xHBXZFfHeLzgtuzKZtBYqk3NFAN+lWEV2l/ERoQyQ864LC94zspOz3olVwTIzF8FvTcHC8++dbepV671GKAdFS0nwiqrrnEi4m0Kftx1iYE5Yoa+aX/1vCA4M8FeLwaB6cJEbMb1y74lv84KoESN2R6IUB6oN8KGzOkuoCYBnaQf77okoDXOUU57LmEpXfosakaR35sYoRnnAA8SotXqrDKEzHnXrNRozO52q2xBI8IMBdJUWpcJJO9vceOFM4FFmA7e6d9RtcBTlzJOGVVF8RG6tN5wO/LxwYh+A4FCMGhsb2vtilvIE+FRg8EXUFpnQw3yJDJ37RrGaXg4k2ndWgFP64N2tmeGRzu4GvYcyFtwRrfz+YceVe1PEXTgkI7iwCxu0NP2OYCNijaAy21SPJpl+w9qWwa3qTWs/sIlXeroGjkk/1Br0a7GiwnTInQPMofi5bMNYGxCTy2BwdbBmvoRST9KOBIwt3UEH7CBzGWgXJaPmrZ2sdtQfnvgk5pqosjLzgEFfEVgKXg8NJdBoVS0LzowgZ5PVdDHwQsZ8x0k1w=="
 
     return {
         "accept": "*/*",
@@ -169,8 +182,9 @@ def get_headers(place_id: str) -> dict:
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/145.0.0.0 Safari/537.36"
         ),
-        "cookie": '''NAC=YL19BMQKiMhK; NNB=YFLRAYGZENQWM; NFS=2; NID_AUT=8rpJgQ97MpUohDOG1qAhmtuzKrCUYHFp5kLEYoHA3uX9+FBJrymzIMXBk77SUIyj; cto_bundle=DOpvjF9rT0t6MWxGYXElMkZma2RpajFHM0paUGxFJTJGTDd2TlJVUUdYUnFUJTJGUHpwWUpValJYR3pWOTRGVEtCYTdtSHJhTmt3WHFZcFhmVTViWHExMVlVMjdOJTJCbGUzSXhOSXBnc3ZlaUppb05saEZqaFk3WkhNckxKVWszbjNUZGNOJTJCcTU1TDROdXFQViUyRkwxeG1IUDBzQlJkMDhYeXclM0QlM0Q; bnb_tooltip_shown_finance_v1=true; ASID=dfc29f200000019cf58edbe60000001d; NV_WETR_LOCATION_RGN_M="MDkyOTAxMTQ="; NV_WETR_LAST_ACCESS_RGN_M="MDkyOTAxMTQ="; PLACE_LANGUAGE=ko; tooltipDisplayed=true; NACT=1; SRT30=1777304956; SRT5=1777304956; _naver_usersession_=CZHiouVFBPUxebCN4eKHL6Id; page_uid=jP+aQwqpsW7sk9GosUN-072220; NID_SES=AAABoh/WW4HoAcJYpPM/yKl7kBfcGRvyYgA9rZgWCv472b989BoH/CvM2tZ/KBO4GfJNd1HOgcUSfr5e13dwxGPznWi9eK05zRXloyPjNY1LW4BUMV6Vu6gI9qgzA8y9CxG82h3kUwxe2xKqOQAAT8ElRd+NJY7V3nUqPA633ZQ7sF0pmoa2bTc+38V5FHvWVLha7p33njLBeBI3BgxNmO16d0R2ZQ6yN1CnAUelUSK2yfuUcoc1H0YPgURJYVysqddvfVnzd9bdXZwz1ySU9gFqUOUfDftu5d8Wb1q03ZnsAkK28vvVy5y/AEZbwElMeWQFIrIdlIh3nQFVQ1PYvV8QjnWfok93hfGRtJbxYHEo7r+x53sayMClOY9/4pPilEt87aDxpBLQoJsAeI4ty1y5w/MFzg+Iv7s8LNPiOXs2XSQdXzhrNiYVuIwh5ykAT0CDU8H7LtLBAWgfF9h9nKvomvgH9GXxv+4VvpcGFlx2OLAkn2uXU/eb1QigM+FtkmNzYYnTU8/Ghg6+ARU5Q24DM3+kZWiR1vQ7n12O+cTTu/RC4+9FmwQL8vzKMJp8cr1jMg==; BUC=fbLEIlEQKqFtaIVmvuP7k33xu0eAu_ypR7TxwFOP-7Q=''',
+        "cookie": cookie,
     }
+
 
 
 # ── S3 업로드 (s3_uploader.upload_if_enabled 위임) ─────────────
