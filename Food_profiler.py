@@ -182,8 +182,13 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
         if name.startswith("_"):
             continue
         if allow_shared or (name in shared_allowlist):
+            lex_sec = lexicon.get("shared", {})
+            if matched and matched in lexicon.get("food_specific", {}):
+                spec_lex = lexicon["food_specific"][matched]
+                if name in spec_lex:
+                    lex_sec = {**lex_sec, name: {**lex_sec.get(name, {}), **spec_lex[name]}}
             taste[name] = build(name, info.get("group", "맛"),
-                                lexicon.get("shared", {}),
+                                lex_sec,
                                 label=info.get("label"))
 
     # ── food_specific 축 ──

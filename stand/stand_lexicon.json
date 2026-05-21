@@ -255,10 +255,10 @@
         "느끼함"
       ],
       "clip_prompt_pos": [
-        "clean mild tasting food"
+        "clean, mild tasting food, fresh and appetizing, neat presentation"
       ],
       "clip_prompt_neg": [
-        "greasy heavy food"
+        "greasy heavy food, unappetizing, messy plate, weird angle, bones, fish skin"
       ]
     },
     "바삭함": {

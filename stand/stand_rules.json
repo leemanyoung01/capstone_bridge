@@ -113,12 +113,19 @@
       "a photo of an empty restaurant interior with tables and chairs",
       "a photo of a paper menu filled with text",
       "a photo of a receipt or screenshot with mostly text",
-      "a photo of people posing without food visible",
+      "a photo of a person",
+      "a photo of people",
+      "a photo of customers sitting at a table",
       "a photo of a logo or graphic design without food"
     ],
     "category_presence_prompts": {
       "_default": [
         "a clear photo of food on a plate"
+      ],
+      "삼겹살": [
+        "a photo of grilled sliced pork belly samgyeopsal on a grill or plate",
+        "a close-up photo of delicious cooked pork belly meat pieces",
+        "grilled pork belly samgyeopsal ready to eat"
       ],
       "버거": [
         "a photo of a hamburger with a bun and patty",
@@ -148,9 +155,6 @@
         "a photo of a fresh salad bowl with vegetables",
         "a photo of a salad bowl with leafy greens and dressing",
         "a photo of mixed salad with toppings"
-      ],
-      "삼겹살": [
-        "a photo of grilled pork belly samgyeopsal"
       ],
       "구이": [
         "a photo of korean grilled meat"
@@ -442,6 +446,23 @@
         "a photo of a loaf of sliced sandwich bread"
       ]
     },
+    "image_axis_priority": {
+      "삼겹살": ["반찬쌈", "촉촉함", "굽기상태", "불맛", "담백함", "쫄깃함"],
+      "회": ["구성", "신선도", "깔끔함", "식감", "촉촉함", "쫄깃함"]
+    },
+    "image_axis_fallback": {
+      "삼겹살": ["기름기", "매운맛", "짠맛", "단맛", "신맛", "쓴맛"],
+      "회": ["짠맛", "단맛", "매운맛", "느끼함", "온도"]
+    },
+    "representative_gate_thresholds": {
+      "삼겹살": {
+        "min_food_presence": 0.18,
+        "min_category_presence": 0.15,
+        "max_non_food_penalty": 0.16,
+        "wrong_food_threshold": 0.16,
+        "wrong_food_margin_threshold": 0.14
+      }
+    },
     "wrong_food_prompts": {
       "_default": [],
       "버거": [
@@ -475,8 +496,12 @@
       "회": [
         "a photo of grilled meat",
         "a photo of fried chicken",
+        "a photo of deep-fried food or tempura",
+        "a photo of french fries or golden breaded fried food",
         "a photo of grilled clams or steamed clams",
         "a photo of korean stew or soup",
+        "a photo of mulhoe, korean cold raw fish soup in red broth",
+        "a photo of cold red soup with raw fish and vegetables in a bowl",
         "a photo of a restaurant exterior or signboard",
         "a photo of a paper menu filled with text"
       ],
@@ -553,7 +578,18 @@
         "a photo of a hamburger",
         "a photo of grilled clams or shellfish only",
         "a photo of korean stew or soup",
-        "a photo of a paper menu filled with text"
+        "a photo of korean steamed egg (gyeranjjim) in a bowl",
+        "a yellow cooked egg dish or omelet",
+        "a bowl of cold noodles naengmyeon",
+        "a bowl of spicy mixed noodles bibim guksu",
+        "a photo of raw uncooked pork belly slices or raw red meat",
+        "a photo of raw meat plates before grilling",
+        "a photo of grilled pork skin or pork rind (껍데기)",
+        "a photo of a paper menu filled with text",
+        "a close-up photo of soju glasses or beer mugs",
+        "a photo of people holding and clinking shot glasses",
+        "a close-up photo of green soju bottles or beer bottles",
+        "a photo of alcoholic drinks and cups without food"
       ],
       "라멘": [
         "a photo of korean instant ramyeon in a tin pot",
