@@ -3781,11 +3781,12 @@
           "육즙 없"
         ],
         "clip_prompt_pos": [
-          "a steamed xiaolongbao bursting with hot broth inside",
-          "soup dumpling with visible juicy filling"
+          "an extreme close-up macro photo of a single shumai dim sum held between black chopsticks showing vivid bright orange fish roe decorating the surface of the yellow-green moist glistening wrapper with bamboo steamer paper visible in the background",
+          "a macro close-up photo of a steamed shumai dim sum grasped by black chopsticks showing the wet glistening yellow outer skin decorated with bright orange tobiko salmon roe dots representing the juicy moist freshly steamed interior"
         ],
         "clip_prompt_neg": [
-          "dry crumbly dumpling without juice"
+          "a wide overhead top-down view of a full chinese restaurant dining table showing many dishes including noodle soup bowls stir-fry plates and fried rice in patterned ceramic dishes spread across the table",
+          "a wide shot of a restaurant table from above showing multiple chinese food dishes in decorative patterned porcelain bowls arranged together"
         ]
       },
       "속재료신선도": {
@@ -3802,10 +3803,12 @@
           "재료 부실"
         ],
         "clip_prompt_pos": [
-          "dim sum with fresh shrimp pork or vegetable filling visible"
+          "a photo of two cheung fun chinese steamed rice noodle rolls on a round white plate completely covered with thick glossy vivid bright red sweet sauce where one end of the rice noodle roll is torn open revealing the white pork or shrimp filling inside the soft white noodle wrapper",
+          "a close-up photo showing two white cylindrical steamed rice noodle rolls cheung fun dim sum heavily drizzled with bright red sweet sauce on a white plate with the end of one roll open showing the fresh filling content inside the rolled wrapper"
         ],
         "clip_prompt_neg": [
-          "dim sum with bland sparse filling"
+          "a top-down aerial view of multiple small round white sealed steamed dumplings spread across a large circular metal mesh steamer rack viewed from directly above showing only the closed opaque tops of each dumpling with no sauce and no filling visible",
+          "a photo of many small round closed steamed dumplings viewed from above on a round steamer with no sauce or filling visible"
         ]
       },
       "찜상태": {
@@ -3821,10 +3824,12 @@
           "굳"
         ],
         "clip_prompt_pos": [
-          "dim sum in bamboo steamer with hot steam"
+          "a photo of multiple round bamboo steamer baskets stacked with freshly steamed white dim sum dumplings with visible white steam rising showing perfect steaming",
+          "a close-up of soft white dim sum dumplings in a traditional round bamboo steamer basket showing perfectly cooked translucent skin glistening with moisture"
         ],
         "clip_prompt_neg": [
-          "overcooked dried-out dim sum"
+          "a photo of raw uncooked dough or overcooked shriveled dried-out dumplings",
+          "a photo of fried or grilled food without any bamboo steamer"
         ]
       },
       "소스조화": {
@@ -3840,10 +3845,142 @@
           "소스 없"
         ],
         "clip_prompt_pos": [
-          "dim sum served with black vinegar and ginger sauce"
+          "a photo of steamed dim sum dumplings on a white plate being dipped into a small bowl of dark soy sauce with ginger strips with the dipping sauce bowl clearly visible next to the dumplings",
+          "a close-up of chopsticks holding a steamed dim sum dumpling over a small white ceramic dish filled with dark vinegar or soy dipping sauce showing the act of dipping"
         ],
         "clip_prompt_neg": [
-          "dim sum without dipping sauce"
+          "a photo of a divided plate or multiple small bowls of chinese cold appetizer dishes without any steamed dumplings",
+          "a photo of chinese cold dishes or banchan spread without any dumplings or steamer"
+        ]
+      },
+      "촉촉함": {
+        "positive": [
+          "촉촉",
+          "말랑",
+          "부드러"
+        ],
+        "negative": [
+          "퍽퍽",
+          "딱딱",
+          "건조"
+        ],
+        "clip_prompt_pos": [
+          "a close-up photo of freshly steamed dim sum dumplings with glistening moist translucent white skin showing moisture on the surface just removed from the bamboo steamer",
+          "a photo of soft moist steamed har gow shrimp dumplings with thin translucent wrapper glistening with steam moisture on a white plate"
+        ],
+        "clip_prompt_neg": [
+          "a photo of grilled or charred dark meat on a plate without any steamed dumplings",
+          "a photo of stir-fried vegetables or dark-sauced braised food without any dumplings"
+        ]
+      },
+      "쫄깃함": {
+        "positive": [
+          "쫄깃",
+          "탱탱",
+          "쫀득"
+        ],
+        "negative": [
+          "퍽퍽",
+          "질긴",
+          "딱딱"
+        ],
+        "clip_prompt_pos": [
+          "a close-up photo of dim sum dumplings with thin chewy elastic translucent wrapper showing the springy pliable skin texture of freshly steamed har gow or shumai",
+          "a photo of multiple white steamed dim sum dumplings with smooth shiny elastic skin showing the chewy pleated wrapper quality"
+        ],
+        "clip_prompt_neg": [
+          "a photo of stir-fried beef or pork with bean sprouts in a white bowl without any dumplings",
+          "a photo of chinese stir-fry vegetables and meat without any steamed dumplings"
+        ]
+      },
+      "온도": {
+        "positive": [
+          "뜨끈",
+          "따뜻",
+          "뜨거"
+        ],
+        "negative": [
+          "식은",
+          "차가",
+          "미지근"
+        ],
+        "clip_prompt_pos": [
+          "a photo of colorful smoothie bowl with fresh tropical fruit slices kiwi mango and granola toppings in a white bowl",
+          "a photo of rows of pink and green pastel macarons lined up on a white marble surface"
+        ],
+        "clip_prompt_neg": [
+          "a photo of steamed dim sum dumplings in a bamboo steamer"
+        ]
+      },
+      "짠맛": {
+        "positive": [
+          "짭조름",
+          "간이 맞",
+          "간 잘"
+        ],
+        "negative": [
+          "싱거",
+          "간이 약"
+        ],
+        "clip_prompt_pos": [
+          "a photo of colorful smoothie bowl with fresh tropical fruit slices kiwi mango and granola toppings in a white bowl",
+          "a photo of rows of pink and green pastel macarons lined up on a white marble surface"
+        ],
+        "clip_prompt_neg": [
+          "a photo of steamed dim sum dumplings in bamboo steamer"
+        ]
+      },
+      "담백함": {
+        "positive": [
+          "담백",
+          "깔끔",
+          "개운"
+        ],
+        "negative": [
+          "느끼",
+          "텁텁"
+        ],
+        "clip_prompt_pos": [
+          "a photo of colorful acai smoothie bowl topped with fresh berries and coconut flakes",
+          "a photo of rainbow layered cake slices with colorful frosting on a white plate"
+        ],
+        "clip_prompt_neg": [
+          "a photo of chinese steamed dim sum dumplings in bamboo basket"
+        ]
+      },
+      "느끼함": {
+        "positive": [
+          "느끼",
+          "기름"
+        ],
+        "negative": [
+          "담백",
+          "느끼 없"
+        ],
+        "clip_prompt_pos": [
+          "a photo of colorful smoothie bowl with fresh tropical fruit slices kiwi mango and granola toppings in a white bowl",
+          "a photo of rows of pink and green pastel macarons lined up on a white marble surface"
+        ],
+        "clip_prompt_neg": [
+          "a photo of steamed dim sum dumplings in a bamboo steamer"
+        ]
+      },
+      "감칠맛": {
+        "positive": [
+          "감칠",
+          "깊은 맛",
+          "풍미"
+        ],
+        "negative": [
+          "심심",
+          "맹맹"
+        ],
+        "clip_prompt_pos": [
+          "a photo of colorful acai smoothie bowl topped with fresh berries and coconut flakes",
+          "a photo of rainbow layered cake slices with colorful frosting on a white plate"
+        ],
+        "clip_prompt_neg": [
+          "a photo of chinese steamed dim sum dumplings in bamboo basket"
         ]
       }
     },
@@ -3898,10 +4035,127 @@
           "속이 안 풀"
         ],
         "clip_prompt_pos": [
-          "hot bean sprout hangover soup steaming in a stone bowl"
+          "a photo of a steaming hot ceramic or stone bowl of korean bean sprout rice soup kongnamul gukbap with visible white steam rising from the hot clear broth",
+          "a side view of a hot bubbling stone pot dolsot of korean bean sprout rice soup showing steam indicating it is a hot hangover cure soup"
         ],
         "clip_prompt_neg": [
-          "cold soup with mild flavor"
+          "a photo of cold naengmyeon noodles or iced drink without any heat or steam",
+          "a photo of grilled meat or stir-fried food without any soup bowl"
+        ]
+      },
+      "촉촉함": {
+        "positive": [
+          "촉촉",
+          "부드러",
+          "육즙"
+        ],
+        "negative": [
+          "퍽퍽",
+          "건조"
+        ],
+        "clip_prompt_pos": [
+          "a close-up photo of a korean bean sprout rice soup kongnamul gukbap bowl showing white rice grains fully soaked and submerged in clear hot broth with bean sprouts on top",
+          "a top-down view of a korean kongnamul gukbap stone bowl where rice and bean sprouts are together in warm clear broth looking moist and tender"
+        ],
+        "clip_prompt_neg": [
+          "a photo of dry fried rice on a plate without any soup or broth",
+          "a photo of dry grilled meat on a grill without any soup or liquid"
+        ]
+      },
+      "느끼함": {
+        "positive": [
+          "느끼",
+          "기름"
+        ],
+        "negative": [
+          "담백",
+          "느끼 없"
+        ],
+        "clip_prompt_pos": [
+          "a photo of colorful smoothie bowl with fresh tropical fruit slices kiwi mango and granola toppings in a white bowl",
+          "a photo of rows of pink and green pastel macarons lined up on a white marble surface"
+        ],
+        "clip_prompt_neg": [
+          "a photo of korean bean sprout rice soup in a stone bowl"
+        ]
+      },
+      "짠맛": {
+        "positive": [
+          "짭조름",
+          "간이 맞",
+          "간 잘"
+        ],
+        "negative": [
+          "싱거",
+          "간이 약"
+        ],
+        "clip_prompt_pos": [
+          "a photo of korean kongnamul gukbap bean sprout rice soup bowl served alongside bright red kimchi and yellow cubed radish kkakdugi side dishes",
+          "a photo of a bean sprout rice soup bowl with red kimchi side dish clearly visible on the same table"
+        ],
+        "clip_prompt_neg": [
+          "a photo of plain unseasoned soup without any kimchi or side dishes",
+          "a photo of sweet dessert without any salty or spicy elements"
+        ]
+      },
+      "담백함": {
+        "positive": [
+          "담백",
+          "깔끔",
+          "개운"
+        ],
+        "negative": [
+          "느끼",
+          "텁텁"
+        ],
+        "clip_prompt_pos": [
+          "a side-view photo of a dark stone dolsot bowl filled with clear pale broth and white bean sprouts with green onion garnish showing a complete serving of korean kongnamul gukbap with the soup clearly visible inside the stone bowl",
+          "a photo of a dark ceramic stone pot of korean bean sprout rice soup showing clear clean broth with white bean sprouts and minimal toppings representing a light and clean bowl of kongnamul gukbap"
+        ],
+        "clip_prompt_neg": [
+          "a photo of multiple plastic containers of korean side dishes banchan displayed in a row or cabinet",
+          "a photo of assorted small korean side dishes bowls spread on a table without any soup or stone pot"
+        ]
+      },
+      "온도": {
+        "positive": [
+          "뜨끈",
+          "따뜻",
+          "뜨거"
+        ],
+        "negative": [
+          "식은",
+          "차가",
+          "미지근"
+        ],
+        "clip_prompt_pos": [
+          "a side-view photo of a hot dark stone dolsot pot of korean kongnamul gukbap bean sprout rice soup with white steam visibly rising from the clear hot broth with seaweed and green onion garnish",
+          "a photo of a bubbling hot dark stone pot of korean bean sprout soup where steam rises clearly from the surface showing it was just brought to the table"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a flat round crispy korean jeon savory pancake on a dark plate or pan without any soup or broth",
+          "a photo of a flat grilled or pan-fried food without any stone pot or soup bowl"
+        ]
+      },
+      "얼큰함": {
+        "positive": [
+          "얼큰",
+          "칼칼",
+          "매콤",
+          "매운맛"
+        ],
+        "negative": [
+          "맵지않",
+          "안맵",
+          "순한맛"
+        ],
+        "clip_prompt_pos": [
+          "a photo of a dark stone bowl filled with hot liquid clear soup broth where white bean sprouts are submerged in the warm liquid with sliced green chili pepper and green onion floating on the surface",
+          "a close-up showing hot clear liquid broth filling a dark stone soup bowl with white bean sprout tails and rice submerged in the liquid inside the bowl with a spoonful of red chili condiment on top"
+        ],
+        "clip_prompt_neg": [
+          "a flat round crispy fried food with no liquid or soup broth visible anywhere in the image",
+          "a photo of side dish bowls without any liquid soup or stone pot"
         ]
       },
       "밥궁합": {
@@ -3956,10 +4210,12 @@
           "양 적"
         ],
         "clip_prompt_pos": [
-          "korean pork bone hangover soup loaded with meaty bones"
+          "a close-up photo of large pork rib bones covered with thick chunks of meat",
+          "a photo of a bowl filled with meaty pork bones piled high"
         ],
         "clip_prompt_neg": [
-          "thin pork bone soup with few bones"
+          "a photo of an empty bowl of clear soup with no meat",
+          "a photo of plain white rice on a plate"
         ]
       },
       "국물진함": {
@@ -3975,10 +4231,12 @@
           "심심"
         ],
         "clip_prompt_pos": [
-          "rich red broth of korean pork bone soup"
+          "a close-up of a dark opaque milky brown soup broth filling a bowl",
+          "a photo of a thick cloudy concentrated soup liquid in a stone pot"
         ],
         "clip_prompt_neg": [
-          "pale watery pork bone soup"
+          "a photo of a dry stir-fried meat dish on a plate without any liquid",
+          "a photo of grilled or fried meat with no soup or broth"
         ]
       },
       "우거지들깨": {
@@ -4048,10 +4306,12 @@
           "순대 별로"
         ],
         "clip_prompt_pos": [
-          "sundae korean blood sausage slices with chewy texture"
+          "a close-up of dark brown or dark purple korean blood sausage sundae slices showing black grain filling in cross-section with glistening dark exterior",
+          "a photo of sliced cylindrical korean sundae with very dark almost black brown color and visible mixed filling inside each slice"
         ],
         "clip_prompt_neg": [
-          "mushy crumbly sundae"
+          "a photo of a bright red or orange spicy seasoned side dish without any dark sausage",
+          "a photo of red braised food or red kimchi without any dark blood sausage slices"
         ]
       },
       "내장퀄리티": {
@@ -4068,10 +4328,12 @@
           "지저분"
         ],
         "clip_prompt_pos": [
-          "sundae soup with assorted clean pork offal pieces"
+          "a photo of assorted pork offal pieces including liver and tripe in a bowl of sundae soup",
+          "a close-up of cleaned pork organ pieces with sundae in milky broth"
         ],
         "clip_prompt_neg": [
-          "soup with poorly cleaned offal having strong smell"
+          "a photo of plain sliced pork belly without any organ meat",
+          "a photo of grilled meat without offal"
         ]
       },
       "국물깊이": {
@@ -4088,10 +4350,12 @@
           "심심"
         ],
         "clip_prompt_pos": [
-          "a bowl of milky rich sundae soup"
+          "a steaming bowl of thick creamy opaque milky white pork bone broth with sundae pieces inside showing deep rich color",
+          "a close-up of a hot sundae gukbap bowl with dense white milky broth that looks intensely flavorful and deep"
         ],
         "clip_prompt_neg": [
-          "thin pale sundae soup"
+          "a photo of red spicy kimchi or seasoned vegetable side dish without any milky white soup",
+          "a photo of a dry plate of seasoned red food without any broth"
         ]
       },
       "잡내없음": {
@@ -4107,10 +4371,12 @@
           "비린"
         ],
         "clip_prompt_pos": [
-          "clean fresh-smelling sundae soup with garnishes"
+          "a clean neatly presented bowl of white sundae soup garnished with green onion looking fresh",
+          "a photo of a steaming bowl of sundae gukbap with clear bright broth and fresh toppings"
         ],
         "clip_prompt_neg": [
-          "sundae soup that looks scummy or stale"
+          "a photo of stainless steel kitchen containers or food prep trays with raw ingredients",
+          "a photo of raw meat or uncooked ingredients in preparation trays"
         ]
       },
       "수육고기양": {
@@ -4125,10 +4391,42 @@
           "고기 적"
         ],
         "clip_prompt_pos": [
-          "sundae soup served with extra boiled pork slices"
+          "a generous portion of sliced boiled pork bossam on a large plate",
+          "a plate of soft boiled pork belly slices showing tender white and pink meat layers"
         ],
         "clip_prompt_neg": [
-          "sundae soup with few meat pieces"
+          "a soup bowl without any pork slices on a side plate",
+          "a small portion of meat with mostly empty plate"
+        ]
+      },
+      "촉촉함": {
+        "clip_prompt_pos": [
+          "a close-up of moist tender sundae blood sausage slices glistening in milky broth",
+          "a photo of soft boiled pork and sundae pieces in white milky soup looking juicy"
+        ],
+        "clip_prompt_neg": [
+          "a photo of dry stir-fried chicken or seafood dish without any soup",
+          "a photo of dry grilled food without broth"
+        ]
+      },
+      "고소함": {
+        "clip_prompt_pos": [
+          "a photo of a bowl of rich creamy opaque white pork bone sundae soup looking savory and nutty",
+          "a close-up of milky white sundae gukbap broth looking rich and deeply flavorful"
+        ],
+        "clip_prompt_neg": [
+          "a photo of red spicy seafood dish with gochujang sauce",
+          "a photo of a clear thin soup without any milky white color"
+        ]
+      },
+      "담백함": {
+        "clip_prompt_pos": [
+          "a photo of a clean mild white sundae soup bowl with light broth and minimal seasoning",
+          "a bowl of pale milky sundae gukbap looking clean and subtly flavored"
+        ],
+        "clip_prompt_neg": [
+          "a photo of steamed dumplings or mandu in soup",
+          "a photo of spicy heavily seasoned red food"
         ]
       }
     },
@@ -4185,10 +4483,12 @@
           "너무 익"
         ],
         "clip_prompt_pos": [
-          "a perfectly grilled medium-rare beef slice with seared crust"
+          "a perfectly grilled medium-rare beef slice with seared crust",
+          "a close-up of beef showing pink interior with browned outer crust"
         ],
         "clip_prompt_neg": [
-          "burned over-grilled beef pieces"
+          "a photo of round golden fried patties on a white plate not beef",
+          "a photo of small round fried korean jeon pancakes on a dish"
         ]
       },
       "잡내": {
@@ -4228,6 +4528,56 @@
         "clip_prompt_neg": [
           "beef boiled or pan-fried without smoky char"
         ]
+      },
+      "촉촉함": {
+        "clip_prompt_pos": [
+          "a close-up of a juicy moist grilled beef slice dripping with juice",
+          "a photo of tender beef with glistening surface showing moisture"
+        ],
+        "clip_prompt_neg": [
+          "a photo of round golden fried patties or korean jeon on a plate",
+          "a photo of dry crispy fried food that is not beef"
+        ]
+      },
+      "담백함": {
+        "clip_prompt_pos": [
+          "a photo of very thinly sliced pale raw beef with no marinade laid out neatly on a white plate",
+          "a close-up of delicate thin beef slices without any sauce showing clean mild light color"
+        ],
+        "clip_prompt_neg": [
+          "a photo of thick heavily marbled beef with abundant white fat veins",
+          "a photo of beef sizzling in a pool of oil or butter on a grill"
+        ]
+      },
+      "느끼함": {
+        "clip_prompt_pos": [
+          "a photo of richly marbled korean wagyu beef with fat melting in a pool of oil on the grill",
+          "a close-up of premium beef surrounded by bubbling white fat and oil on a hot iron plate"
+        ],
+        "clip_prompt_neg": [
+          "a photo of dry lean beef strips with no oil or fat on a clean grill surface",
+          "a photo of raw salmon or light fish without any beef"
+        ]
+      },
+      "쫄깃함": {
+        "clip_prompt_pos": [
+          "a close-up of grilled beef slices showing dense fibrous chewy grain texture on the cut surface",
+          "a photo of thinly sliced beef brisket chadolbaegi with visible tight muscle grain looking bouncy and elastic"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a wine bottle or wine glass placed next to raw beef",
+          "a photo of a restaurant table backdrop with wine without beef texture focus"
+        ]
+      },
+      "고소함": {
+        "clip_prompt_pos": [
+          "a photo of golden seared beef with nutty savory aroma on a hot pan",
+          "a close-up of well-marbled grilled beef showing rich savory fat"
+        ],
+        "clip_prompt_neg": [
+          "a photo of korean doenjang jjigae soybean paste stew without beef",
+          "a photo of a soup or stew with vegetables and no visible beef"
+        ]
       }
     },
     "닭갈비": {
@@ -4245,10 +4595,12 @@
           "양념 약"
         ],
         "clip_prompt_pos": [
-          "korean dakgalbi stir-fried in red sweet-spicy gochujang sauce"
+          "a close-up of korean dakgalbi chicken pieces coated in thick glossy deep red gochujang sauce with rich caramelized seasoning clinging to every piece",
+          "a photo of dakgalbi with deeply colored red sweet spicy gochujang sauce thickly coating the chicken and vegetables showing rich seasoning"
         ],
         "clip_prompt_neg": [
-          "plain chicken pieces without sauce"
+          "a photo of plain steamed white chicken breast without any sauce or seasoning",
+          "a photo of lightly grilled chicken with no red sauce or gochujang seasoning"
         ]
       },
       "닭고기질": {
@@ -4264,10 +4616,12 @@
           "닭이 별로"
         ],
         "clip_prompt_pos": [
-          "chunks of juicy chicken thigh in dakgalbi pan"
+          "a close-up top-down photo of a dakgalbi iron pan where large thick boneless chicken thigh pieces completely fill the frame as the dominant subject with glossy red gochujang sauce showing the quality and quantity of chicken",
+          "a photo of abundant generous meaty chicken pieces in a black iron dakgalbi pan where the chicken is unmistakably the largest and most prominent element in the entire image showing thick meaty cuts"
         ],
         "clip_prompt_neg": [
-          "overcooked dry chicken pieces"
+          "a photo of an iron dakgalbi pan showing mostly green cabbage leaves and white rice cakes with barely any chicken visible",
+          "a photo of a pan filled mostly with vegetables where chicken pieces are hidden and the overall image shows very little meat"
         ]
       },
       "야채사리구성": {
@@ -4284,10 +4638,12 @@
           "사리 없"
         ],
         "clip_prompt_pos": [
-          "dakgalbi pan with cabbage sweet potato rice cake and noodles"
+          "a top-down photo of a flat round black iron pan cooking korean dakgalbi showing soft green cabbage white cylindrical rice cakes and red-sauce chicken pieces all together in the pan",
+          "a photo of a black iron dakgalbi cooking pan seen from above with soft cooked green cabbage white tteok rice cakes and red spicy chicken clearly visible together in the same pan"
         ],
         "clip_prompt_neg": [
-          "dakgalbi with only chicken and few vegetables"
+          "a photo of a white ceramic bowl containing cold buckwheat noodles with pink pickled radish dark seaweed and sesame seeds without any iron pan or red sauce",
+          "a photo of a white bowl of cold mixed noodles with colorful vegetable toppings and no chicken or red gochujang sauce"
         ]
       },
       "매운정도": {
@@ -4301,10 +4657,33 @@
           "순한"
         ],
         "clip_prompt_pos": [
-          "spicy red dakgalbi sizzling on a hot plate"
+          "a top-down photo of a fully cooked spicy korean dakgalbi iron pan where all cabbage and vegetables are completely wilted and softened with chicken pieces uniformly coated in thick red gochujang sauce ready to eat",
+          "a photo of finished dakgalbi stir-fry where green cabbage has fully collapsed and the bright red spicy sauce coats everything in the black iron pan uniformly"
         ],
         "clip_prompt_neg": [
-          "mild non-spicy chicken stir-fry"
+          "a photo of raw crisp fresh vegetables with uncooked pale chicken before any stir-frying",
+          "a photo of mild non-spicy white grilled chicken without any red gochujang sauce"
+        ]
+      },
+      "촉촉함": {
+        "positive": [
+          "촉촉",
+          "부드러",
+          "육즙",
+          "쫄깃"
+        ],
+        "negative": [
+          "퍽퍽",
+          "건조",
+          "뻑뻑"
+        ],
+        "clip_prompt_pos": [
+          "a close-up of fully cooked moist tender dakgalbi chicken pieces glistening with thick absorbed glossy red sauce with soft wilted cabbage around it looking juicy and ready to eat",
+          "a photo of finished well-cooked dakgalbi where every chicken piece has a shiny sauce glaze and the vegetables are soft and the whole pan looks moist and succulent"
+        ],
+        "clip_prompt_neg": [
+          "a photo of dry golden crispy fried chicken pieces without any sauce on them",
+          "a photo of overcooked dry pale chicken with no gloss looking tough and dry"
         ]
       },
       "볶음밥궁합": {
@@ -4319,10 +4698,30 @@
           "볶음밥 별로"
         ],
         "clip_prompt_pos": [
-          "leftover dakgalbi pan turned into red fried rice"
+          "a close-up photo of korean dakgalbi leftover fried rice with melted white cream cheese covering the dark brown reddish rice in a black iron pan",
+          "a photo of dakgalbi stir-fried rice with white melted mozzarella or cream sauce on top the rice is dark brownish red in a used black iron pan with burnt residue around the edge"
         ],
         "clip_prompt_neg": [
-          "dakgalbi served without fried rice option"
+          "a photo of raw uncooked dakgalbi chicken and vegetables in an iron pan before cooking",
+          "a photo of plain steamed white rice in a bowl without any fried rice or melted cheese"
+        ]
+      },
+      "느끼함": {
+        "positive": [
+          "느끼",
+          "기름",
+          "느끼해"
+        ],
+        "negative": [
+          "담백",
+          "느끼 없"
+        ],
+        "clip_prompt_pos": [
+          "a photo of colorful smoothie bowl with fresh tropical fruit slices kiwi mango and granola toppings in a white bowl",
+          "a photo of rows of pink and green pastel macarons lined up on a white marble surface"
+        ],
+        "clip_prompt_neg": [
+          "a photo of korean stir-fried chicken with bright red gochujang sauce and green cabbage in a black iron pan"
         ]
       }
     },
@@ -4522,480 +4921,6 @@
     "마라탕": {
       "마라강도": {
         "positive": [
-          "마라",
-          "얼얼",
-          "마비",
-          "산초",
-          "혀가 얼얼",
-          "강한 마라"
-        ],
-        "negative": [
-          "마라 약",
-          "안 매"
-        ],
-        "clip_prompt_pos": [
-          "a bowl of red malatang covered in sichuan peppercorns"
-        ],
-        "clip_prompt_neg": [
-          "plain mild noodle soup without sichuan spice"
-        ]
-      },
-      "국물농도": {
-        "positive": [
-          "국물 진",
-          "걸쭉",
-          "농도 좋",
-          "되직"
-        ],
-        "negative": [
-          "국물 묽",
-          "맹탕"
-        ],
-        "clip_prompt_pos": [
-          "malatang with rich thick red broth coating ingredients"
-        ],
-        "clip_prompt_neg": [
-          "malatang with thin watery broth"
-        ]
-      },
-      "재료선택폭": {
-        "positive": [
-          "재료 많",
-          "고를 수 있",
-          "선택 폭",
-          "다양"
-        ],
-        "negative": [
-          "재료 적",
-          "선택 폭 좁"
-        ],
-        "clip_prompt_pos": [
-          "malatang counter with many trays of ingredients to choose"
-        ],
-        "clip_prompt_neg": [
-          "malatang with only a few ingredient options"
-        ]
-      },
-      "재료신선도": {
-        "positive": [
-          "신선",
-          "재료 좋",
-          "야채 신선"
-        ],
-        "negative": [
-          "재료 별로",
-          "신선도 떨어"
-        ],
-        "clip_prompt_pos": [
-          "fresh vegetables and meat in a malatang bowl"
-        ],
-        "clip_prompt_neg": [
-          "malatang with wilted poor-quality ingredients"
-        ]
-      },
-      "향신료밸런스": {
-        "positive": [
-          "향신료",
-          "팔각",
-          "산초",
-          "균형",
-          "고수"
-        ],
-        "negative": [
-          "향신료 강",
-          "약초맛",
-          "이상한 향"
-        ],
-        "clip_prompt_pos": [
-          "malatang broth with balanced sichuan spice aroma"
-        ],
-        "clip_prompt_neg": [
-          "malatang with overwhelming medicinal herb smell"
-        ]
-      }
-    },
-    "우동": {
-      "면발탄력": {
-        "positive": [
-          "쫄깃",
-          "탱탱",
-          "면이 굵",
-          "면이 통통",
-          "사누키"
-        ],
-        "negative": [
-          "퍼진",
-          "불은",
-          "흐물"
-        ],
-        "clip_prompt_pos": [
-          "thick chewy udon noodles being lifted from broth"
-        ],
-        "clip_prompt_neg": [
-          "soggy thin udon noodles"
-        ]
-      },
-      "국물감칠맛": {
-        "positive": [
-          "국물 감칠",
-          "다시 국물",
-          "가다랑어",
-          "쯔유",
-          "깔끔한 감칠"
-        ],
-        "negative": [
-          "국물 심심",
-          "맹탕"
-        ],
-        "clip_prompt_pos": [
-          "a bowl of udon with clear amber dashi broth"
-        ],
-        "clip_prompt_neg": [
-          "bowl of udon with pale flavorless broth"
-        ]
-      },
-      "튀김토핑": {
-        "positive": [
-          "튀김",
-          "새우튀김",
-          "유부",
-          "어묵",
-          "텐푸라"
-        ],
-        "negative": [
-          "토핑 없",
-          "토핑 부실"
-        ],
-        "clip_prompt_pos": [
-          "udon topped with shrimp tempura and tofu pouch"
-        ],
-        "clip_prompt_neg": [
-          "plain udon without tempura or toppings"
-        ]
-      },
-      "깔끔함": {
-        "positive": [
-          "깔끔",
-          "정갈",
-          "담백",
-          "맑은"
-        ],
-        "negative": [
-          "기름지",
-          "텁텁"
-        ],
-        "clip_prompt_pos": [
-          "a tidy clean udon bowl with thoughtful presentation"
-        ],
-        "clip_prompt_neg": [
-          "udon served in a messy cluttered way"
-        ]
-      },
-      "온도감": {
-        "positive": [
-          "따뜻",
-          "뜨끈",
-          "시원",
-          "차가운"
-        ],
-        "negative": [
-          "미지근",
-          "식어"
-        ],
-        "clip_prompt_pos": [
-          "steaming hot udon bowl with rising steam"
-        ],
-        "clip_prompt_neg": [
-          "lukewarm udon without steam"
-        ]
-      }
-    },
-    "스시": {
-      "네타신선도": {
-        "positive": [
-          "네타",
-          "신선",
-          "회 신선",
-          "회가 좋",
-          "재료 좋",
-          "생선 신선"
-        ],
-        "negative": [
-          "비린",
-          "오래",
-          "신선도 떨어"
-        ],
-        "clip_prompt_pos": [
-          "sushi nigiri with bright fresh fish slices on rice"
-        ],
-        "clip_prompt_neg": [
-          "dull-colored sushi with old-looking fish"
-        ]
-      },
-      "샤리간": {
-        "positive": [
-          "샤리",
-          "초밥 간",
-          "단촛물",
-          "밥 간 좋"
-        ],
-        "negative": [
-          "밥 간 별로",
-          "샤리 별로"
-        ],
-        "clip_prompt_pos": [
-          "nigiri sushi with well-seasoned vinegared rice"
-        ],
-        "clip_prompt_neg": [
-          "nigiri with bland rice and no vinegar seasoning"
-        ]
-      },
-      "밥양균형": {
-        "positive": [
-          "밥 적당",
-          "밥과 회 비율",
-          "밸런스"
-        ],
-        "negative": [
-          "밥 많",
-          "밥 적",
-          "회만 큼"
-        ],
-        "clip_prompt_pos": [
-          "sushi with balanced rice-to-fish proportion"
-        ],
-        "clip_prompt_neg": [
-          "sushi with oversized rice ball or huge fish slice"
-        ]
-      },
-      "구성다양성": {
-        "positive": [
-          "오마카세",
-          "구성 다양",
-          "여러 종류",
-          "모듬"
-        ],
-        "negative": [
-          "구성 단조",
-          "한 종류"
-        ],
-        "clip_prompt_pos": [
-          "an omakase sushi platter with assorted nigiri varieties"
-        ],
-        "clip_prompt_neg": [
-          "a plate with only one or two kinds of sushi"
-        ]
-      },
-      "와사비간장조화": {
-        "positive": [
-          "와사비",
-          "간장",
-          "쇼유",
-          "조화",
-          "찍먹"
-        ],
-        "negative": [
-          "와사비 없",
-          "간장 별로"
-        ],
-        "clip_prompt_pos": [
-          "sushi served with wasabi and a small dish of soy sauce"
-        ],
-        "clip_prompt_neg": [
-          "sushi served without wasabi or soy sauce"
-        ]
-      }
-    },
-    "소바": {
-      "면향": {
-        "positive": [
-          "메밀 향",
-          "메밀",
-          "고소",
-          "곡물 향"
-        ],
-        "negative": [
-          "메밀 향 없",
-          "밍밍"
-        ],
-        "clip_prompt_pos": [
-          "a plate of cold buckwheat soba with visible grain texture"
-        ],
-        "clip_prompt_neg": [
-          "plain wheat noodles without buckwheat character"
-        ]
-      },
-      "면식감": {
-        "positive": [
-          "탱탱",
-          "쫄깃",
-          "면이 살아",
-          "코시"
-        ],
-        "negative": [
-          "퍼진",
-          "흐물",
-          "끊어진"
-        ],
-        "clip_prompt_pos": [
-          "chewy soba noodles arranged neatly on a bamboo mat"
-        ],
-        "clip_prompt_neg": [
-          "mushy broken soba noodles"
-        ]
-      },
-      "쯔유밸런스": {
-        "positive": [
-          "쯔유",
-          "장국",
-          "다시",
-          "간 좋",
-          "쯔유가 맛있"
-        ],
-        "negative": [
-          "쯔유 별로",
-          "장국 짜",
-          "장국 묽"
-        ],
-        "clip_prompt_pos": [
-          "soba served with a small cup of tsuyu dipping sauce"
-        ],
-        "clip_prompt_neg": [
-          "soba served without a proper dipping sauce"
-        ]
-      },
-      "차가움온도": {
-        "positive": [
-          "차가",
-          "시원",
-          "얼음"
-        ],
-        "negative": [
-          "미지근",
-          "녹은 얼음"
-        ],
-        "clip_prompt_pos": [
-          "chilled soba on ice with frosted glass"
-        ],
-        "clip_prompt_neg": [
-          "lukewarm soba sitting on a plate"
-        ]
-      },
-      "튀김토핑": {
-        "positive": [
-          "튀김",
-          "새우튀김",
-          "야채튀김",
-          "텐푸라"
-        ],
-        "negative": [
-          "튀김 없"
-        ],
-        "clip_prompt_pos": [
-          "soba set with side plate of shrimp and vegetable tempura"
-        ],
-        "clip_prompt_neg": [
-          "soba served alone without tempura"
-        ]
-      }
-    },
-    "덮밥": {
-      "밥소스비율": {
-        "positive": [
-          "밥과 소스",
-          "밥에 잘",
-          "양념밥",
-          "소스가 잘 배"
-        ],
-        "negative": [
-          "소스 적",
-          "밥만",
-          "건조"
-        ],
-        "clip_prompt_pos": [
-          "a donburi bowl with rice well soaked in savory sauce"
-        ],
-        "clip_prompt_neg": [
-          "a bowl of dry rice with topping on the side"
-        ]
-      },
-      "토핑양": {
-        "positive": [
-          "토핑 많",
-          "푸짐",
-          "양 많",
-          "토핑 푸짐"
-        ],
-        "negative": [
-          "토핑 적",
-          "양 적",
-          "허전"
-        ],
-        "clip_prompt_pos": [
-          "donburi bowl heaped with abundant toppings over rice"
-        ],
-        "clip_prompt_neg": [
-          "donburi bowl with sparse toppings and mostly rice"
-        ]
-      },
-      "재료신선도": {
-        "positive": [
-          "신선",
-          "재료 좋",
-          "회 신선",
-          "고기 신선"
-        ],
-        "negative": [
-          "재료 별로",
-          "신선도 떨어"
-        ],
-        "clip_prompt_pos": [
-          "donburi topped with fresh-looking fish or sliced beef"
-        ],
-        "clip_prompt_neg": [
-          "donburi with dull-colored toppings"
-        ]
-      },
-      "간균형": {
-        "positive": [
-          "간 좋",
-          "간 적당",
-          "달짭",
-          "간이 잘"
-        ],
-        "negative": [
-          "짜",
-          "싱거",
-          "간 별로"
-        ],
-        "clip_prompt_pos": [
-          "a balanced donburi with glossy sauce-coated topping"
-        ],
-        "clip_prompt_neg": [
-          "overly salty or bland donburi"
-        ]
-      },
-      "온도감": {
-        "positive": [
-          "따뜻",
-          "뜨끈",
-          "갓 지은"
-        ],
-        "negative": [
-          "식어",
-          "미지근"
-        ],
-        "clip_prompt_pos": [
-          "a hot donburi bowl with rising steam"
-        ],
-        "clip_prompt_neg": [
-          "a cold donburi served without warmth"
-        ]
-      }
-    },
-    "마라탕": {
-      "마라강도": {
-        "positive": [
           "얼얼",
           "마라",
           "마라맛",
@@ -5157,6 +5082,528 @@
         "clip_prompt_neg": [
           "a photo of unappetizing overly spiced food",
           "a photo of raw ingredients piled up before cooking"
+        ]
+      }
+    },
+    "우동": {
+      "면발탄력": {
+        "positive": [
+          "쫄깃",
+          "탱탱",
+          "면이 굵",
+          "면이 통통",
+          "사누키"
+        ],
+        "negative": [
+          "퍼진",
+          "불은",
+          "흐물"
+        ],
+        "clip_prompt_pos": [
+          "thick chewy udon noodles being lifted from broth"
+        ],
+        "clip_prompt_neg": [
+          "soggy thin udon noodles"
+        ]
+      },
+      "국물감칠맛": {
+        "positive": [
+          "국물 감칠",
+          "다시 국물",
+          "가다랑어",
+          "쯔유",
+          "깔끔한 감칠"
+        ],
+        "negative": [
+          "국물 심심",
+          "맹탕"
+        ],
+        "clip_prompt_pos": [
+          "a bowl of udon with clear amber dashi broth"
+        ],
+        "clip_prompt_neg": [
+          "bowl of udon with pale flavorless broth"
+        ]
+      },
+      "튀김토핑": {
+        "positive": [
+          "튀김",
+          "새우튀김",
+          "유부",
+          "어묵",
+          "텐푸라"
+        ],
+        "negative": [
+          "토핑 없",
+          "토핑 부실"
+        ],
+        "clip_prompt_pos": [
+          "udon topped with shrimp tempura and tofu pouch"
+        ],
+        "clip_prompt_neg": [
+          "plain udon without tempura or toppings"
+        ]
+      },
+      "깔끔함": {
+        "positive": [
+          "깔끔",
+          "정갈",
+          "담백",
+          "맑은"
+        ],
+        "negative": [
+          "기름지",
+          "텁텁"
+        ],
+        "clip_prompt_pos": [
+          "a tidy clean udon bowl with thoughtful presentation"
+        ],
+        "clip_prompt_neg": [
+          "udon served in a messy cluttered way"
+        ]
+      },
+      "온도감": {
+        "positive": [
+          "따뜻",
+          "뜨끈",
+          "시원",
+          "차가운"
+        ],
+        "negative": [
+          "미지근",
+          "식어"
+        ],
+        "clip_prompt_pos": [
+          "steaming hot udon bowl with rising steam"
+        ],
+        "clip_prompt_neg": [
+          "lukewarm udon without steam"
+        ]
+      }
+    },
+    "스시": {
+      "네타신선도": {
+        "positive": [
+          "네타",
+          "신선",
+          "회 신선",
+          "회가 좋",
+          "재료 좋",
+          "생선 신선"
+        ],
+        "negative": [
+          "비린",
+          "오래",
+          "신선도 떨어"
+        ],
+        "clip_prompt_pos": [
+          "sushi nigiri with bright fresh fish slices on rice"
+        ],
+        "clip_prompt_neg": [
+          "dull-colored sushi with old-looking fish"
+        ]
+      },
+      "샤리간": {
+        "positive": [
+          "샤리",
+          "초밥 간",
+          "단촛물",
+          "밥 간 좋"
+        ],
+        "negative": [
+          "밥 간 별로",
+          "샤리 별로"
+        ],
+        "clip_prompt_pos": [
+          "nigiri sushi with well-seasoned vinegared rice"
+        ],
+        "clip_prompt_neg": [
+          "nigiri with bland rice and no vinegar seasoning"
+        ]
+      },
+      "밥양균형": {
+        "positive": [
+          "밥 적당",
+          "밥과 회 비율",
+          "밸런스"
+        ],
+        "negative": [
+          "밥 많",
+          "밥 적",
+          "회만 큼"
+        ],
+        "clip_prompt_pos": [
+          "sushi with balanced rice-to-fish proportion"
+        ],
+        "clip_prompt_neg": [
+          "sushi with oversized rice ball or huge fish slice"
+        ]
+      },
+      "구성다양성": {
+        "clip_prompt_pos": [
+          "a top-down overhead photo of an omakase sushi course showing a neat row of many different nigiri varieties including red tuna salmon orange fatty fish and white fish all arranged on a clean wooden board or black slate",
+          "a photo of an assorted sushi platter with multiple different colored nigiri pieces including red orange white and yellow varieties neatly arranged showing wide variety of fish types"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a restaurant serving counter with multiple wooden boards and side dishes and background restaurant signs and equipment visible",
+          "a close-up macro photo of a single piece of nigiri sushi with black caviar on a wooden surface"
+        ]
+      },
+      "와사비간장조화": {
+        "positive": [
+          "와사비",
+          "간장",
+          "쇼유",
+          "조화",
+          "찍먹"
+        ],
+        "negative": [
+          "와사비 없",
+          "간장 별로"
+        ],
+        "clip_prompt_pos": [
+          "sushi served with wasabi and a small dish of soy sauce"
+        ],
+        "clip_prompt_neg": [
+          "sushi served without wasabi or soy sauce"
+        ]
+      },
+      "촉촉함": {
+        "clip_prompt_pos": [
+          "a close-up photo of plump juicy botan shrimp nigiri or scallop hotate nigiri sushi showing a glossy translucent tender glistening raw seafood piece on white vinegared rice that looks moist and succulent",
+          "a photo of moist tender raw seafood sushi nigiri such as juicy shrimp or scallop with a soft silky glistening surface on top of white rice"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a sushi maki roll topped with white mayo sauce and tempura breadcrumbs and shredded daikon on a wooden board",
+          "a photo of a blue ceramic bowl with chopsticks and no food inside"
+        ]
+      },
+      "담백함": {
+        "clip_prompt_pos": [
+          "a close-up photo of a single piece of pale white translucent raw flounder hirame sushi nigiri with ivory white fish and visible white muscle tendons on top of white rice with sesame seed garnish on a dark stone slate plate representing a very clean light delicate mild flavor",
+          "a photo of a single elegant white-colored light fish nigiri sushi with thin semi-transparent pale white fish slice with sesame seeds on a dark ceramic or stone surface representing clean minimal mild taste"
+        ],
+        "clip_prompt_neg": [
+          "a photo of two pieces of blowtorch torched aburi sushi on a white ceramic plate with orange fish roe and green onion garnish on top",
+          "a photo of a dark empty ceramic bowl with chopsticks placed on top and absolutely no food inside"
+        ]
+      },
+      "신선함": {
+        "clip_prompt_pos": [
+          "a close-up photo of multiple fresh vivid orange salmon nigiri pieces lined up on a wooden board showing brilliant glossy shiny surfaces with vibrant saturated orange color representing premium freshly prepared sushi",
+          "a photo of a plate of fresh salmon nigiri sushi pieces with vivid bright orange glossy fish slices showing top quality freshness just prepared"
+        ],
+        "clip_prompt_neg": [
+          "a photo of grilled or blowtorch torched aburi sushi with charred brown cooked surface showing burn marks",
+          "a photo of a blue empty ceramic bowl on a woven mat with chopsticks and no food"
+        ]
+      },
+      "쫄깃함": {
+        "clip_prompt_pos": [
+          "a close-up photo of chewy elastic sushi nigiri like squid ika or fresh snapper fish showing a firm textured raw seafood piece on white rice",
+          "a photo of firm chewy raw fish sushi that looks pleasantly elastic and springy in texture"
+        ],
+        "clip_prompt_neg": [
+          "a photo of sushi pieces covered with thick white cream sauce or melted yellow cheese sauce on top of the fish",
+          "a photo of an empty blue ceramic bowl with chopsticks placed on it with no food"
+        ]
+      },
+      "플레이팅": {
+        "clip_prompt_pos": [
+          "a close-up photo of a beautifully plated sushi maki roll with glossy soy glaze salmon slices draped over the roll with sesame seeds and sauce decoration showing elegant premium visual presentation",
+          "a photo of an artfully presented sushi roll or nigiri with beautiful garnish and sauce decoration showing premium visual plating quality"
+        ],
+        "clip_prompt_neg": [
+          "a photo of plain simple sushi on a wooden board with no special decoration or sauce",
+          "a photo of an empty bowl or plate with chopsticks and no food"
+        ]
+      }
+    },
+    "소바": {
+      "면향": {
+        "positive": [
+          "메밀 향",
+          "메밀",
+          "고소",
+          "곡물 향"
+        ],
+        "negative": [
+          "메밀 향 없",
+          "밍밍"
+        ],
+        "clip_prompt_pos": [
+          "a close-up photo where dark brown buckwheat soba noodle strands fill most of the frame on a bamboo mat",
+          "a photo of dark speckled soba noodles piled on a zaru tray showing visible buckwheat grain"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a bowl of liquid broth or soup without any noodles visible",
+          "a photo of fried cutlet or tempura without soba noodles"
+        ]
+      },
+      "면식감": {
+        "positive": [
+          "탱탱",
+          "쫄깃",
+          "면이 살아",
+          "코시"
+        ],
+        "negative": [
+          "퍼진",
+          "흐물",
+          "끊어진"
+        ],
+        "clip_prompt_pos": [
+          "chewy firm buckwheat soba noodles arranged neatly on a bamboo mat"
+        ],
+        "clip_prompt_neg": [
+          "mushy overcooked noodles without texture"
+        ]
+      },
+      "쯔유밸런스": {
+        "positive": [
+          "쯔유",
+          "장국",
+          "다시",
+          "간 좋",
+          "쯔유가 맛있"
+        ],
+        "negative": [
+          "쯔유 별로",
+          "장국 짜",
+          "장국 묽"
+        ],
+        "clip_prompt_pos": [
+          "a photo of cold zaru soba noodles on a bamboo mat with a small cup of dark tsuyu dipping sauce beside it",
+          "a photo clearly showing buckwheat soba noodles AND a tsuyu dipping cup together"
+        ],
+        "clip_prompt_neg": [
+          "a photo of fried pork cutlet tonkatsu with sauce on a tray without any soba noodles",
+          "a photo of a fried food set meal without buckwheat soba noodles"
+        ]
+      },
+      "차가움온도": {
+        "positive": [
+          "차가",
+          "시원",
+          "얼음"
+        ],
+        "negative": [
+          "미지근",
+          "녹은 얼음"
+        ],
+        "clip_prompt_pos": [
+          "a photo of cold zaru soba noodles served on a bamboo tray looking chilled and refreshing",
+          "a close-up of cold buckwheat soba noodles on a bamboo mat with a frosted or iced appearance"
+        ],
+        "clip_prompt_neg": [
+          "a photo of hot soba noodle soup in warm broth with steam rising",
+          "a photo of warm stew or hot soup without any cold noodles"
+        ]
+      },
+      "튀김토핑": {
+        "positive": [
+          "튀김",
+          "새우튀김",
+          "야채튀김",
+          "텐푸라"
+        ],
+        "negative": [
+          "튀김 없"
+        ],
+        "clip_prompt_pos": [
+          "a photo of soba noodles served with golden crispy shrimp tempura and vegetable tempura beside it",
+          "a photo of cold zaru soba set meal with a separate plate of crispy fried tempura"
+        ],
+        "clip_prompt_neg": [
+          "a photo of plain soba without any tempura or fried toppings",
+          "a photo of a bowl of dark red sauce or soup broth without any tempura"
+        ]
+      },
+      "바삭함": {
+        "clip_prompt_pos": [
+          "a close-up of golden crispy shrimp tempura with light airy crunchy batter looking very crispy",
+          "a photo of golden fried tempura pieces with visibly crunchy batter coating on a plate"
+        ],
+        "clip_prompt_neg": [
+          "a photo of soft plain soba noodles without any fried element",
+          "a photo of a bowl of noodle soup without any crispy food"
+        ]
+      },
+      "촉촉함": {
+        "clip_prompt_pos": [
+          "a close-up of cold buckwheat soba noodles with glistening moist surface on a bamboo mat",
+          "a photo of smooth silky soba noodles looking wet and fresh just rinsed"
+        ],
+        "clip_prompt_neg": [
+          "a photo of dry stir-fried rice or grain dish with sausage and green onions",
+          "a photo of dry fried food without any noodles"
+        ]
+      },
+      "담백함": {
+        "clip_prompt_pos": [
+          "a photo of clean cold zaru soba noodles on a bamboo mat with only shredded nori on top, minimal and light",
+          "a close-up of plain buckwheat soba noodles without heavy toppings showing clean simple presentation"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a breaded fried pork cutlet tonkatsu on a plate",
+          "a photo of wine glass or wine bottle visible on table"
+        ]
+      },
+      "느끼함": {
+        "clip_prompt_pos": [
+          "a photo of soba noodles with rich oily thick sauce or heavy pork belly toppings",
+          "a photo of heavy rich soba with fatty toppings looking greasy and indulgent"
+        ],
+        "clip_prompt_neg": [
+          "a photo of clean light cold soba noodles with thin tsuyu dipping sauce only"
+        ]
+      }
+    },
+    "덮밥": {
+      "밥소스비율": {
+        "positive": [
+          "밥과 소스",
+          "밥에 잘",
+          "양념밥",
+          "소스가 잘 배"
+        ],
+        "negative": [
+          "소스 적",
+          "밥만",
+          "건조"
+        ],
+        "clip_prompt_pos": [
+          "a photo of a korean donburi rice bowl in a round bowl where fluffy white rice is clearly visible alongside braised meat and dark sauce toppings showing both the white rice and the sauce-covered meat at the same time",
+          "a close-up photo of a rice bowl showing white rice at the bottom and sides alongside sauce-coated braised pork topping where you can clearly see both the white rice and the dark sauce toppings together"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a dark bowl completely wall to wall covered with thick braised pork belly slices and a runny egg with absolutely no white rice visible anywhere in the bowl",
+          "a photo of a rice bowl where the toppings completely cover all the rice leaving no rice visible on the surface"
+        ]
+      },
+      "토핑양": {
+        "positive": [
+          "토핑 많",
+          "푸짐",
+          "양 많",
+          "토핑 푸짐"
+        ],
+        "negative": [
+          "토핑 적",
+          "양 적",
+          "허전"
+        ],
+        "clip_prompt_pos": [
+          "a close-up photo of a korean rice bowl in a blue and white ceramic bowl densely filled with abundant generous toppings of stir-fried pork pieces and various vegetables including onion cherry tomato and green pepper showing a rice bowl overflowing with toppings",
+          "a photo of a korean donburi with a large amount of varied toppings including tender braised pork slices and colorful vegetables piled abundantly over rice showing a well-loaded generously topped rice bowl"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a rice bowl with only a small sparse amount of topping where most of the white rice surface is clearly visible and uncovered",
+          "a photo showing a minimal amount of topping on a rice bowl leaving most of the bowl empty"
+        ]
+      },
+      "재료신선도": {
+        "positive": [
+          "신선",
+          "재료 좋",
+          "회 신선",
+          "고기 신선"
+        ],
+        "negative": [
+          "재료 별로",
+          "신선도 떨어"
+        ],
+        "clip_prompt_pos": [
+          "donburi topped with fresh-looking fish or sliced beef"
+        ],
+        "clip_prompt_neg": [
+          "donburi with dull-colored toppings"
+        ]
+      },
+      "간균형": {
+        "positive": [
+          "간 좋",
+          "간 적당",
+          "달짭",
+          "간이 잘"
+        ],
+        "negative": [
+          "짜",
+          "싱거",
+          "간 별로"
+        ],
+        "clip_prompt_pos": [
+          "a balanced donburi with glossy sauce-coated topping"
+        ],
+        "clip_prompt_neg": [
+          "overly salty or bland donburi"
+        ]
+      },
+      "온도감": {
+        "positive": [
+          "따뜻",
+          "뜨끈",
+          "갓 지은"
+        ],
+        "negative": [
+          "식어",
+          "미지근"
+        ],
+        "clip_prompt_pos": [
+          "a hot donburi bowl with rising steam"
+        ],
+        "clip_prompt_neg": [
+          "a cold donburi served without warmth"
+        ]
+      },
+      "온도": {
+        "clip_prompt_pos": [
+          "a photo of colorful french macarons neatly stacked in a pyramid on a white marble background with pastel pink green yellow and purple colors",
+          "a photo of a row of assorted french macarons in various colors on a white surface"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a korean donburi rice bowl with toppings served in a round ceramic bowl",
+          "a photo of a rice bowl with meat toppings in a bowl"
+        ]
+      },
+      "촉촉함": {
+        "clip_prompt_pos": [
+          "a close-up photo of silver metal chopsticks holding up a large juicy piece of saucy braised spicy pork from a round cream white ceramic donburi rice bowl showing the glossy wet sauce coating on the tender meat",
+          "a photo of silver chopsticks lifting a thick piece of braised pork with glistening sauce from a white ceramic korean rice bowl"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a small dark gray ceramic side dish bowl containing only chopped spicy red kimchi cabbage without any chopsticks",
+          "a top-down overhead view of a restaurant table with multiple dishes and side bowls arranged around rice bowls"
+        ]
+      },
+      "담백함": {
+        "clip_prompt_pos": [
+          "a close-up photo of a salmon donburi rice bowl in a round black ceramic bowl with fresh pale pink raw salmon sashimi slices neatly arranged over white rice with green wasabi and fresh microgreen sprouts representing a light clean refreshing taste",
+          "a photo of a japanese style salmon rice bowl in a dark bowl with fresh raw salmon slices and wasabi showing a clean light delicate donburi"
+        ],
+        "clip_prompt_neg": [
+          "a close-up photo of a dark bowl with thick dark brown soy braised pork belly slices and a runny egg yolk showing a rich heavy indulgent rice bowl",
+          "a photo of a spicy boldly sauced Korean rice bowl with dark red or brown sauce coating chunky braised meat"
+        ]
+      },
+      "짠맛": {
+        "clip_prompt_pos": [
+          "a close-up photo of a korean donburi rice bowl with intensely seasoned braised pork toppings in bold dark red-brown sauce topped with golden crispy fried garlic chip slices and sesame seeds and shredded white daikon radish and chopped green onion in a round ceramic rice bowl",
+          "a photo of a boldly seasoned korean rice bowl showing heavily sauced dark braised pork with crispy golden garlic chips and black and white sesame seeds sprinkled on top showing a richly flavored assertively seasoned donburi"
+        ],
+        "clip_prompt_neg": [
+          "a photo of stir-fried spicy squid or octopus with tentacles and shredded seaweed strips and bean sprouts in a dark pan or bowl",
+          "a photo of a korean donburi in a blue speckled ceramic bowl with stir-fried pork belly pieces and a cherry tomato and green cabbage and onion pieces"
+        ]
+      },
+      "느끼함": {
+        "clip_prompt_pos": [
+          "a photo of a korean pork belly rice bowl in a dark round ceramic bowl with thick grilled soy-glazed pork belly slices and a round egg on top with bright vivid orange-yellow runny yolk representing a rich fatty heavy bowl",
+          "a close-up photo of thick pork belly slices arranged over rice in a dark bowl with a runny egg yolk showing fatty greasy rich flavor"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a wooden serving tray containing multiple separate dishes including fried rice and pork belly side plates and a metal cup",
+          "a photo of a fresh salmon donburi with light pink raw salmon slices and clean minimal toppings without any egg or fatty meat"
         ]
       }
     }
