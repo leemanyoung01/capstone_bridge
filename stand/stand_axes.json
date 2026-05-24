@@ -74,6 +74,269 @@
       "shared_taste_allowlist": [
         "매운맛"
       ]
+    },
+    "아구찜": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "촉촉함",
+        "쫄깃함"
+      ]
+    },
+    "우동": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "담백함",
+        "쫄깃함"
+      ]
+    },
+    "버거": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "단맛",
+        "매운맛",
+        "감칠맛",
+        "고소함",
+        "느끼함",
+        "바삭함",
+        "촉촉함"
+      ]
+    },
+    "짜장": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "단맛",
+        "감칠맛",
+        "쫄깃함"
+      ]
+    },
+    "짬뽕": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "매운맛",
+        "감칠맛",
+        "쫄깃함",
+        "담백함",
+        "온도"
+      ]
+    },
+    "청국장": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "감칠맛",
+        "고소함",
+        "담백함",
+        "온도",
+        "촉촉함"
+      ]
+    },
+    "치킨": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "단맛",
+        "매운맛",
+        "고소함",
+        "담백함",
+        "바삭함",
+        "촉촉함"
+      ]
+    },
+    "스시": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "감칠맛",
+        "단맛",
+        "담백함",
+        "쫄깃함",
+        "촉촉함"
+      ]
+    },
+    "뼈해장국": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "매운맛",
+        "감칠맛",
+        "고소함",
+        "촉촉함",
+        "느끼함",
+        "온도"
+      ]
+    },
+    "소고기": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "감칠맛",
+        "고소함",
+        "담백함",
+        "촉촉함",
+        "쫄깃함",
+        "느끼함"
+      ]
+    },
+    "소바": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "감칠맛",
+        "담백함",
+        "쫄깃함",
+        "촉촉함",
+        "바삭함"
+      ]
+    },
+    "순대국": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "감칠맛",
+        "고소함",
+        "담백함",
+        "쫄깃함"
+      ]
+    },
+    "닭갈비": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "매운맛",
+        "짠맛",
+        "단맛",
+        "감칠맛",
+        "고소함",
+        "쫄깃함",
+        "촉촉함"
+      ]
+    },
+    "콩나물국밥": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "담백함",
+        "짠맛",
+        "감칠맛",
+        "매운맛",
+        "촉촉함",
+        "온도"
+      ]
+    },
+    "딤섬": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "감칠맛",
+        "고소함",
+        "짠맛",
+        "촉촉함",
+        "쫄깃함"
+      ]
+    },
+    "덮밥": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "단맛",
+        "감칠맛",
+        "고소함",
+        "느끼함",
+        "담백함",
+        "촉촉함"
+      ]
+    },
+    "곱창": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "고소함",
+        "감칠맛",
+        "매운맛",
+        "느끼함",
+        "쫄깃함"
+      ]
+    },
+    "김밥": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "고소함",
+        "감칠맛",
+        "짠맛",
+        "담백함"
+      ]
+    },
+    "김치찌개": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "매운맛",
+        "감칠맛",
+        "짠맛"
+      ]
+    },
+    "돈까스": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "바삭함",
+        "촉촉함",
+        "고소함",
+        "짠맛",
+        "감칠맛",
+        "담백함"
+      ]
+    },
+    "떡볶이": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "매운맛",
+        "단맛",
+        "짠맛",
+        "감칠맛",
+        "쫄깃함"
+      ]
     }
   },
   "meta_axes": {
@@ -142,7 +405,7 @@
       "group": "맛"
     },
     "온도": {
-      "label": "온도감",
+      "label": "따뜻함",
       "group": "기타"
     }
   },
@@ -163,6 +426,10 @@
       "재료퀄리티": {
         "label": "재료 퀄리티",
         "group": "짜장특화"
+      },
+      "온도": {
+        "label": "따뜻함",
+        "group": "기타"
       }
     },
     "떡볶이": {
@@ -184,6 +451,10 @@
       },
       "매운달콤밸런스": {
         "label": "매운·달콤 밸런스",
+        "group": "떡볶이특화"
+      },
+      "매콤달콤밸런스": {
+        "label": "매콤달콤 밸런스",
         "group": "떡볶이특화"
       }
     },
@@ -445,6 +716,10 @@
       "불맛": {
         "label": "불맛",
         "group": "짬뽕특화"
+      },
+      "온도": {
+        "label": "따뜻함",
+        "group": "기타"
       }
     },
     "탕수육": {
@@ -781,6 +1056,10 @@
       "구수함": {
         "label": "구수함",
         "group": "청국장특화"
+      },
+      "온도": {
+        "label": "따뜻함",
+        "group": "기타"
       }
     },
     "조개": {
@@ -887,28 +1166,72 @@
       "수란계란": {
         "label": "수란·계란",
         "group": "콩나물국밥특화"
+      },
+      "얼큰함": {
+        "label": "얼큰함",
+        "group": "콩나물국밥특화"
       }
     },
     "뼈해장국": {
       "뼈고기양": {
         "label": "뼈·고기 양",
-        "group": "뼈해장국특화"
+        "group": "뼈해장국특화",
+        "clip_prompt_pos": [
+          "a close-up photo of large pork rib bones covered with thick chunks of meat",
+          "a photo of a bowl filled with meaty pork bones piled high"
+        ],
+        "clip_prompt_neg": [
+          "a photo of an empty bowl of clear soup with no meat",
+          "a photo of plain white rice on a plate"
+        ]
       },
       "국물진함": {
         "label": "국물 진함",
-        "group": "뼈해장국특화"
+        "group": "뼈해장국특화",
+        "clip_prompt_pos": [
+          "a close-up of a dark opaque milky brown soup broth in a bowl",
+          "a photo of a thick cloudy concentrated soup liquid filling a bowl"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a dry stir-fried meat dish on a plate without any liquid",
+          "a photo of grilled or fried meat with no soup or broth"
+        ]
       },
       "우거지들깨": {
         "label": "우거지·들깨",
-        "group": "뼈해장국특화"
+        "group": "뼈해장국특화",
+        "clip_prompt_pos": [
+          "a photo of wilted cabbage leaves and green vegetables floating in a soup",
+          "a close-up of a soup bowl covered with leafy greens and powdered perilla seeds"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a soup bowl with only broth and no vegetables visible",
+          "a photo of grilled meat without any greens or vegetables"
+        ]
       },
       "해장력": {
         "label": "해장력",
-        "group": "뼈해장국특화"
+        "group": "뼈해장국특화",
+        "clip_prompt_pos": [
+          "a photo of a large steaming hot stone bowl of korean pork bone soup",
+          "a photo of a hearty rich brown bone soup with lots of ingredients inside"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a small light dessert or cold snack on a plate",
+          "a photo of a fresh salad or fruit bowl"
+        ]
       },
       "매운정도": {
         "label": "매운 정도",
-        "group": "뼈해장국특화"
+        "group": "뼈해장국특화",
+        "clip_prompt_pos": [
+          "a photo of a bright red spicy soup with chili pepper floating on surface",
+          "a close-up of a fiery red broth with chili oil and red pepper flakes"
+        ],
+        "clip_prompt_neg": [
+          "a photo of a white or beige pale colored soup with no red color",
+          "a photo of a light colored broth without any red or orange tint"
+        ]
       }
     },
     "순대국": {
@@ -1085,6 +1408,14 @@
       "와사비간장조화": {
         "label": "와사비·간장 조화",
         "group": "스시특화"
+      },
+      "신선함": {
+        "label": "신선함",
+        "group": "스시특화"
+      },
+      "플레이팅": {
+        "label": "플레이팅",
+        "group": "스시특화"
       }
     },
     "소바": {
@@ -1129,6 +1460,16 @@
       "온도감": {
         "label": "온도감",
         "group": "덮밥특화"
+      }
+    },
+    "아구찜": {
+      "마무리볶음밥": {
+        "label": "마무리 볶음밥",
+        "group": "찜특화"
+      },
+      "재료신선도": {
+        "label": "재료 신선도",
+        "group": "찜특화"
       }
     }
   },
@@ -1790,10 +2131,10 @@
     "찜": "찜류",
     "보쌈찜": "찜류",
     "해물찜": "찜류",
-    "아구찜": "찜류",
+    "아구찜": "아구찜",
     "갈비찜": "찜류",
-    "순대국밥": "순대국밥",
-    "순대": "순대국밥",
+    "순대국밥": "순대국",
+    "순대": "순대국",
     "감자탕": "감자탕",
     "족발": "족발",
     "짬뽕": "짬뽕",
@@ -1879,8 +2220,6 @@
     "뼈해장": "뼈해장국",
     "뼈다귀해장국": "뼈해장국",
     "순대국": "순대국",
-    "순대국밥": "순대국",
-    "순대": "순대국",
     "순대정식": "순대국",
     "소고기": "소고기",
     "쇠고기": "소고기",

@@ -314,9 +314,9 @@ def image_embedding_np(image_path: str, use_cache: bool = True):
         return None
 
 
-def clip_prompt_score(image_path: str, prompts: list[str], use_cache: bool = True) -> float:
+def clip_prompt_score(image_path: str, prompts: list[str], use_cache: bool = True, mode: str = "mean") -> float:
     """
-    이미지와 prompt 리스트의 평균 코사인 유사도. 음식 존재 / 비음식 패널티 등에 사용.
+    이미지와 prompt 리스트의 평균/최대 코사인 유사도. 음식 존재 / 비음식 패널티 등에 사용.
     [0, 1] 범위 (CLIP 유사도는 -1~1이지만 보통 0~0.4 사이)
     """
     try:
@@ -326,6 +326,8 @@ def clip_prompt_score(image_path: str, prompts: list[str], use_cache: bool = Tru
         sims = [(ie @ _text_emb(p).T).squeeze().item() for p in prompts]
         if not sims:
             return 0.0
+        if mode == "max":
+            return float(max(0.0, max(sims)))
         return float(max(0.0, sum(sims) / len(sims)))
     except Exception:
         return 0.0
@@ -637,10 +639,13 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     wrong_prompts = wrong_map.get(keyword) or wrong_map.get("_default") or []
 
     th = image_filtering.get("thresholds", {}) or {}
-    min_food   = float(th.get("min_food_presence", 0.18))
-    max_non    = float(th.get("max_non_food_penalty", 0.18))
-    min_cat    = float(th.get("min_category_presence", 0.15))
-    max_wrong  = float(th.get("max_wrong_food_penalty", 0.20))
+    gate_th = image_filtering.get("representative_gate_thresholds", {})
+    kw_th = gate_th.get(keyword, {})
+
+    min_food   = float(kw_th.get("min_food_presence", th.get("min_food_presence", 0.18)))
+    max_non    = float(kw_th.get("max_non_food_penalty", th.get("max_non_food_penalty", 0.18)))
+    min_cat    = float(kw_th.get("min_category_presence", th.get("min_category_presence", 0.15)))
+    max_wrong  = float(kw_th.get("max_wrong_food_penalty", th.get("max_wrong_food_penalty", 0.20)))
     w_food     = float(th.get("food_presence_weight", 0.0))
     w_non      = float(th.get("non_food_penalty_weight", 0.6))
     w_cat      = float(th.get("category_bonus_weight", 0.30))
@@ -712,10 +717,10 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
             }
             continue
 
-        food = clip_prompt_score(resolved_path, food_prompts, use_cache=use_cache) if food_prompts else 0.0
-        non_food = clip_prompt_score(resolved_path, non_food_prompts, use_cache=use_cache) if non_food_prompts else 0.0
-        category = clip_prompt_score(resolved_path, cat_prompts, use_cache=use_cache) if cat_prompts else 1.0
-        wrong = clip_prompt_score(resolved_path, wrong_prompts, use_cache=use_cache) if wrong_prompts else 0.0
+        food = clip_prompt_score(resolved_path, food_prompts, use_cache=use_cache, mode="mean") if food_prompts else 0.0
+        non_food = clip_prompt_score(resolved_path, non_food_prompts, use_cache=use_cache, mode="max") if non_food_prompts else 0.0
+        category = clip_prompt_score(resolved_path, cat_prompts, use_cache=use_cache, mode="mean") if cat_prompts else 1.0
+        wrong = clip_prompt_score(resolved_path, wrong_prompts, use_cache=use_cache, mode="max") if wrong_prompts else 0.0
 
         # excluded_reason 표준 명칭 (debug JSON / API 응답 일관성):
         #   rejected_non_food            — 메뉴판/영수증/매장 외관/사람 등 음식이 아닌 사진
