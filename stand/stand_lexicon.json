@@ -453,170 +453,159 @@
     },
     "떡볶이": {
       "국물양": {
-        "positive": [
-          "자작",
-          "소스 많",
-          "국물"
-        ],
-        "negative": [
-          "국물 적",
-          "소스 적"
-        ],
+        "positive": ["자작", "소스 많", "국물"],
+        "negative": ["국물 적", "소스 적"],
         "clip_prompt_pos": [
-          "tteokbokki with plenty of red sauce"
+          "a close-up of cylindrical korean rice cakes tteok swimming and submerged in plenty of thick, abundant red gochujang sauce in a pot",
+          "korean tteokbokki with a generous amount of glossy, deep red spicy sauce pooling around the rice cakes"
         ],
         "clip_prompt_neg": [
-          "tteokbokki with little sauce"
+          "dry tteokbokki rice cakes on a plate with barely any sauce on them",
+          "fried rice or dry snacks without liquid sauce pool"
         ]
       },
       "토핑": {
-        "positive": [
-          "오뎅",
-          "치즈",
-          "계란",
-          "만두",
-          "토핑",
-          "어묵",
-          "김말이"
-        ],
+        "positive": ["오뎅", "치즈", "계란", "만두", "토핑", "어묵", "김말이"],
         "negative": [],
         "clip_prompt_pos": [
-          "tteokbokki with cheese egg toppings"
+          "a massive, large deep bowl of red tteokbokki heavily loaded and piled with heavy toppings of melted mozzarella cheese pools, hard-boiled eggs, and diverse seafood like whole shrimps or octopus on top of the rice cakes",
+          "a big street-food style platter of gochujang tteokbokki overflowing with a rich variety of toppings including boiled eggs, cheese stretches, and fish cakes centered in a large bowl"
         ],
         "clip_prompt_neg": [
-          "plain tteokbokki without toppings"
+          "fried rice, bokkeumbap, or rice grains being stir-fried or scraped in a pan",
+          "a thin flat pan of instant tteokbokki with mostly liquid sauce or ramyun noodles filling the pan",
+          "pizza slices or baked cheese bread toast on a rack",
+          "plain tteokbokki with only white rice cakes and absolutely no toppings"
         ]
       },
-      "떡종류": {
-        "positive": [
-          "쌀떡",
-          "쫄깃",
-          "탱글",
-          "탱탱"
-        ],
-        "negative": [
-          "밀떡",
-          "딱딱",
-          "퍼진",
-          "무른"
-        ],
+      "쫄깃함": {
+        "positive": ["쌀떡", "쫄깃", "탱글", "탱탱"],
+        "negative": ["밀떡", "딱딱", "퍼진", "무른"],
         "clip_prompt_pos": [
-          "chewy elastic rice cake tteokbokki"
+          "a macro shot of plump, thick cylindrical korean rice cakes tteok coated in red sauce, showing an elastic chewy texture inside the pan",
+          "thick round rice cakes being lifted by chopsticks or a fork, showing a glossy stretchy surface seared in red gochujang sauce"
         ],
         "clip_prompt_neg": [
-          "mushy soft rice cake"
+          "a triangular pizza slice, whole flat pizza with crust, or melted cheese on pizza dough",
+          "fried rice or rice grains being scooped by a spoon in a pan",
+          "bokkeumbap or kimchi fried rice without clear whole cylindrical rice cakes"
         ]
       },
       "세트구성": {
-        "positive": [
-          "세트",
-          "순대",
-          "튀김",
-          "김밥",
-          "모듬",
-          "구성"
-        ],
-        "negative": [
-          "구성 별로"
-        ],
+        "positive": ["세트", "순대", "튀김", "김밥", "모듬", "구성"],
+        "negative": ["구성 별로"],
         "clip_prompt_pos": [
-          "tteokbokki combo set with sundae and fried food"
+          "loaded and colorful tteokbokki topped with various ingredients like eggs and cheese served alongside a diverse variety of street foods and side dishes",
+          "a full korean street food platter featuring a bowl of red tteokbokki served with black sundae blood sausage slices and golden fried twigim snacks together on a green plastic plate"
         ],
         "clip_prompt_neg": [
-          "single tteokbokki dish alone"
+          "a single flat baked pizza on a wooden board or iron pan",
+          "a single kimbap roll or kimbap slices alone on a plate without any red tteokbokki sauce or rice cakes visible"
+        ]
+      },
+      "감칠맛": {
+        "positive": ["진한 맛", "진국", "깊은 맛", "구수", "풍미", "감칠", "감칠맛"],
+        "negative": ["밍밍", "감칠맛 없", "심심한 맛"],
+        "clip_prompt_pos": [
+          "a steaming pan of delicious red gochujang tteokbokki showing cylindrical rice cakes simmered in a deep, rich, savory red sauce",
+          "appetizing savory tteokbokki with bubbling dark red sauce full of rich flavor profiles around the rice cakes"
+        ],
+        "clip_prompt_neg": [
+          "fried chicken pieces, chicken wings, or crispy fried chicken on a plate",
+          "a single bowl of ramen or seafood soup stew",
+          "a separate dish of chicken with bones visible"
+        ]
+      },
+      "짠맛": {
+        "positive": ["짠", "짭짤", "짭쪼름", "소금", "간이 세"],
+        "negative": ["싱거", "밍밍", "간이 약"],
+        "clip_prompt_pos": [
+          "an appetizing close-up cross-section of cylindrical tteokbokki rice cakes deeply simmered and densely coated in thick, dark-red salty gochujang gravy sauce on a plate",
+          "a sharp macro shot of savory red gochujang tteokbokki with thick sauce glazing the surface of the rice cakes cleanly centered in frame"
+        ],
+        "clip_prompt_neg": [
+          "a photo showing faces, children, hands, or people holding chopsticks",
+          "a deep pot filled mostly with raw unseasoned white cabbage greens or ramen noodles before boiling",
+          "a flat circular pizza, cheesy pizza slice, or pepperoni toppings",
+          "heavy background scenery like trees, buildings, sky, or outdoor towers"
         ]
       }
     },
     "돈까스": {
       "두께": {
-        "positive": [
-          "두께",
-          "두툼",
-          "통째",
-          "크기",
-          "두꺼"
-        ],
-        "negative": [
-          "얇",
-          "작"
-        ],
+        "positive": ["두께", "두툼", "통째", "크기", "두꺼"],
+        "negative": ["얇", "작"],
         "clip_prompt_pos": [
-          "thick pork cutlet generous meat"
+          "a macro shot of a single thick-cut tonkatsu slice revealing dense, solid pork loin meat thickness inside golden crunchy panko breading",
+          "cross-section view of Japanese pork cutlet katsu showcasing a heavy, thick premium slab of meat texture"
         ],
         "clip_prompt_neg": [
-          "thin flat pork cutlet"
+          "a round soft ground meat patty like hamburger steak or hamburg",
+          "paper-thin flat schnitzel with mostly batter",
+          "creamy white sauce on top of food"
         ]
       },
       "소스맛": {
-        "positive": [
-          "소스 맛있",
-          "타르타르",
-          "돈까스소스",
-          "데미글라스",
-          "소스"
-        ],
-        "negative": [
-          "소스 적"
-        ],
+        "positive": ["소스 맛있", "타르타르", "돈까스소스", "데미글라스", "소스"],
+        "negative": ["소스 적"],
         "clip_prompt_pos": [
-          "pork cutlet with rich sauce"
+          "a photo of classic traditional tonkatsu completely covered and drenched in rich glossy brown demi-glace sauce poured all over it",
+          "korean style old-school pork cutlet sitting in a deep pool of flavorful brown gravy sauce on a white plate"
         ],
         "clip_prompt_neg": [
-          "pork cutlet without sauce"
+          "dry fried chicken pieces",
+          "a soft ground meat hamburger steak or minced meat hamburg patty",
+          "a bowl of white cream soup alone"
         ]
       },
       "겉바속촉": {
-        "positive": [
-          "겉바속촉",
-          "겉바",
-          "속촉",
-          "바삭",
-          "육즙"
-        ],
-        "negative": [
-          "눅눅",
-          "기름",
-          "퍽퍽"
-        ],
+        "positive": ["겉바속촉", "겉바", "속촉", "바삭", "육즙"],
+        "negative": ["눅눅", "기름", "퍽퍽"],
         "clip_prompt_pos": [
-          "crispy outside juicy inside pork cutlet"
+          "a close-up cross-section of premium Japanese katsu showcasing perfectly crunchy spiked panko crumbs exterior and glistening pink juicy pork inside",
+          "sliced pork cutlet revealing succulent, moist tender meat centers inside incredibly crisp golden brown breading texture"
         ],
         "clip_prompt_neg": [
-          "soggy greasy pork cutlet"
+          "soft minced meat dish or hamburger steak",
+          "greasy pale tonkatsu without golden brown color spikes",
+          "a plate covered entirely in thick white tartar sauce"
         ]
       },
       "부위": {
-        "positive": [
-          "등심",
-          "안심",
-          "히레",
-          "로스"
-        ],
+        "positive": ["등심", "안심", "히레", "로스"],
         "negative": [],
         "clip_prompt_pos": [
-          "premium pork loin cutlet"
+          "a close-up of perfectly arranged circular hire-katsu tenderloin pieces showing rosy pink tender meat circles inside a crisp shell",
+          "premium rosu-katsu pork loin cutlet showing distinct solid lean meat fiber grains and a small strip of fat at the edge"
         ],
         "clip_prompt_neg": [
-          "low quality thin pork cutlet"
+          "a soft textured minced ground beef hamburger steak or hamburg patty on a sizzling hot stone platter",
+          "shredded cheese covering the entire dish like pizza"
+        ]
+      },
+      "촉촉함": {
+        "positive": ["촉촉", "속촉", "육즙", "부드러", "쥬시"],
+        "negative": ["퍽퍽", "딱딱", "건조"],
+        "clip_prompt_pos": [
+          "a sharp macro cross-section of a sliced pork katsu where natural pork juices are glistening and shimmering on the fresh tender pink meat surface"
+        ],
+        "clip_prompt_neg": [
+          "white fish cutlet drenched in white tartar sauce lifted by a fork",
+          "minced hamburger patty covered in processed cheese slice",
+          "dry overcooked white meat"
         ]
       },
       "사이드": {
-        "positive": [
-          "우동",
-          "카레",
-          "마제소바",
-          "고로케",
-          "샐러드",
-          "양배추"
-        ],
-        "negative": [
-          "사이드 별로"
-        ],
+        "positive": ["우동", "카레", "마제소바", "고로케", "샐러드", "양배추"],
+        "negative": ["사이드 별로"],
         "clip_prompt_pos": [
-          "tonkatsu set with udon salad and sides"
+          "tonkatsu set meal with shredded cabbage udon and miso soup on a tray",
+          "japanese pork cutlet set with rice pickles salad and soup bowls arranged together",
+          "donkatsu plate served with side dishes and dipping sauce"
         ],
         "clip_prompt_neg": [
-          "tonkatsu without side dishes"
+          "single pork cutlet on an empty plate without any sides",
+          "tonkatsu served alone without cabbage or soup"
         ]
       }
     },
@@ -3033,136 +3022,69 @@
         ]
       }
     },
-    "김밥": {
+   "김밥": {
       "김밥상태": {
-        "positive": [
-          "김밥 맛있",
-          "신선",
-          "재료 많",
-          "속이 꽉",
-          "잘 말린",
-          "터지지 않",
-          "단면",
-          "두툼"
-        ],
-        "negative": [
-          "김밥 별로",
-          "밥이 딱딱",
-          "재료 적",
-          "터짐",
-          "말림이 별로"
-        ],
+        "positive": ["김밥 맛있", "신선", "재료 많", "속이 꽉", "잘 말린", "터지지 않", "단면", "두툼"],
+        "negative": ["김밥 별로", "밥이 딱딱", "재료 적", "터짐", "말림이 별로"],
         "clip_prompt_pos": [
-          "fresh kimbap with abundant fillings",
-          "close-up photo of kimbap cross-section showing fillings"
+          "a close-up photo of neatly sliced kimbap rolls arranged on a plate showing colorful fillings embedded inside black seaweed wrap",
+          "traditional korean kimbap cross-section centered in frame with tight rice and ingredient layers"
         ],
         "clip_prompt_neg": [
-          "dried out kimbap with few fillings",
-          "messy broken kimbap roll"
+          "a single bowl of red tteokbokki or spicy rice cakes without kimbap rolls",
+          "a plate of korean blood sausage sundae",
+          "messy broken kimbap roll falling apart"
         ]
       },
       "속재료구성": {
-        "positive": [
-          "속재료",
-          "재료 많",
-          "속이 꽉",
-          "알찬",
-          "다양",
-          "야채",
-          "계란",
-          "참치",
-          "치즈"
-        ],
-        "negative": [
-          "속재료 적",
-          "밥만 많",
-          "부실"
-        ],
+        "positive": ["속재료", "재료 많", "속이 꽉", "알찬", "다양", "야채", "계란", "참치", "치즈"],
+        "negative": ["속재료 적", "밥만 많", "부실"],
         "clip_prompt_pos": [
-          "kimbap roll filled with many colorful ingredients"
+          "a flat-lay extreme close-up of multiple kimbap pieces showing a huge variety of colorful inner fillings inside black seaweed",
+          "kimbap slices packed with highly diverse, dense and colorful ingredients like bright yellow egg, orange carrot, green spinach, pink ham, and burdock"
         ],
         "clip_prompt_neg": [
-          "plain kimbap with very few fillings"
+          "a bowl of spicy red tteokbokki",
+          "kimbap with only one or two boring ingredients inside"
         ]
       },
       "밥의간과양": {
-        "positive": [
-          "밥 간",
-          "밥 양",
-          "간이 좋",
-          "밥이 적당",
-          "밥과 재료 비율"
-        ],
-        "negative": [
-          "밥이 많",
-          "밥만 많",
-          "싱거",
-          "짜"
-        ],
+        "positive": ["밥 간", "밥 양", "간이 좋", "밥이 적당", "밥과 재료 비율"],
+        "negative": ["밥이 많", "밥만 많", "싱거", "짜"],
         "clip_prompt_pos": [
-          "kimbap with balanced rice and fillings"
+          "The side of the gimbap with a lot of white rice grains",
+          "a macro close-up cross-section of a kimbap slice clearly emphasizing a thin, neat circle of white cooked rice grains wrapped around the central fillings"
         ],
         "clip_prompt_neg": [
-          "kimbap with too much rice and little filling"
+          "red stir-fried rice or orange colored rice grains inside the kimbap slice",
+          "kimbap stuffed with white tuna mayonnaise paste, white creamy salad, or heavy white sauce mixed in the center fillings",
+          "a whole uncut kimbap log or full long roll showing only dark seaweed exterior on aluminum foil",
+          "exterior view of a takeaway plastic box or messy table looking down from a distance",
+          "kimbap made with dark purple rice, black rice, or brown rice instead of plain white rice grains",
+          "a plate of red tteokbokki or raw food ingredients on a table"
         ]
       },
       "참기름고소함": {
-        "positive": [
-          "참기름",
-          "고소",
-          "김 향",
-          "깨",
-          "꼬소"
-        ],
-        "negative": [
-          "고소함 부족",
-          "김 향 없음",
-          "밍밍"
-        ],
+        "positive": ["참기름", "고소", "김 향", "깨", "꼬소"],
+        "negative": ["고소함 부족", "김 향 없음", "밍밍"],
         "clip_prompt_pos": [
-          "glossy kimbap with sesame oil and seaweed aroma"
+          "highly glossy, reflective and shiny kimbap rolls heavily glistening with an oily sesame coat on the dark black seaweed surface",
+          "an appetizing sheen and bright oily reflection on the smooth surface of uncut or sliced kimbap rolls sprinkled with sesame seeds"
         ],
         "clip_prompt_neg": [
-          "dry dull kimbap without sesame oil shine"
-        ]
-      },
-      "매운맛강도": {
-        "positive": [
-          "매콤",
-          "땡초",
-          "청양",
-          "매운 김밥",
-          "매운맛"
-        ],
-        "negative": [
-          "안 매",
-          "맵지 않",
-          "매운맛 부족"
-        ],
-        "clip_prompt_pos": [
-          "spicy kimbap with chili pepper filling"
-        ],
-        "clip_prompt_neg": [
-          "plain mild kimbap"
+          "dry, dull, matte and powdery kimbap skin without any oil or shine",
+          "steamed sundae sausages on a plate"
         ]
       },
       "재료신선도": {
-        "positive": [
-          "신선",
-          "야채 신선",
-          "아삭",
-          "재료 신선"
-        ],
-        "negative": [
-          "시든",
-          "눅눅",
-          "재료 오래됨"
-        ],
+        "positive": ["신선", "야채 신선", "아삭", "재료 신선"],
+        "negative": ["시든", "눅눅", "재료 오래됨"],
         "clip_prompt_pos": [
-          "fresh kimbap with crisp vegetables"
+          "vividly colored fresh kimbap cross-section with bright green spinach and crisp orange carrots wrapped tightly in glossy black seaweed"
         ],
         "clip_prompt_neg": [
-          "old soggy kimbap with wilted vegetables"
+          "old soggy kimbap with wilted brown ingredients",
+          "a plate of red saucy street food snacks without clean kimbap slices"
         ]
       }
     },
@@ -3290,10 +3212,14 @@
           "밍밍"
         ],
         "clip_prompt_pos": [
-          "bubbling rich kimchi jjigae broth in a stone pot"
+          "bubbling red kimchi jjigae in a hot stone pot with steam rising",
+          "close-up of rich deep red kimchi stew broth boiling vigorously",
+          "korean kimchi jjigae bubbling in a black earthenware pot"
         ],
         "clip_prompt_neg": [
-          "watery thin pale kimchi stew"
+          "watery thin pale orange soup in a bowl",
+          "clear broth without red kimchi color",
+          "a photo of a cold non-bubbling stew"
         ]
       },
       "김치풍미": {
@@ -3310,10 +3236,13 @@
           "단맛만"
         ],
         "clip_prompt_pos": [
-          "kimchi jjigae with well-fermented aged kimchi"
+          "kimchi jjigae with large chunks of well-fermented dark red aged kimchi",
+          "close-up of deep red fermented kimchi pieces in bubbling stew",
+          "korean stew with soft thoroughly fermented kimchi leaves visible"
         ],
         "clip_prompt_neg": [
-          "kimchi stew with unfermented kimchi"
+          "stew with pale unfermented fresh-looking kimchi",
+          "soup with no visible kimchi pieces"
         ]
       },
       "고기두부양": {
@@ -3332,10 +3261,13 @@
           "허전"
         ],
         "clip_prompt_pos": [
-          "kimchi jjigae loaded with pork belly tofu chunks"
+          "kimchi jjigae loaded with thick pork belly slices and large tofu chunks",
+          "generous portions of meat and white tofu blocks in red kimchi stew",
+          "kimchi stew packed with spam slices and soft tofu cubes"
         ],
         "clip_prompt_neg": [
-          "kimchi stew with very few meat or tofu pieces"
+          "kimchi stew with almost no meat or tofu visible",
+          "thin watery kimchi soup with only broth and few ingredients"
         ]
       },
       "밥궁합": {
@@ -3351,10 +3283,12 @@
           "심심"
         ],
         "clip_prompt_pos": [
-          "kimchi jjigae served with a hot bowl of rice"
+          "kimchi jjigae served alongside a steaming bowl of white rice",
+          "korean meal set with bubbling kimchi stew and rice bowl together"
         ],
         "clip_prompt_neg": [
-          "kimchi stew not paired with rice"
+          "kimchi stew served alone without any rice on the table",
+          "a photo of bread or noodles instead of rice"
         ]
       },
       "매운정도": {
@@ -3371,10 +3305,12 @@
           "맵지 않"
         ],
         "clip_prompt_pos": [
-          "spicy red Korean kimchi stew"
+          "intensely red spicy korean kimchi stew with chili flakes floating",
+          "deep red fiery kimchi jjigae with visible red pepper oil on surface"
         ],
         "clip_prompt_neg": [
-          "mild non-spicy kimchi stew"
+          "mild light-colored kimchi stew without red pepper",
+          "pale non-spicy soup without any chili color"
         ]
       }
     },
@@ -4339,82 +4275,70 @@
           "곱 적"
         ],
         "clip_prompt_pos": [
-          "grilled gopchang intestines packed with creamy gop filling"
+          "a macro close-up of thick cut grilled gopchang intestines with abundance of white creamy glistening gop filling popping out",
+          "cross-section of grilled gopchang showing rich hot creamy interior inside sizzling on an iron plate",
+          "super close-up of a golden brown grilled gopchang piece filled with delicious looking gop in a black iron skillet"
         ],
         "clip_prompt_neg": [
-          "dry empty intestines without filling"
+          "flat empty intestine tube without visible filling",
+          "a photo of mixed grilled meats like steak liver and mushrooms together without clear focus on single gopchang piece",
+          "shriveled deflated gopchang without gop content",
+          "a bowl of soup or noodle dish",
+          "a close-up photo of raw uncooked meat",
+          "a photo of a person or people",
+          "a photo of a menu filled with text"
         ]
       },
       "잡내관리": {
-        "positive": [
-          "잡내 없",
-          "깔끔",
-          "잘 손질"
-        ],
-        "negative": [
-          "잡내",
-          "누린",
-          "비린",
-          "냄새"
-        ],
+        "positive": ["잡내 없", "깔끔", "잘 손질"],
+        "negative": ["잡내", "누린", "비린", "냄새"],
         "clip_prompt_pos": [
-          "clean well-trimmed gopchang on a grill plate"
+          "golden brown neatly trimmed and sliced gopchang pieces sizzling beautifully on a clean round iron grill plate",
+          "fresh clean-looking grilled gopchang intestines with no black burnt debris on a restaurant grill table"
         ],
         "clip_prompt_neg": [
-          "poorly cleaned intestines with strong odor description"
+          "a steel bowl of ramen noodle soup with red broth",
+          "dark discolored rough-surfaced gopchang with burnt residue",
+          "a photo of shiny beer glass with foam"
         ]
       },
       "식감": {
-        "positive": [
-          "쫄깃",
-          "탱글",
-          "쫀득",
-          "씹는 맛"
-        ],
-        "negative": [
-          "질긴",
-          "물러",
-          "퍽퍽"
-        ],
+        "positive": ["쫄깃", "탱글", "쫀득", "씹는 맛"],
+        "negative": ["질긴", "물러", "퍽퍽"],
         "clip_prompt_pos": [
-          "chewy grilled gopchang pieces with crisp surface"
+          "plump juicy grilled gopchang with crisp seared golden exterior edges showing chewy elastic texture",
+          "grilled round intestines with crisp blistered outer skin sizzling on a hot skillet pan"
         ],
         "clip_prompt_neg": [
-          "overcooked tough or mushy intestines"
+          "a photo of fried rice or bibimbap dish without round intestines",
+          "a bowl of noodles or soup dish",
+          "shriveled overcooked dry meat pieces with wrinkled shape"
         ]
       },
       "기름밸런스": {
-        "positive": [
-          "기름 적당",
-          "고소",
-          "느끼하지 않"
-        ],
-        "negative": [
-          "느끼",
-          "기름 많",
-          "기름 떠"
-        ],
+        "positive": ["기름 적당", "고소", "느끼하지 않"],
+        "negative": ["느끼", "기름 많", "기름 떠"],
         "clip_prompt_pos": [
-          "gopchang grilled to render fat with balanced finish"
+          "sliced gopchang on a hot iron grill with rendered glossy fat glistening but not pooling in an oil puddle",
+          "grilled round gopchang with crisply rendered fat edges and neat skillet surface around it"
         ],
         "clip_prompt_neg": [
-          "greasy gopchang swimming in oil"
+          "gopchang submerged and swimming in an excessive messy oil puddle on a grill plate",
+          "a photo of red foil container filled with spicy meat stir fry",
+          "a bowl of greasy soup or noodle dish"
         ]
       },
       "볶음밥궁합": {
-        "positive": [
-          "볶음밥",
-          "마무리 볶음밥",
-          "밥 볶아"
-        ],
-        "negative": [
-          "볶음밥 없"
-        ],
+        "positive": ["볶음밥", "마무리 볶음밥", "밥 볶아"],
+        "negative": ["볶음밥 없"],
         "clip_prompt_pos": [
-          "fried rice cooked in the gopchang pan with leftover sauce"
+          "korean fried rice with seaweed sprinkles being stir-fried directly in a greasy round black gopchang iron pan",
+          "final course bokkeumbap fried rice with sesame seeds mixed in the same black skillet where intestines were cooked"
         ],
         "clip_prompt_neg": [
-          "gopchang meal without fried rice option"
+          "a bowl of ramen noodle soup",
+          "a bowl of plain white rice separate from any grill",
+          "grilled round intestines on grill without any rice grains mixed in"
         ]
       }
     },

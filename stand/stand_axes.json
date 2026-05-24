@@ -74,7 +74,37 @@
       "shared_taste_allowlist": [
         "매운맛"
       ]
-    }
+    },
+    "곱창": {
+            "include_shared_taste_axes": false,
+            "include_meta_axes": true,
+            "use_food_specific_axes": true,
+            "shared_taste_allowlist": ["짠맛", "고소함", "감칠맛", "매운맛", "느끼함", "쫄깃함"]
+        },
+        "김밥": {
+            "include_shared_taste_axes": false,
+            "include_meta_axes": true,
+            "use_food_specific_axes": true,
+            "shared_taste_allowlist": ["고소함", "감칠맛", "짠맛", "담백함"]
+        },
+        "김치찌개": {
+            "include_shared_taste_axes": false,
+            "include_meta_axes": true,
+            "use_food_specific_axes": true,
+            "shared_taste_allowlist": ["매운맛", "감칠맛", "짠맛"]
+        },
+        "돈까스": {
+            "include_shared_taste_axes": false,
+            "include_meta_axes": true,
+            "use_food_specific_axes": true,
+            "shared_taste_allowlist": ["바삭함", "촉촉함", "고소함", "짠맛", "감칠맛", "담백함"]
+        },
+        "떡볶이": {
+            "include_shared_taste_axes": false,
+            "include_meta_axes": true,
+            "use_food_specific_axes": true,
+            "shared_taste_allowlist": ["매운맛", "단맛", "짠맛", "감칠맛", "쫄깃함"]
+        }
   },
   "meta_axes": {
     "_comment": "추천 점수에 약하게만 반영. 라벨은 사용자 화면 표시용.",
@@ -182,8 +212,8 @@
         "label": "세트 구성",
         "group": "떡볶이특화"
       },
-      "매운달콤밸런스": {
-        "label": "매운·달콤 밸런스",
+      "매콤달콤밸런스": {
+        "label": "매콤달콤 밸런스",
         "group": "떡볶이특화"
       }
     },

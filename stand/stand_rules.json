@@ -283,9 +283,10 @@
         "korean dakgalbi mixed with cabbage and sweet potato in red sauce"
       ],
       "곱창": [
-        "a grill plate of korean gopchang pork intestines being cooked",
-        "korean gopchang grilled to golden brown with charred edges",
-        "close-up of grilled intestines showing creamy gop filling"
+        "a grill plate of korean gopchang pork intestines being cooked on a grill",
+        "korean gopchang grilled to golden brown with charred edges on iron plate",
+        "close-up of grilled intestines showing creamy gop filling",
+        "a photo of sizzling gopchang and makchang on a hot grill with flames"
       ],
       "훠궈": [
         "a chinese hotpot table with bubbling red mala broth and white broth",
@@ -448,11 +449,21 @@
     },
     "image_axis_priority": {
       "삼겹살": ["반찬쌈", "촉촉함", "굽기상태", "불맛", "담백함", "쫄깃함"],
-      "회": ["구성", "신선도", "깔끔함", "식감", "촉촉함", "쫄깃함"]
+      "회": ["구성", "신선도", "깔끔함", "식감", "촉촉함", "쫄깃함"],
+      "곱창": ["곱고소함", "식감", "기름밸런스", "잡내관리", "쫄깃함", "감칠맛"],
+      "김밥": ["속재료구성", "김밥상태", "참기름고소함", "재료신선도", "밥의간과양"],
+      "김치찌개": ["국물맛", "김치풍미", "고기두부양", "매운정도", "밥궁합"],
+      "돈까스": ["겉바속촉", "두께", "소스맛", "부위", "사이드"],
+      "떡볶이": ["매운달콤밸런스", "국물양", "토핑", "떡종류", "세트구성"]
     },
     "image_axis_fallback": {
       "삼겹살": ["기름기", "매운맛", "짠맛", "단맛", "신맛", "쓴맛"],
-      "회": ["짠맛", "단맛", "매운맛", "느끼함", "온도"]
+      "회": ["짠맛", "단맛", "매운맛", "느끼함", "온도"],
+      "곱창": ["매운맛", "짠맛", "단맛", "느끼함"],
+      "김밥": ["짠맛", "매운맛", "단맛"],
+      "김치찌개": ["짠맛", "단맛", "느끼함"],
+      "돈까스": ["짠맛", "느끼함", "단맛"],
+      "떡볶이": ["짠맛", "단맛", "느끼함"]
     },
     "representative_gate_thresholds": {
       "삼겹살": {
@@ -465,6 +476,22 @@
     },
     "wrong_food_prompts": {
       "_default": [],
+       "돈까스": [
+        "a photo of fried chicken without breaded cutlet",
+        "a photo of pasta or noodles",
+        "a photo of plain rice without cutlet",
+        "a photo of salad only",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "떡볶이": [
+        "a photo of plain rice without tteokbokki",
+        "a photo of kimbap rice rolls only",
+        "a photo of fried chicken pieces",
+        "a photo of sundae blood sausage only without tteokbokki",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard"
+      ],
       "버거": [
         "a photo of korean fried chicken pieces only",
         "a photo of french fries alone without burger",
@@ -513,6 +540,10 @@
         "a photo of a paper menu filled with text"
       ],
       "김밥": [
+        "a photo of spicy red tteokbokki rice cakes alone without kimbap rolls",
+        "a plate of dark steaming sundae blood sausages or pork organ meats",
+        "a single bowl of ramen or noodle soup with red broth",
+        "rice cake or tteok in orange chili sauce",
         "a photo of rice cake or tteok",
         "a photo of butter rice cake or sweet pastry",
         "a photo of bread or cake",
@@ -645,9 +676,17 @@
       "곱창": [
         "a photo of grilled pork belly samgyeopsal",
         "a photo of korean fried chicken",
-        "a photo of raw fish sashimi",
-        "a photo of a salad bowl",
-        "a photo of a paper menu filled with text"
+	"a photo of raw fish sashimi",
+ 	"a photo of a salad bowl",
+ 	"a photo of a paper menu filled with text",
+ 	"a photo of a restaurant exterior or signboard",
+ 	"a photo of korean stew or soup bubbling in a pot",
+	"a photo of red jjigae stew in a stone pot",
+ 	"a photo of fried rice with toppings on a plate",
+ 	"a photo of bokkeumbap fried rice with egg or seaweed",
+ 	"a close-up photo of a beer glass or soju bottle",
+ 	"a photo of alcoholic drinks and glasses without food",
+ 	"a photo of side dishes banchan only without main dish"
       ],
       "훠궈": [
         "a photo of korean spicy stew kimchi jjigae",
