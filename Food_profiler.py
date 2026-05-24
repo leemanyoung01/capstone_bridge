@@ -163,6 +163,7 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
     allow_meta = bool(policy.get("include_meta_axes", True))
     use_food_specific = bool(policy.get("use_food_specific_axes", True))
     shared_allowlist = set(policy.get("shared_taste_allowlist") or [])
+    spec_lex_for_matched = lexicon.get("food_specific", {}).get(matched, {}) if matched else {}
 
     # ── meta_axes ──
     meta: dict = {}
@@ -170,8 +171,11 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
         for name, info in axes_def.get("meta_axes", {}).items():
             if name.startswith("_"):
                 continue
+            lex_sec = lexicon.get("common", {})
+            if name in spec_lex_for_matched:
+                lex_sec = {**lex_sec, name: {**lex_sec.get(name, {}), **spec_lex_for_matched[name]}}
             meta[name] = {
-                **build(name, info.get("group", "메타"), lexicon.get("common", {}),
+                **build(name, info.get("group", "메타"), lex_sec,
                         label=info.get("label")),
                 "_weight": info.get("weight", 0.3),
             }
@@ -183,10 +187,8 @@ def compose_axes(keyword: str) -> tuple[dict, dict]:
             continue
         if allow_shared or (name in shared_allowlist):
             lex_sec = lexicon.get("shared", {})
-            if matched and matched in lexicon.get("food_specific", {}):
-                spec_lex = lexicon["food_specific"][matched]
-                if name in spec_lex:
-                    lex_sec = {**lex_sec, name: {**lex_sec.get(name, {}), **spec_lex[name]}}
+            if name in spec_lex_for_matched:
+                lex_sec = {**lex_sec, name: {**lex_sec.get(name, {}), **spec_lex_for_matched[name]}}
             taste[name] = build(name, info.get("group", "맛"),
                                 lex_sec,
                                 label=info.get("label"))
@@ -666,6 +668,7 @@ def save_json(keyword: str, profiles: dict, axes_names: list,
         "axes_config": {
             name: {
                 "group": info.get("group", "기타"),
+                "label": info.get("label", name),
                 "positive_keywords": info.get("positive", []),
                 "negative_keywords": info.get("negative", []),
                 "clip_prompt_pos": info.get("clip_prompt_pos", []),

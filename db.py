@@ -687,6 +687,7 @@ def get_reviews_for_profiler(
     sql_rows = f"""
         SELECT
             r.review_id,
+            rst.restaurant_id  AS "RestaurantID",
             rst.name          AS "Restaurant",
             r.content         AS "Review",
             r.rating          AS "Total",
@@ -704,7 +705,7 @@ def get_reviews_for_profiler(
         LEFT JOIN review_images ri ON ri.review_id = r.review_id
         WHERE rst.restaurant_id = ANY(%s)
           AND ({review_cond})
-        GROUP BY r.review_id, rst.name
+        GROUP BY r.review_id, rst.restaurant_id, rst.name
         ORDER BY rst.name, r.reviewed_at DESC NULLS LAST
     """
     with conn.cursor() as cur:

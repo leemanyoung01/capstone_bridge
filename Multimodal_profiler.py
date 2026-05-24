@@ -314,7 +314,13 @@ def image_embedding_np(image_path: str, use_cache: bool = True):
         return None
 
 
-def clip_prompt_score(image_path: str, prompts: list[str], use_cache: bool = True) -> float:
+def clip_prompt_score(
+    image_path: str,
+    prompts: list[str],
+    use_cache: bool = True,
+    aggregation: str = "avg",
+    top_k: int | None = None,
+) -> float:
     """
     이미지와 prompt 리스트의 평균 코사인 유사도. 음식 존재 / 비음식 패널티 등에 사용.
     [0, 1] 범위 (CLIP 유사도는 -1~1이지만 보통 0~0.4 사이)
@@ -326,7 +332,16 @@ def clip_prompt_score(image_path: str, prompts: list[str], use_cache: bool = Tru
         sims = [(ie @ _text_emb(p).T).squeeze().item() for p in prompts]
         if not sims:
             return 0.0
-        return float(max(0.0, sum(sims) / len(sims)))
+        aggregation = (aggregation or "avg").lower()
+        if aggregation in ("max", "best"):
+            score = max(sims)
+        elif aggregation in ("topk", "top_k", "topk_avg", "top_k_avg"):
+            k = int(top_k or 2)
+            k = max(1, min(k, len(sims)))
+            score = sum(sorted(sims, reverse=True)[:k]) / k
+        else:
+            score = sum(sims) / len(sims)
+        return float(max(0.0, score))
     except Exception:
         return 0.0
 
@@ -594,6 +609,11 @@ def _expand_images_per_review(df) -> list[dict]:
             rid = int(rid_raw) if rid_raw is not None else 0
         except Exception:
             rid = 0
+        rest_id_raw = row.get("RestaurantID") if "RestaurantID" in row else row.get("restaurant_id", 0)
+        try:
+            restaurant_id = int(rest_id_raw) if pd.notna(rest_id_raw) else 0
+        except Exception:
+            restaurant_id = 0
         text = str(row.get("Review", "") or "")
 
         urls_str = str(row.get("ImageURLs", "") or "")
@@ -610,6 +630,7 @@ def _expand_images_per_review(df) -> list[dict]:
             out.append({
                 "image_id":     (rid * 100 + i) if rid else (len(out) + 1),
                 "review_id":    rid,
+                "restaurant_id": restaurant_id,
                 "restaurant":   rest,
                 "review_text":  text,
                 "image_url":    url,
@@ -619,9 +640,69 @@ def _expand_images_per_review(df) -> list[dict]:
     return out
 
 
+def _lookup_keyword_setting(mapping: dict, keyword: str, default=None):
+    """Return a keyword setting by exact key first, then by simple alias containment."""
+    if not isinstance(mapping, dict):
+        return default, None
+    if keyword in mapping:
+        return mapping.get(keyword), keyword
+    for key, value in mapping.items():
+        if str(key).startswith("_"):
+            continue
+        if key and keyword and (str(key) in keyword or keyword in str(key)):
+            return value, key
+    if "_default" in mapping:
+        return mapping.get("_default"), "_default"
+    return default, None
+
+
+def _clean_setting_dict(value) -> dict:
+    if not isinstance(value, dict):
+        return {}
+    return {k: v for k, v in value.items() if not str(k).startswith("_")}
+
+
+def _axis_score_rule(image_filtering: dict, keyword: str, axis_name: str) -> tuple[dict, str | None]:
+    """
+    image_filtering.axis_score_overrides에서 keyword/axis별 시각 점수 룰을 꺼낸다.
+    _default는 같은 keyword 안의 축 공통값이고, axis_name 값이 있으면 덮어쓴다.
+    """
+    rules_map = image_filtering.get("axis_score_overrides") or {}
+    keyword_rules, source_key = _lookup_keyword_setting(rules_map, keyword, {})
+    if not isinstance(keyword_rules, dict):
+        return {}, source_key
+
+    rule = {}
+    rule.update(_clean_setting_dict(keyword_rules.get("_default", {})))
+    rule.update(_clean_setting_dict(keyword_rules.get(axis_name, {})))
+    return rule, source_key
+
+
+def _candidate_report_row(cand: dict) -> dict:
+    return {
+        "image_url": cand.get("image_src", ""),
+        "restaurant_id": cand.get("restaurant_id", 0),
+        "restaurant": cand.get("restaurant", ""),
+        "review_id": cand.get("review_id"),
+        "axis": cand.get("axis", ""),
+        "score": cand.get("score"),
+        "review_snippet": cand.get("review_snippet", ""),
+        "score_breakdown": cand.get("score_breakdown", {
+            "image_axis_score": cand.get("_axis_clip", 0.0),
+            "linked_text_score": cand.get("_linked", 0.0),
+            "category_score": cand.get("_category", 0.0),
+            "wrong_food_penalty": cand.get("_wrong", 0.0),
+            "final_score": cand.get("score"),
+        }),
+        "reason": cand.get("reason", ""),
+        "selected_fallback": bool(cand.get("selected_fallback", False)),
+    }
+
+
 def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                         rules: dict, top_n: int = 6, use_cache: bool = True,
-                        debug_dump: dict | None = None):
+                        debug_dump: dict | None = None,
+                        rep_debug_report: bool = False):
     """
     대표 이미지 선정 v3 — image_id 단위 평가 + category/wrong_food/duplicate.
 
@@ -633,19 +714,61 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     non_food_prompts = image_filtering.get("non_food_penalty_prompts") or []
     cat_map = image_filtering.get("category_presence_prompts") or {}
     wrong_map = image_filtering.get("wrong_food_prompts") or {}
-    cat_prompts = cat_map.get(keyword) or cat_map.get("_default") or []
-    wrong_prompts = wrong_map.get(keyword) or wrong_map.get("_default") or []
+    cat_prompts, cat_prompt_key = _lookup_keyword_setting(cat_map, keyword, [])
+    wrong_prompts, wrong_prompt_key = _lookup_keyword_setting(wrong_map, keyword, [])
+    cat_prompts = cat_prompts or []
+    wrong_prompts = wrong_prompts or []
+    cat_aggregation, _cat_aggregation_key = _lookup_keyword_setting(
+        image_filtering.get("category_presence_aggregation") or {}, keyword, "avg"
+    )
+    wrong_aggregation, _wrong_aggregation_key = _lookup_keyword_setting(
+        image_filtering.get("wrong_food_aggregation") or {}, keyword, "avg"
+    )
+    cat_top_k_raw, _cat_top_k_key = _lookup_keyword_setting(
+        image_filtering.get("category_presence_top_k") or {}, keyword, None
+    )
+    wrong_top_k_raw, _wrong_top_k_key = _lookup_keyword_setting(
+        image_filtering.get("wrong_food_top_k") or {}, keyword, None
+    )
+    try:
+        cat_top_k = int(cat_top_k_raw) if cat_top_k_raw is not None else None
+    except (TypeError, ValueError):
+        cat_top_k = None
+    try:
+        wrong_top_k = int(wrong_top_k_raw) if wrong_top_k_raw is not None else None
+    except (TypeError, ValueError):
+        wrong_top_k = None
+    axis_score_override_raw, axis_score_override_key = _lookup_keyword_setting(
+        image_filtering.get("axis_score_overrides") or {}, keyword, {}
+    )
 
-    th = image_filtering.get("thresholds", {}) or {}
+    priority_map = image_filtering.get("image_axis_priority") or {}
+    fallback_map = image_filtering.get("image_axis_fallback") or {}
+    axis_priority_raw, axis_priority_key = _lookup_keyword_setting(priority_map, keyword, [])
+    axis_fallback_raw, axis_fallback_key = _lookup_keyword_setting(fallback_map, keyword, [])
+    axis_priority = [a for a in (axis_priority_raw or []) if a in axes_config]
+    axis_fallback = [
+        a for a in (axis_fallback_raw or [])
+        if a in axes_config and a not in axis_priority
+    ]
+
+    base_th = _clean_setting_dict(image_filtering.get("thresholds", {}) or {})
+    override_map = image_filtering.get("representative_gate_thresholds") or {}
+    override_raw, override_key = _lookup_keyword_setting(override_map, keyword, {})
+    override_th = _clean_setting_dict(override_raw)
+    th = dict(base_th)
+    th.update(override_th)
     min_food   = float(th.get("min_food_presence", 0.18))
     max_non    = float(th.get("max_non_food_penalty", 0.18))
     min_cat    = float(th.get("min_category_presence", 0.15))
-    max_wrong  = float(th.get("max_wrong_food_penalty", 0.20))
+    max_wrong  = float(th.get("wrong_food_threshold", th.get("max_wrong_food_penalty", 0.20)))
+    wrong_margin = th.get("wrong_food_margin_threshold")
+    wrong_margin = float(wrong_margin) if wrong_margin is not None else None
     w_food     = float(th.get("food_presence_weight", 0.0))
     w_non      = float(th.get("non_food_penalty_weight", 0.6))
     w_cat      = float(th.get("category_bonus_weight", 0.30))
     w_wrong    = float(th.get("wrong_food_weight", 0.70))
-    w_link     = float(th.get("linked_text_weight", 0.15))
+    w_link     = float(th.get("linked_text_weight", 0.0))
     dup_thresh = float(th.get("duplicate_threshold", 0.92))
     w_dup      = float(th.get("duplicate_penalty_weight", 0.30))
     max_per_review = int(th.get("max_per_review", 1))
@@ -654,6 +777,19 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     max_per_rest_axis = int(th.get("max_per_restaurant_axis", 1))
     fallback_target = int(th.get("fallback_target_count", top_n))
     fallback_min_combined = float(th.get("fallback_min_combined", 0.10))
+
+    configured_axes = axis_priority + axis_fallback
+    if configured_axes:
+        rest_axes = [
+            n for n, info in axes_config.items()
+            if not info.get("is_meta") and n not in configured_axes
+        ]
+        axis_eval_order = configured_axes + rest_axes
+    else:
+        axis_eval_order = [
+            n for n, info in axes_config.items()
+            if not info.get("is_meta")
+        ]
 
     # image_id 단위로 펼치기
     images_all = _expand_images_per_review(df)
@@ -714,8 +850,26 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
 
         food = clip_prompt_score(resolved_path, food_prompts, use_cache=use_cache) if food_prompts else 0.0
         non_food = clip_prompt_score(resolved_path, non_food_prompts, use_cache=use_cache) if non_food_prompts else 0.0
-        category = clip_prompt_score(resolved_path, cat_prompts, use_cache=use_cache) if cat_prompts else 1.0
-        wrong = clip_prompt_score(resolved_path, wrong_prompts, use_cache=use_cache) if wrong_prompts else 0.0
+        category = (
+            clip_prompt_score(
+                resolved_path,
+                cat_prompts,
+                use_cache=use_cache,
+                aggregation=str(cat_aggregation or "avg"),
+                top_k=cat_top_k,
+            )
+            if cat_prompts else 1.0
+        )
+        wrong = (
+            clip_prompt_score(
+                resolved_path,
+                wrong_prompts,
+                use_cache=use_cache,
+                aggregation=str(wrong_aggregation or "avg"),
+                top_k=wrong_top_k,
+            )
+            if wrong_prompts else 0.0
+        )
 
         # excluded_reason 표준 명칭 (debug JSON / API 응답 일관성):
         #   rejected_non_food            — 메뉴판/영수증/매장 외관/사람 등 음식이 아닌 사진
@@ -727,6 +881,8 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
         elif food < min_food:
             ok, excluded = False, "rejected_low_foodness"
         elif wrong > max_wrong:
+            ok, excluded = False, "rejected_wrong_visual"
+        elif wrong_margin is not None and (wrong - category) > wrong_margin:
             ok, excluded = False, "rejected_wrong_visual"
         elif category < min_cat:
             ok, excluded = False, "rejected_low_foodness"
@@ -747,13 +903,45 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     candidates_per_axis: dict[str, list[dict]] = defaultdict(list)
     all_records: list[dict] = []   # debug 풀 기록
 
-    taste_axes_only = [(n, info) for n, info in axes_config.items() if not info.get("is_meta")]
-    print(f"  ⚙️  축 {len(taste_axes_only)}개 × 이미지 {sum(1 for m in img_keyword_meta.values() if m['ok'])}장 평가")
+    rep_axes = [(n, axes_config[n]) for n in axis_eval_order if n in axes_config]
+    print(f"  ⚙️  축 {len(rep_axes)}개 × 이미지 {sum(1 for m in img_keyword_meta.values() if m['ok'])}장 평가")
 
-    for ax_name, ax_info in taste_axes_only:
+    for ax_name, ax_info in rep_axes:
+        candidates_per_axis.setdefault(ax_name, [])
+        axis_rule, axis_rule_source = _axis_score_rule(image_filtering, keyword, ax_name)
         ax_pos = ax_info.get("clip_prompt_pos") or []
         ax_neg = ax_info.get("clip_prompt_neg") or []
         ax_label = ax_info.get("label") or ax_name
+        pos_limit = int(axis_rule.get("positive_prompt_limit", axis_rule.get("axis_prompt_limit", 3)))
+        neg_limit = int(axis_rule.get("negative_prompt_limit", axis_rule.get("axis_prompt_limit", 3)))
+        axis_clip_weight = float(axis_rule.get("image_axis_weight", th.get("image_axis_weight", 1.0)))
+        axis_link_weight = float(axis_rule.get("linked_text_weight", w_link))
+        axis_presence_weight = float(axis_rule.get("axis_presence_weight", 0.0))
+        axis_wrong_weight = float(axis_rule.get("axis_wrong_weight", 0.0))
+        axis_presence_prompts = axis_rule.get("axis_presence_prompts") or []
+        axis_wrong_prompts = axis_rule.get("axis_wrong_prompts") or []
+        axis_presence_aggregation = str(
+            axis_rule.get("axis_presence_aggregation", axis_rule.get("axis_prompt_aggregation", "avg"))
+        )
+        axis_wrong_aggregation = str(
+            axis_rule.get("axis_wrong_aggregation", axis_rule.get("axis_prompt_aggregation", "avg"))
+        )
+        axis_presence_top_k_raw = axis_rule.get("axis_presence_top_k", axis_rule.get("axis_prompt_top_k"))
+        axis_wrong_top_k_raw = axis_rule.get("axis_wrong_top_k", axis_rule.get("axis_prompt_top_k"))
+        try:
+            axis_presence_top_k = int(axis_presence_top_k_raw) if axis_presence_top_k_raw is not None else None
+        except (TypeError, ValueError):
+            axis_presence_top_k = None
+        try:
+            axis_wrong_top_k = int(axis_wrong_top_k_raw) if axis_wrong_top_k_raw is not None else None
+        except (TypeError, ValueError):
+            axis_wrong_top_k = None
+        min_axis_clip = axis_rule.get("min_axis_clip")
+        min_axis_clip = float(min_axis_clip) if min_axis_clip is not None else None
+        min_axis_presence = axis_rule.get("min_axis_presence")
+        min_axis_presence = float(min_axis_presence) if min_axis_presence is not None else None
+        max_axis_wrong_visual = axis_rule.get("max_axis_wrong_visual")
+        max_axis_wrong_visual = float(max_axis_wrong_visual) if max_axis_wrong_visual is not None else None
 
         for im in images:
             meta = img_keyword_meta[im["image_id"]]
@@ -763,6 +951,7 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                            for r in all_records):
                     all_records.append({
                         "image_id": im["image_id"], "review_id": im["review_id"],
+                        "restaurant_id": im.get("restaurant_id", 0),
                         "restaurant_name": im["restaurant"], "source_order": im["source_order"],
                         "axis": "_excluded_", "axis_label": "(컷오프)",
                         "image_url": im["image_url"],
@@ -786,26 +975,153 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
             # 이미지×축 CLIP — resolved_image_path 사용
             local = im.get("resolved_image_path", "")
             if ax_pos or ax_neg:
-                axis_clip = analyze_clip(local, ax_pos[:3], ax_neg[:3], use_cache=use_cache)
+                axis_clip = analyze_clip(local, ax_pos[:pos_limit], ax_neg[:neg_limit], use_cache=use_cache)
             else:
                 axis_clip = 0.0
+
+            axis_presence = (
+                clip_prompt_score(
+                    local,
+                    axis_presence_prompts,
+                    use_cache=use_cache,
+                    aggregation=axis_presence_aggregation,
+                    top_k=axis_presence_top_k,
+                )
+                if axis_presence_prompts else 0.0
+            )
+            axis_wrong_visual = (
+                clip_prompt_score(
+                    local,
+                    axis_wrong_prompts,
+                    use_cache=use_cache,
+                    aggregation=axis_wrong_aggregation,
+                    top_k=axis_wrong_top_k,
+                )
+                if axis_wrong_prompts else 0.0
+            )
 
             # linked review (해당 리뷰 텍스트만)
             linked_dict = _compute_linked_text(im["review_text"], axes_config, rules)
             linked_score = float(linked_dict.get(ax_name, 0.0))
 
             final_score = (
-                axis_clip
+                axis_clip_weight * axis_clip
                 + w_food  * meta["food"]
                 + w_cat   * meta["category"]
-                + w_link  * abs(linked_score)
+                + axis_presence_weight * axis_presence
+                + axis_link_weight * abs(linked_score)
                 - w_non   * meta["non_food"]
                 - w_wrong * meta["wrong"]
+                - axis_wrong_weight * axis_wrong_visual
             )
+            score_breakdown = {
+                "image_axis_score": round(axis_clip, 4),
+                "image_axis_weight": round(axis_clip_weight, 4),
+                "axis_presence_score": round(axis_presence, 4),
+                "axis_presence_weight": round(axis_presence_weight, 4),
+                "axis_presence_aggregation": axis_presence_aggregation,
+                "axis_presence_top_k": axis_presence_top_k,
+                "min_axis_presence": min_axis_presence,
+                "axis_wrong_visual_score": round(axis_wrong_visual, 4),
+                "axis_wrong_visual_weight": round(axis_wrong_weight, 4),
+                "axis_wrong_aggregation": axis_wrong_aggregation,
+                "axis_wrong_top_k": axis_wrong_top_k,
+                "max_axis_wrong_visual": max_axis_wrong_visual,
+                "linked_text_score": round(linked_score, 4),
+                "linked_text_abs_score": round(abs(linked_score), 4),
+                "food_presence_score": round(meta["food"], 4),
+                "category_score": round(meta["category"], 4),
+                "non_food_penalty": round(meta["non_food"], 4),
+                "wrong_food_penalty": round(meta["wrong"], 4),
+                "linked_text_weight": round(axis_link_weight, 4),
+                "final_score": round(float(final_score), 4),
+                "axis_score_override_applied": bool(axis_rule),
+                "axis_score_override_source": axis_rule_source,
+            }
+
+            if min_axis_clip is not None and axis_clip < min_axis_clip:
+                all_records.append({
+                    "image_id": im["image_id"], "review_id": im["review_id"],
+                    "restaurant_id": im.get("restaurant_id", 0),
+                    "restaurant_name": im["restaurant"], "source_order": im["source_order"],
+                    "axis": ax_name, "axis_label": ax_label,
+                    "image_url": im["image_url"],
+                    "original_image_path": im.get("image_path", ""),
+                    "resolved_image_path": local,
+                    "downloaded_from_url": bool(im.get("downloaded_from_url", False)),
+                    "food_presence_score": round(meta["food"], 4),
+                    "category_presence_score": round(meta["category"], 4),
+                    "image_axis_clip_score": round(axis_clip, 4),
+                    "axis_match_score": round(axis_clip, 4),
+                    "linked_review_axis_score": round(linked_score, 4),
+                    "axis_presence_score": round(axis_presence, 4),
+                    "axis_wrong_visual_score": round(axis_wrong_visual, 4),
+                    "non_food_penalty": round(meta["non_food"], 4),
+                    "wrong_food_penalty": round(meta["wrong"], 4),
+                    "duplicate_penalty": 0.0,
+                    "final_score": round(float(final_score), 4),
+                    "score_breakdown": score_breakdown,
+                    "selected": False,
+                    "excluded_reason": "rejected_low_axis_clip",
+                })
+                continue
+            if min_axis_presence is not None and axis_presence < min_axis_presence:
+                all_records.append({
+                    "image_id": im["image_id"], "review_id": im["review_id"],
+                    "restaurant_id": im.get("restaurant_id", 0),
+                    "restaurant_name": im["restaurant"], "source_order": im["source_order"],
+                    "axis": ax_name, "axis_label": ax_label,
+                    "image_url": im["image_url"],
+                    "original_image_path": im.get("image_path", ""),
+                    "resolved_image_path": local,
+                    "downloaded_from_url": bool(im.get("downloaded_from_url", False)),
+                    "food_presence_score": round(meta["food"], 4),
+                    "category_presence_score": round(meta["category"], 4),
+                    "image_axis_clip_score": round(axis_clip, 4),
+                    "axis_match_score": round(axis_clip, 4),
+                    "linked_review_axis_score": round(linked_score, 4),
+                    "axis_presence_score": round(axis_presence, 4),
+                    "axis_wrong_visual_score": round(axis_wrong_visual, 4),
+                    "non_food_penalty": round(meta["non_food"], 4),
+                    "wrong_food_penalty": round(meta["wrong"], 4),
+                    "duplicate_penalty": 0.0,
+                    "final_score": round(float(final_score), 4),
+                    "score_breakdown": score_breakdown,
+                    "selected": False,
+                    "excluded_reason": "rejected_low_axis_presence",
+                })
+                continue
+            if max_axis_wrong_visual is not None and axis_wrong_visual > max_axis_wrong_visual:
+                all_records.append({
+                    "image_id": im["image_id"], "review_id": im["review_id"],
+                    "restaurant_id": im.get("restaurant_id", 0),
+                    "restaurant_name": im["restaurant"], "source_order": im["source_order"],
+                    "axis": ax_name, "axis_label": ax_label,
+                    "image_url": im["image_url"],
+                    "original_image_path": im.get("image_path", ""),
+                    "resolved_image_path": local,
+                    "downloaded_from_url": bool(im.get("downloaded_from_url", False)),
+                    "food_presence_score": round(meta["food"], 4),
+                    "category_presence_score": round(meta["category"], 4),
+                    "image_axis_clip_score": round(axis_clip, 4),
+                    "axis_match_score": round(axis_clip, 4),
+                    "linked_review_axis_score": round(linked_score, 4),
+                    "axis_presence_score": round(axis_presence, 4),
+                    "axis_wrong_visual_score": round(axis_wrong_visual, 4),
+                    "non_food_penalty": round(meta["non_food"], 4),
+                    "wrong_food_penalty": round(meta["wrong"], 4),
+                    "duplicate_penalty": 0.0,
+                    "final_score": round(float(final_score), 4),
+                    "score_breakdown": score_breakdown,
+                    "selected": False,
+                    "excluded_reason": "rejected_axis_wrong_visual",
+                })
+                continue
 
             cand = {
                 "image_id":      im["image_id"],
                 "review_id":     im["review_id"],
+                "restaurant_id":  im.get("restaurant_id", 0),
                 "restaurant":    im["restaurant"],
                 "source_order":  im["source_order"],
                 "image_src":     im["image_url"],
@@ -822,11 +1138,15 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                 "_non_food":     round(meta["non_food"], 4),
                 "_wrong":        round(meta["wrong"], 4),
                 "_linked":       round(linked_score, 4),
+                "_axis_presence": round(axis_presence, 4),
+                "_axis_wrong_visual": round(axis_wrong_visual, 4),
+                "score_breakdown": score_breakdown,
             }
             candidates_per_axis[ax_name].append(cand)
 
             all_records.append({
                 "image_id": im["image_id"], "review_id": im["review_id"],
+                "restaurant_id": im.get("restaurant_id", 0),
                 "restaurant_name": im["restaurant"], "source_order": im["source_order"],
                 "axis": ax_name, "axis_label": ax_label,
                 "image_url": im["image_url"],
@@ -838,10 +1158,13 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                 "image_axis_clip_score": round(axis_clip, 4),
                 "axis_match_score": round(axis_clip, 4),
                 "linked_review_axis_score": round(linked_score, 4),
+                "axis_presence_score": round(axis_presence, 4),
+                "axis_wrong_visual_score": round(axis_wrong_visual, 4),
                 "non_food_penalty": round(meta["non_food"], 4),
                 "wrong_food_penalty": round(meta["wrong"], 4),
                 "duplicate_penalty": 0.0,
                 "final_score": round(float(final_score), 4),
+                "score_breakdown": score_breakdown,
                 "selected": False,
                 "excluded_reason": None,
             })
@@ -865,17 +1188,24 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     # 같은 (restaurant, axis) 1장 (max_per_rest_axis), 같은 restaurant 전체 누적 max_per_restaurant 장,
     # 같은 image_id 1회, duplicate_penalty 적용.
     rep: list[dict] = []
-    seen_pairs: set[tuple[str, str]] = set()
     seen_image_ids: set[int] = set()
     per_restaurant_count: dict[str, int] = defaultdict(int)
+    per_restaurant_axis_count: dict[tuple[str, str], int] = defaultdict(int)
     per_review_selected: dict[int, int] = defaultdict(int)
     selected_embs: list["np.ndarray"] = []
     # 선정 단계 거절 로그 — debug_dump.selection_rejections에 적재.
     # phase: "primary" | "fallback" | "fallback_relaxed"
     selection_rejections: list[dict] = []
 
-    axis_order = sorted(candidates_per_axis.keys(),
-                        key=lambda a: -sum(c["score"] for c in candidates_per_axis[a][:3]))
+    auto_axis_order = sorted(candidates_per_axis.keys(),
+                             key=lambda a: -sum(c["score"] for c in candidates_per_axis[a][:3]))
+    if configured_axes:
+        configured_axis_order = [a for a in configured_axes if a in candidates_per_axis]
+        axis_order = configured_axis_order + [
+            a for a in auto_axis_order if a not in configured_axis_order
+        ]
+    else:
+        axis_order = auto_axis_order
 
     def _try_select(cand, fallback: bool, allow_relax_restaurant: bool = False) -> tuple[bool, str | None]:
         """선정 시도. 통과하면 rep에 추가하고 (True, None) 반환, 차단되면 (False, reason)."""
@@ -883,7 +1213,7 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
         if cand["image_id"] in seen_image_ids:
             return False, "rejected_duplicate_image"
         # 2) (restaurant, axis) 중복
-        if (cand["restaurant"], cand["axis"]) in seen_pairs:
+        if (cand["restaurant"], cand["axis"]) and per_restaurant_axis_count[(cand["restaurant"], cand["axis"])] >= max_per_rest_axis:
             return False, "rejected_duplicate_restaurant"
         # 3) 같은 review_id 누적 cap: primary는 strict(=1), fallback은 loose(=2)
         review_cap = max_per_review_loose if fallback else max_per_review
@@ -903,10 +1233,13 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
             if sims and max(sims) >= dup_thresh:
                 dup_pen = w_dup
                 cand["score"] = round(cand["score"] - dup_pen, 4)
+        if "score_breakdown" in cand:
+            cand["score_breakdown"]["duplicate_penalty"] = round(dup_pen, 4)
+            cand["score_breakdown"]["final_score"] = cand["score"]
 
-        seen_pairs.add((cand["restaurant"], cand["axis"]))
         seen_image_ids.add(cand["image_id"])
         per_restaurant_count[cand["restaurant"]] += 1
+        per_restaurant_axis_count[(cand["restaurant"], cand["axis"])] += 1
         if rid:
             per_review_selected[rid] += 1
         cand["_duplicate_penalty"] = dup_pen
@@ -926,6 +1259,9 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                 r["selected_fallback"] = bool(fallback)
                 r["duplicate_penalty"] = dup_pen
                 r["final_score"] = cand["score"]
+                if "score_breakdown" in r:
+                    r["score_breakdown"]["duplicate_penalty"] = round(dup_pen, 4)
+                    r["score_breakdown"]["final_score"] = cand["score"]
                 break
         return True, None
 
@@ -1039,9 +1375,74 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
     with open(f"{safe}_representative_images.json", "w", encoding="utf-8") as f:
         json.dump({"keyword": keyword, "images": rep_for_json}, f, ensure_ascii=False, indent=2)
 
+    rep_candidate_report = {
+        "keyword": keyword,
+        "axis_priority": axis_priority,
+        "axis_priority_source": axis_priority_key,
+        "axis_fallback": axis_fallback,
+        "axis_fallback_source": axis_fallback_key,
+        "evaluation_axes": axis_eval_order,
+        "axis_order": axis_order,
+        "linked_text_weight": w_link,
+        "category_presence_prompts_applied": bool(cat_prompts),
+        "category_presence_prompts_source": cat_prompt_key,
+        "category_presence_aggregation": str(cat_aggregation or "avg"),
+        "category_presence_top_k": cat_top_k,
+        "wrong_food_prompts_applied": bool(wrong_prompts),
+        "wrong_food_prompts_source": wrong_prompt_key,
+        "wrong_food_aggregation": str(wrong_aggregation or "avg"),
+        "wrong_food_top_k": wrong_top_k,
+        "representative_gate_thresholds_override_applied": bool(override_th),
+        "representative_gate_thresholds_override_source": override_key,
+        "axis_score_overrides_applied": bool(axis_score_override_raw),
+        "axis_score_overrides_source": axis_score_override_key,
+        "thresholds": {
+            "min_food_presence": min_food,
+            "max_non_food_penalty": max_non,
+            "min_category_presence": min_cat,
+            "max_wrong_food_penalty": max_wrong,
+            "wrong_food_margin_threshold": wrong_margin,
+            "food_presence_weight": w_food,
+            "category_bonus_weight": w_cat,
+            "non_food_penalty_weight": w_non,
+            "wrong_food_weight": w_wrong,
+            "linked_text_weight": w_link,
+            "duplicate_threshold": dup_thresh,
+            "duplicate_penalty_weight": w_dup,
+            "max_per_review": max_per_review,
+            "max_per_review_loose": max_per_review_loose,
+            "max_per_restaurant": max_per_restaurant,
+            "max_per_restaurant_axis": max_per_rest_axis,
+            "fallback_target_count": fallback_target,
+            "fallback_min_combined": fallback_min_combined,
+        },
+        "top_candidates_by_axis": {
+            axis: [_candidate_report_row(c) for c in cands[:10]]
+            for axis, cands in candidates_per_axis.items()
+        },
+        "selected_images": [_candidate_report_row(c) for c in rep],
+        "selection_rejections": selection_rejections[:400],
+    }
+
+    report_path = None
+    if rep_debug_report or debug_dump is not None:
+        os.makedirs("debug", exist_ok=True)
+        report_path = os.path.join("debug", f"rep_candidates_{safe}.json")
+        with open(report_path, "w", encoding="utf-8") as f:
+            json.dump(rep_candidate_report, f, ensure_ascii=False, indent=2)
+        print(f"  🧪 representative candidate report: {report_path}")
+    if debug_dump is not None:
+        print(f"    priority={axis_priority or []} fallback={axis_fallback or []}")
+        print(f"    evaluation_axes={axis_eval_order}")
+        print(f"    linked_text_weight={w_link:.2f} category_prompts={bool(cat_prompts)} wrong_prompts={bool(wrong_prompts)} override={bool(override_th)} axis_overrides={bool(axis_score_override_raw)}")
+        for idx, cand in enumerate(rep[:top_n], 1):
+            print(f"    selected[{idx}] axis={cand.get('axis')} score={cand.get('score')} restaurant_id={cand.get('restaurant_id')} review_id={cand.get('review_id')} reason={cand.get('reason')}")
+
     if debug_dump is not None:
         debug_dump["skipped_keyword_mismatch_count"] = len(skipped_keyword_mismatch)
         debug_dump["skipped_keyword_mismatch"] = skipped_keyword_mismatch[:200]
+        debug_dump["representative_candidate_report_path"] = report_path
+        debug_dump["representative_candidate_report"] = rep_candidate_report
         debug_dump["image_axis_evaluations"] = all_records
         debug_dump["selection_rejections"] = selection_rejections[:400]
         debug_dump["selection_summary"] = {
@@ -1057,6 +1458,7 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
         debug_dump["image_filtering_thresholds"] = {
             "min_food_presence": min_food, "max_non_food_penalty": max_non,
             "min_category_presence": min_cat, "max_wrong_food_penalty": max_wrong,
+            "wrong_food_margin_threshold": wrong_margin,
             "category_bonus_weight": w_cat, "wrong_food_weight": w_wrong,
             "non_food_penalty_weight": w_non, "linked_text_weight": w_link,
             "duplicate_threshold": dup_thresh, "duplicate_penalty_weight": w_dup,
@@ -1109,6 +1511,8 @@ def main():
     parser.add_argument("--source", choices=["db", "csv", "auto"], default="auto")
     parser.add_argument("--purge-rep", action="store_true",
                         help="해당 keyword의 representative_images를 DB에서 삭제 후 재선정")
+    parser.add_argument("--rep-debug-report", action="store_true",
+                        help="대표 이미지 축별 후보 점수 리포트를 debug/rep_candidates_<keyword>.json에 저장")
     args = parser.parse_args()
 
     keyword = args.keyword or input("키워드: ").strip()
@@ -1184,7 +1588,8 @@ def main():
     print(f"\n🖼️  대표 이미지...")
     rep = extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
                              rules=rules, top_n=6, use_cache=use_cache,
-                             debug_dump=debug_dump)
+                             debug_dump=debug_dump,
+                             rep_debug_report=args.rep_debug_report)
 
     # --purge-rep는 새 후보가 1장 이상일 때만 적용 (0장이면 기존 유지)
     if args.purge_rep:

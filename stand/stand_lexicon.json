@@ -384,17 +384,140 @@
         "positive": [
           "안불",
           "안 불",
-          "탱탱"
+          "탱탱",
+          "쫄깃",
+          "면발",
+          "살아있는 면",
+          "면 들어올림",
+          "면발 살아",
+          "윤기나는 면",
+          "소스 잘 묻은 면",
+          "쫀득한 면",
+          "새우 보이는 면",
+          "양파 많은 면",
+          "오징어 보이는 면",
+          "해물 섞인 면",
+          "건더기 많은 면",
+          "재료랑 섞인 면",
+          "면 상태",
+          "면 컨디션",
+          "탱글한 면",
+          "쫄깃한 면",
+          "윤기 있는 면",
+          "젓가락으로 집은 면",
+          "들어 올린 면",
+          "짜장면 면발",
+          "클로즈업",
+          "소스가 묻은 면발",
+          "면발 질감",
+          "젓가락 면",
+          "면 클로즈업",
+          "젓가락면",
+          "젓가락 리프트",
+          "면 리프트",
+          "면발 클로즈업",
+          "짜장면 면 들어올림",
+          "젓가락으로 든 짜장면",
+          "면 들어올린 클로즈업",
+          "짜장면 면리프트",
+          "집어올린 면",
+          "면발 들림",
+          "면만 클로즈업",
+          "면발 리프트"
         ],
         "negative": [
           "불어",
-          "퍼진"
+          "퍼진",
+          "떡진",
+          "끊기는 면",
+          "면 안보임",
+          "소스만",
+          "분리된 면",
+          "건더기 없음",
+          "재료 없는 면",
+          "면만 있음",
+          "짜장만 있음",
+          "튀김",
+          "탕수육",
+          "짬뽕",
+          "국물",
+          "해물",
+          "빨간 국물",
+          "음식물 쓰레기",
+          "남은 음식",
+          "지저분한 접시",
+          "튀긴 음식",
+          "튀김류",
+          "숫가락",
+          "숫가락 소스",
+          "소스만 클로즈업",
+          "면 안 든 사진",
+          "젓가락 없음",
+          "튀김 집은 사진",
+          "짬뽕면 집은 사진"
         ],
         "clip_prompt_pos": [
-          "elastic chewy noodles"
+          "tight crop of metal chopsticks lifting only glossy brown-black jajangmyeon noodles filling the frame",
+          "close-up noodle pull of jajangmyeon strands suspended from chopsticks with dark sauce clinging to every strand",
+          "jajangmyeon noodle lift where long yellow noodles hang from chopsticks and dominate the photo",
+          "single bowl jajangmyeon close-up with chopsticks pulling noodles upward, no spoon, no soup, no fried pork",
+          "vertical lifted black bean noodle strands from a jajangmyeon bowl with thick chunjang sauce stretching downward",
+          "macro photo of chopsticks holding only jajangmyeon noodles coated in black bean sauce",
+          "single close-up photo of metal chopsticks lifting only jajangmyeon black bean noodles, no spoon and no other dishes",
+          "tight close-up chopstick noodle lift of jajangmyeon strands coated in dark chunjang sauce",
+          "jajangmyeon noodles lifted high by chopsticks with no red soup and no fried pork visible",
+          "vertical noodle pull of black bean jajangmyeon noodles from a bowl using chopsticks only",
+          "metal chopsticks holding long yellow jajangmyeon noodles covered in glossy black sauce, noodles filling the frame",
+          "close-up jajangmyeon noodle strands hanging from chopsticks with thick dark sauce clinging to them",
+          "Korean black bean noodles lifted by chopsticks in a single dish photo without side dishes",
+          "close-up of chopsticks lifting jajangmyeon black bean noodles from a bowl",
+          "metal chopsticks holding dark sauce coated jajangmyeon noodle strands",
+          "black bean noodles lifted high with chopsticks, noodles filling the frame",
+          "jajangmyeon noodle pull close up with glossy dark sauce on the strands",
+          "chopsticks lifting only jajangmyeon noodles coated in thick black bean sauce",
+          "jajangmyeon noodles lifted with chopsticks coated in glossy black bean sauce",
+          "long chewy jajangmyeon noodle strands pulled up from a bowl by chopsticks",
+          "close up lifted black bean noodles with sauce clinging to the strands held by chopsticks",
+          "vertical chopstick lift of long yellow jajangmyeon noodles coated in glossy chunjang",
+          "noodle pull of jajangmyeon with dark sauce strands hanging from the chopsticks",
+          "noodle closing shot of jajangmyeon strands pulled by chopsticks dripping with dark sauce",
+          "jajangmyeon noodle lift close-up with thick dark sauce visibly clinging to lifted strands",
+          "elastic chewy Korean black bean noodles lifted high with chopsticks",
+          "steaming jajangmyeon noodles pulled from a bowl with thick sauce by chopsticks"
         ],
         "clip_prompt_neg": [
-          "soggy overcooked noodles"
+          "white spoon scooping black bean sauce from jajangmyeon instead of chopsticks lifting noodles",
+          "spoon holding thick black bean sauce over noodles with no chopsticks visible",
+          "close-up of jajangmyeon sauce on a spoon without lifted noodle strands",
+          "jajangmyeon sauce-only close-up with no chopsticks and no noodle pull",
+          "black bean sauce mound with noodles hidden and no chopsticks lifting noodles",
+          "fork or spoon lifting jajangmyeon instead of metal chopsticks",
+          "jajangmyeon with no chopsticks visible and no noodle lift",
+          "chopsticks lifting tangsuyuk fried pork instead of jajangmyeon noodles",
+          "chopsticks lifting red jjamppong noodles from spicy red soup",
+          "red jjamppong soup bowl visible beside the noodle lift",
+          "tangsuyuk fried pork plate visible beside the noodle lift",
+          "fried food",
+          "tempura",
+          "tangsuyuk",
+          "jjamppong",
+          "seafood noodle soup",
+          "red soup",
+          "spicy seafood noodles",
+          "messy leftover food",
+          "food waste",
+          "dirty plate",
+          "fried pork",
+          "crispy fried dish",
+          "chopsticks lifting battered crispy tangsuyuk fried pork pieces dripping with sweet and sour sauce",
+          "chopsticks lifting jjamppong noodles dripping with red spicy seafood broth",
+          "jajangmyeon noodle lift with a red jjamppong soup bowl clearly visible behind it",
+          "jajangmyeon noodle lift with a plate of crispy fried tangsuyuk clearly visible behind it",
+          "chopsticks holding a battered piece of fried tangsuyuk pork",
+          "chopsticks lifting a strand of red napa cabbage from spicy jjamppong soup",
+          "plate of crispy fried tangsuyuk with no noodles in the photo",
+          "red jjamppong noodle soup bowl with no jajangmyeon",
+          "fried rice on a plate with no black bean noodles"
         ]
       },
       "불맛웍향": {
@@ -402,33 +525,185 @@
           "불맛",
           "불향",
           "웍향",
-          "센불"
+          "센불",
+          "볶은향",
+          "볶음짜장"
         ],
         "negative": [
-          "탄맛"
+          "탄맛",
+          "밋밋",
+          "향 없음"
         ],
         "clip_prompt_pos": [
-          "wok-fired smoky food"
+          "wok-fired smoky food",
+          "wok fried jajangmyeon with smoky stir fried onions",
+          "black bean noodles with smoky wok hei and charred vegetables"
         ],
         "clip_prompt_neg": [
-          "food without smoky flavor"
+          "food without smoky flavor",
+          "plain black bean noodles without stir fried vegetables"
         ]
       },
       "소스농도": {
         "positive": [
           "걸쭉",
           "되직",
-          "소스 많"
+          "소스 많",
+          "꾸덕",
+          "진한 소스",
+          "춘장 진한",
+          "검은 소스",
+          "짜장소스",
+          "춘장",
+          "간짜장",
+          "쟁반짜장",
+          "춘장소스",
+          "꾸덕한 춘장",
+          "되직한 춘장",
+          "소스 덩어리",
+          "양파 가득 소스",
+          "진득한 소스",
+          "꾸덕꾸덕",
+          "춘장 듬뿍",
+          "점도 높은 춘장",
+          "양파 큼직",
+          "검은 춘장 덩어리",
+          "되직한 소스 덮임",
+          "녹진한",
+          "녹진한 춘장",
+          "농도 높은 소스",
+          "되직한 짜장소스",
+          "검은 춘장소스",
+          "진한 짜장 양념",
+          "소스 질감",
+          "꾸덕한 소스 질감",
+          "춘장 질감",
+          "소스 점도",
+          "양파 들어간 녹진한 소스",
+          "진득한 춘장",
+          "거의 검은 춘장",
+          "춘장 덩어리",
+          "검은 소스 클로즈업",
+          "양파 큼직한 춘장",
+          "녹진한 간짜장",
+          "꾸덕한 간짜장",
+          "진한 검은 춘장",
+          "새까만 춘장",
+          "춘장만 진하게",
+          "짜장면만",
+          "국물 없는 짜장",
+          "검은 춘장 가득"
         ],
         "negative": [
           "묽",
-          "소스 적"
+          "소스 적",
+          "싱거운 소스",
+          "물 많은",
+          "짬뽕",
+          "탕수육",
+          "튀김",
+          "깐풍기",
+          "팔보채",
+          "양장피",
+          "묽은 춘장",
+          "소스 없음",
+          "면만",
+          "국물",
+          "짜장 소스 따로",
+          "분리된 소스",
+          "얇은 소스",
+          "물기 많은",
+          "흐릿한 소스",
+          "지저분한 접시",
+          "음식물 섞임",
+          "남은 음식",
+          "국물류",
+          "묽은 소스",
+          "국물 보임",
+          "빨간 국물",
+          "탕수육 동반",
+          "주황 국물",
+          "붉은 국물",
+          "짬뽕 국물",
+          "해물 국물",
+          "국물면",
+          "빨간 국물면",
+          "노란 면만",
+          "묽은 갈색 국물"
         ],
         "clip_prompt_pos": [
-          "thick rich dark sauce"
+          "only jajangmyeon with extremely dark thick chunjang black bean sauce covering the noodles, no soup",
+          "single dish close-up of very dark Korean jajangmyeon sauce with chunky onions and yellow noodles",
+          "almost black glossy chunjang sauce piled thickly on jajangmyeon noodles, not red soup",
+          "dense black bean paste sauce on jajangmyeon with no red or orange broth visible",
+          "rich black chunjang sauce mound over yellow noodles in a white bowl, only jajangmyeon in frame",
+          "thick dark ganjajang sauce with large onion cubes sitting heavily on noodles, no jjamppong",
+          "extreme close-up of almost black paste-like chunjang sauce with glossy onion cubes on jajangmyeon noodles",
+          "very dark thick chunky black bean sauce mound covering yellow jajangmyeon noodles",
+          "macro texture shot of dense sticky chunjang sauce with large onion pieces and oil sheen",
+          "rich black-brown chunjang sauce piled heavily over noodles with barely any empty plate visible",
+          "close crop of viscous glossy black bean sauce dominating jajangmyeon, no red soup and no fried food",
+          "ganjajang style thick chunjang sauce sitting as a heavy dark mound over yellow noodles",
+          "macro close-up of thick glossy chunjang black bean sauce with chunky onions on jajangmyeon noodles",
+          "dense sticky dark jajang sauce texture dominating the photo with yellow noodles partly visible",
+          "very thick black bean sauce pooled heavily over jajangmyeon with large onion cubes",
+          "close-up of viscous chunjang sauce clinging to jajangmyeon noodles, no soup and no fried food",
+          "rich dark black bean sauce with high viscosity and glossy oil sheen over Korean jajangmyeon",
+          "single dish jajangmyeon with thick chunky chunjang sauce as the main visual subject",
+          "thick glossy black bean sauce jajangmyeon",
+          "dense chunjang sauce covering noodles",
+          "rich dark sticky jajang sauce texture",
+          "close-up of thick black bean sauce on jajangmyeon",
+          "viscous dark black bean sauce with glossy texture",
+          "jajangmyeon with heavy thick sauce",
+          "single bowl of jajangmyeon black bean noodles with thick glossy dark sauce",
+          "Korean black bean noodles covered in dark black sauce only",
+          "close up jajangmyeon noodles coated with dense black bean sauce",
+          "yellow noodles mixed with thick dark jajang sauce",
+          "thick rich dark sauce",
+          "thick glossy black bean sauce covering jajangmyeon noodles",
+          "rich dark jajang sauce coating visible noodles",
+          "Korean black bean noodles with dense dark sauce",
+          "thick sticky chunjang black bean sauce dominating a bowl of jajangmyeon",
+          "dense glossy black bean sauce clinging heavily to yellow jajangmyeon noodles",
+          "very viscous dark jajang sauce with chunky onions covering the noodles",
+          "close up of rich thick chunjang sauce pooled over jajangmyeon noodles",
+          "dark chunky black bean sauce with high viscosity on Korean jajangmyeon",
+          "unmixed ganjajang with a thick mound of chunky chunjang black bean sauce over yellow noodles",
+          "very thick black bean sauce piled on top of jajangmyeon noodles with diced onions",
+          "chunky glossy chunjang sauce sitting heavily on yellow noodles",
+          "close up of thick sticky black bean sauce with large onion cubes over noodles",
+          "jajangmyeon with a mound of thick chunky chunjang black bean sauce on top",
+          "dense glossy black bean sauce piled thickly over yellow noodles",
+          "ganjajang with chunky onions in very thick dark black sauce",
+          "close up thick dark jajang sauce with onion chunks covering noodles",
+          "viscous black bean sauce clinging heavily to jajangmyeon noodles"
         ],
         "clip_prompt_neg": [
-          "watery thin sauce"
+          "red jjamppong seafood noodle soup or orange spicy broth filling the photo",
+          "yellow noodles or seafood in red orange soup broth instead of black bean sauce",
+          "translucent amber or orange noodle soup broth with seafood vegetables and no thick black sauce",
+          "close-up of jjamppong broth with red chili oil and seafood instead of jajangmyeon",
+          "a single yellow noodle lifted from red or orange soup broth with no black bean sauce",
+          "watery red orange broth around noodles instead of thick black chunjang sauce",
+          "spicy seafood noodle soup bowl with cabbage squid shrimp mussels and red broth",
+          "white or pale seafood noodle soup instead of dark black bean noodles",
+          "jajangmyeon served together with a visible red jjamppong soup bowl",
+          "thin brown soup-like liquid sauce without a thick black bean paste mound",
+          "thin watery black bean sauce with little texture",
+          "plain yellow noodles with almost no black bean sauce",
+          "red jjamppong soup or orange broth visible in the same photo",
+          "tangsuyuk fried pork visible in the same photo as jajangmyeon",
+          "jajangmyeon and red jjamppong soup served together on the same table",
+          "jajangmyeon plate next to a separate bowl of red jjamppong soup in the same photo",
+          "jajangmyeon and tangsuyuk fried pork served together on the same table",
+          "jajangmyeon plate next to a plate of crispy fried tangsuyuk in the same photo",
+          "table with jajangmyeon jjamppong and tangsuyuk visible in the same image",
+          "red jjamppong noodle soup in a bowl filling the photo with no jajangmyeon",
+          "deep fried tangsuyuk pieces piled on a plate with red dipping sauce and no noodles",
+          "palbochae or yangjangpi seafood platter without any black bean noodles",
+          "kkanpunggi fried chicken pieces with sauce and no black bean noodles",
+          "fried rice topped with stir-fried jajang sauce instead of jajangmyeon noodles"
         ]
       },
       "재료퀄리티": {
@@ -437,17 +712,342 @@
           "오징어",
           "고기",
           "건더기",
-          "신선"
+          "신선",
+          "양파",
+          "재료 신선",
+          "큼직한 재료",
+          "돼지고기",
+          "채소",
+          "춘장",
+          "짜장소스",
+          "새우",
+          "새우살",
+          "관자",
+          "해산물",
+          "해물짜장",
+          "간짜장",
+          "쟁반짜장",
+          "재료 듬뿍",
+          "건더기 많"
         ],
         "negative": [
           "비린",
-          "재료가 별"
+          "재료가 별",
+          "재료 적",
+          "고기 적",
+          "양파 적",
+          "부실",
+          "냉동재료",
+          "탕수육",
+          "튀김",
+          "깐풍기",
+          "팔보채",
+          "양장피",
+          "짬뽕",
+          "재료 없음",
+          "건더기 없음",
+          "소스만",
+          "면만",
+          "계란후라이",
+          "달걀후라이",
+          "계란만",
+          "고명만"
         ],
         "clip_prompt_pos": [
-          "food with abundant fresh ingredients"
+          "jajangmyeon black bean noodles with visible onions and pork pieces",
+          "black bean noodles topped with chunky onions pork and vegetables",
+          "Korean jajangmyeon with abundant ingredients mixed into dark sauce",
+          "close up black bean sauce noodles with diced onion and pork",
+          "food with abundant fresh ingredients",
+          "jajangmyeon with visible onions pork and fresh vegetables",
+          "black bean noodles topped with chunky onions and pork pieces",
+          "Korean black bean noodles with abundant visible ingredients",
+          "jajangmyeon with visible shrimp squid onions and pork mixed in black sauce",
+          "black bean noodles with many visible seafood pieces onions and vegetables",
+          "Korean ganjajang noodles topped with chunky onion shrimp squid and pork",
+          "seafood jajangmyeon with glossy black sauce and abundant toppings",
+          "jajangmyeon with large chunks of onion pork shrimp and squid"
         ],
         "clip_prompt_neg": [
-          "food with few ingredients"
+          "Korean sweet and sour pork tangsuyuk fried pork with sauce",
+          "fried pork pieces on a plate without noodles",
+          "crispy battered fried food without black bean noodles",
+          "palbochae seafood stir fry dish without noodles",
+          "yangjangpi assorted seafood and vegetables platter",
+          "red jjamppong soup bowl",
+          "food with few ingredients",
+          "plain black bean noodles with almost no toppings",
+          "jajangmyeon with sparse ingredients",
+          "plain jajangmyeon with only black sauce and almost no visible toppings",
+          "simple black bean noodles without shrimp onion pork or vegetables",
+          "plain jajangmyeon topped with a fried egg and few visible ingredients",
+          "black bean noodles with egg garnish and almost no seafood or vegetables",
+          "simple jajangmyeon bowl with only sauce noodles and fried egg"
+        ]
+      },
+      "감칠맛": {
+        "positive": [
+          "감칠맛",
+          "진한 맛",
+          "고소",
+          "춘장 맛",
+          "짭짤고소",
+          "풍미",
+          "짜장소스",
+          "진한 춘장",
+          "검은소스",
+          "자극적",
+          "강한 맛",
+          "진득한 소스",
+          "꾸덕한 소스",
+          "윤기",
+          "윤기나는 소스",
+          "짭짤",
+          "농후",
+          "고춧가루",
+          "고추가루",
+          "매콤한 짜장",
+          "사천짜장",
+          "고추기름",
+          "칼칼한 짜장",
+          "고춧가루 뿌린",
+          "빨간 가루",
+          "매운 짜장",
+          "자극적인 비주얼",
+          "고추 플레이크",
+          "강한 춘장맛",
+          "매콤한",
+          "자극적인",
+          "진한 양념",
+          "진한 소스",
+          "춘장",
+          "양념이 강한",
+          "매콤달큰한",
+          "윤기 있는 짜장소스",
+          "양념감",
+          "고춧가루 짜장",
+          "매콤한 비주얼",
+          "사천 느낌",
+          "자극적인 춘장",
+          "고추가루 토핑",
+          "강한 양념감",
+          "고춧가루 올라간 짜장",
+          "빨간 고춧가루 토핑",
+          "사천식 짜장",
+          "매운 양념 토핑",
+          "고추기름 비주얼"
+        ],
+        "negative": [
+          "밋밋",
+          "싱거움",
+          "감칠맛 없음",
+          "춘장맛 약함",
+          "탕수육",
+          "튀김",
+          "깐풍기",
+          "팔보채",
+          "양장피",
+          "짬뽕",
+          "묽은 소스",
+          "소스 적",
+          "연한 소스",
+          "물맛",
+          "따로 나온 소스",
+          "분리된 면",
+          "비벼지지 않은",
+          "소스 따로",
+          "고춧가루 없음",
+          "평범한 짜장",
+          "하얀 면만",
+          "연한 비주얼",
+          "고춧가루 없는 짜장",
+          "자극적이지 않음",
+          "빨간 국물",
+          "짬뽕국물",
+          "탕수육 동반",
+          "젓가락 면 리프트",
+          "면만 들어올림",
+          "고춧가루 없는 면",
+          "평범한 면 리프트",
+          "소스만 진함"
+        ],
+        "clip_prompt_pos": [
+          "single dish jajangmyeon with red chili powder sprinkled on thick dark chunjang sauce, no soup in frame",
+          "jajangmyeon black bean noodles with visible gochugaru red chili powder on glossy sauce",
+          "spicy-looking jajangmyeon with red pepper flakes over dark black bean sauce and no red broth",
+          "stimulating strong-seasoned jajangmyeon with oily glossy dark sauce and chili powder garnish",
+          "Sichuan style jajangmyeon with red chili powder on thick chunjang black bean sauce",
+          "intense messy jajangmyeon close-up with dark glossy sauce, onions, and spicy red garnish",
+          "bold savory black bean noodles with chili powder dusted over dense sauce",
+          "single bowl of jajangmyeon topped with a mound of red chili powder over glossy chunjang sauce, no soup",
+          "jajangmyeon bowl with spicy red seasoning garnish over thick dark chunjang sauce",
+          "dark jajangmyeon sauce dusted with red pepper powder on yellow noodles, no red broth",
+          "bold spicy black bean noodles with red chili flakes sitting on top of the sauce",
+          "close crop of jajangmyeon sauce with visible red pepper flakes and chopped onion",
+          "Korean black bean noodles with red chili powder garnish and oily glossy sauce",
+          "Sichuan style spicy jajangmyeon with red chili powder, not jjamppong soup",
+          "close-up of glossy dark chunjang black bean sauce with strong savory umami flavor on yellow jajangmyeon noodles",
+          "rich thick black bean chunjang sauce coating yellow noodles with deep dark color",
+          "close-up of jajangmyeon with thick glossy dark black bean sauce and chunky onions",
+          "dark glossy jajang sauce with intense umami savory look smeared on yellow noodles",
+          "Korean jajangmyeon close-up with dark glossy chunjang sauce coating the noodles thickly",
+          "savory glossy jajangmyeon with rich dark black bean sauce",
+          "dark umami jajang sauce coating yellow noodles",
+          "black bean noodles with glossy dark sauce and onions",
+          "close up Korean jajangmyeon noodles covered with savory black sauce",
+          "savory glossy jajangmyeon with rich black bean sauce and onions",
+          "dark umami black bean sauce coating noodles with pork and onions",
+          "intense glossy black bean sauce smeared over yellow jajangmyeon noodles",
+          "stimulating rich dark jajang sauce with shiny oil coating noodles",
+          "close up messy-looking jajangmyeon with thick dark sauce and chunky onions",
+          "bold salty umami black bean noodles with dark glossy sauce",
+          "thick dark jajang sauce clinging heavily to noodles and onions",
+          "jajangmyeon noodles fully mixed with very dark glossy sauce and sauce smeared on the plate",
+          "close up dark sauce stained jajangmyeon noodles with chunks of onion",
+          "single dish jajangmyeon photo with chili powder dusted over glossy black bean sauce and no broth",
+          "jajangmyeon noodles with a sprinkle of chili powder on top of thick dark chunjang sauce, no soup in frame",
+          "close-up of dark black bean sauce dusted with chili powder on yellow noodles, no red broth",
+          "Sichuan style jajangmyeon with chili powder and thick dark chunjang sauce, no broth visible",
+          "spicy-looking jajangmyeon plate with chili powder on top of glossy black bean sauce"
+        ],
+        "clip_prompt_neg": [
+          "plain jajangmyeon with no chili powder and no spicy garnish",
+          "ordinary black bean sauce bowl without red chili powder or stimulating garnish",
+          "chopsticks lifting glossy jajangmyeon noodles with no red chili powder visible",
+          "plain jajangmyeon noodle lift from chopsticks without chili powder garnish",
+          "close-up of black bean noodles pulled by chopsticks with no spicy red seasoning",
+          "thick black bean sauce close-up with no red pepper flakes or chili powder",
+          "red jjamppong soup broth with seafood instead of black bean sauce",
+          "jajangmyeon served beside red jjamppong soup in the same frame",
+          "tangsuyuk fried pork or crispy battered food beside jajangmyeon",
+          "single bowl of Korean jjamppong red spicy seafood noodle soup with red broth and no black bean sauce",
+          "close-up of jjamppong red soup broth with mussels squid shrimp or napa cabbage",
+          "deep bowl of red chili oil seafood noodle soup with no jajangmyeon",
+          "Korean spicy seafood noodle soup in a metal bowl with red broth",
+          "samseon jjamppong with whole squid shrimp and crab in red broth",
+          "baek jjamppong white seafood noodle soup with no black bean sauce",
+          "red soup noodle dish with floating seafood and vegetables and no black bean sauce",
+          "jajangmyeon and red jjamppong soup served together on the same table",
+          "jajangmyeon plate next to a separate bowl of red jjamppong soup in the same photo",
+          "Korean sweet and sour pork tangsuyuk with red dipping sauce and no noodles",
+          "deep fried tangsuyuk pieces piled on a plate with red dipping sauce and no noodles",
+          "fried rice topped with stir-fried jajang sauce instead of jajangmyeon noodles"
+        ]
+      },
+      "양많음": {
+        "positive": [
+          "양 많",
+          "푸짐",
+          "곱빼기",
+          "대접",
+          "면 많",
+          "소스 듬뿍",
+          "짜장면 곱빼기",
+          "쟁반짜장",
+          "푸짐한 짜장",
+          "푸짐한 삼선짜장",
+          "삼선짜장",
+          "해물짜장",
+          "고기 듬뿍",
+          "재료 많은 짜장",
+          "큰 그릇 짜장",
+          "토핑 많은 짜장",
+          "양 많은 삼선짜장",
+          "해물 듬뿍 짜장",
+          "계란 올라간 푸짐한 짜장",
+          "큼직한 고기 짜장",
+          "가득 담긴 짜장면",
+          "곱빼기 느낌",
+          "고기 큐브",
+          "고기 토핑",
+          "계란후라이 토핑",
+          "새우튀김 토핑",
+          "부추 토핑",
+          "고기 계란 새우",
+          "토핑 가득",
+          "차돌 짜장",
+          "고기 듬뿍 올린 짜장"
+        ],
+        "negative": [
+          "양 적",
+          "부족",
+          "면 적",
+          "소스 적",
+          "팔보채",
+          "양장피",
+          "탕수육",
+          "짬뽕",
+          "볶음밥",
+          "빨간 국물",
+          "짬뽕 동반",
+          "탕수육 동반",
+          "양 적음",
+          "빈 접시 많음",
+          "토핑 없음",
+          "고기 없음",
+          "계란 없음",
+          "새우 없음",
+          "면만 많음",
+          "소스만 있음"
+        ],
+        "clip_prompt_pos": [
+          "loaded jajangmyeon topped with many grilled pork cubes fried egg fried shrimp and chives over black bean sauce",
+          "very generous jajangmyeon bowl piled with chunky pork fried egg shrimp tempura chives and dark chunjang sauce",
+          "Korean jajangmyeon with large meat cubes egg and shrimp toppings covering most of the noodles",
+          "premium loaded jajangmyeon with fried egg crispy shrimp big pork pieces and chopped green chives",
+          "heaping black bean noodles topped with abundant pork egg shrimp and green garnish filling the bowl",
+          "full bowl of jajangmyeon where meat egg shrimp and thick black sauce dominate the photo",
+          "jajangmyeon with a fried egg and many large brown pork cubes piled high on top",
+          "loaded jajangmyeon toppings of grilled pork fried egg shrimp and chives in a white bowl, no red soup",
+          "loaded samseon jajangmyeon topped with fried egg chives and large chunks of pork or seafood filling the bowl",
+          "very full bowl of jajangmyeon with abundant toppings covering the noodles and dark sauce",
+          "generous black bean noodles with fried egg and chunky pork seafood toppings piled high",
+          "large serving of jajangmyeon with many ingredients and dark sauce filling the whole bowl",
+          "huge portion of seafood jajangmyeon with shrimp squid pork onions and noodles visible",
+          "heaping jajangmyeon bowl where noodles sauce and toppings fill nearly the entire photo",
+          "large loaded samseon jajangmyeon with abundant black bean noodles and many toppings filling the bowl",
+          "generous heaping jajangmyeon with seafood pork onions and thick dark sauce piled high",
+          "big full bowl of jajangmyeon with rich chunjang sauce and abundant toppings, no red soup",
+          "extra large portion of black bean noodles with chunky ingredients covering the plate",
+          "wide plate completely filled with jajangmyeon noodles, dark sauce, onions, and toppings",
+          "overhead photo of a plentiful jajangmyeon portion with thick sauce and many ingredients",
+          "large heaping bowl of jajangmyeon black bean noodles",
+          "generous portion of yellow noodles covered with dark black bean sauce",
+          "big plate of Korean black bean noodles with plenty of sauce",
+          "jajangmyeon noodles filling most of the plate",
+          "large generous plate of jajangmyeon noodles covered with sauce",
+          "heaping portion of Korean black bean noodles on a plate",
+          "heaping generous plate of jajangmyeon black bean noodles filling the frame",
+          "large full bowl of jajangmyeon with many noodles and thick dark sauce",
+          "big portion of glossy black bean noodles piled high on a plate",
+          "abundant jajangmyeon noodles spread across a large plate with dark sauce",
+          "close up of a very full plate of jajangmyeon noodles and chunjang sauce",
+          "extra large gop bbaegi portion of jajangmyeon noodles overflowing the plate",
+          "wide jaengban jajangmyeon platter with abundant noodles and toppings",
+          "huge mountain of yellow jajangmyeon noodles with thick chunjang covering them",
+          "single jajangmyeon plate so full the noodles almost spill over the edge",
+          "overhead shot of a wide plate completely full of jajangmyeon noodles and dark sauce",
+          "very large helping of jajangmyeon noodles with chunky onions and pork",
+          "double portion gop bbaegi style jajangmyeon piled high in a bowl"
+        ],
+        "clip_prompt_neg": [
+          "plain large plate of jajangmyeon noodles with no meat cubes no fried egg and no shrimp toppings",
+          "simple black bean noodles with only sauce and noodles but no visible toppings",
+          "ordinary bowl of jajangmyeon with sparse ingredients and lots of visible empty bowl",
+          "noodles-only jajangmyeon without fried egg pork shrimp or chives",
+          "wide plate of plain mixed black bean noodles with no chunky toppings",
+          "red jjamppong soup or orange seafood broth visible near the jajangmyeon",
+          "small portion of jajangmyeon with lots of empty plate visible",
+          "tangsuyuk fried pork or crispy battered food as the main subject",
+          "jajangmyeon and red jjamppong soup served together on the same table",
+          "jajangmyeon plate next to a separate bowl of red jjamppong soup in the same photo",
+          "jajangmyeon and tangsuyuk fried pork served together on the same table",
+          "jajangmyeon plate next to a plate of crispy fried tangsuyuk in the same photo",
+          "table with jajangmyeon jjamppong and tangsuyuk visible in the same image",
+          "deep fried tangsuyuk pieces piled on a plate with red dipping sauce and no noodles",
+          "palbochae or yangjangpi seafood platter without any black bean noodles",
+          "red jjamppong noodle soup in a bowl filling the photo with no jajangmyeon",
+          "fried rice on a plate with no black bean noodles"
         ]
       }
     },
@@ -1686,19 +2286,62 @@
     "짬뽕": {
       "면컨디션": {
         "positive": [
+          "면발",
           "탱글",
           "쫄깃",
-          "탱탱"
+          "탱탱",
+          "안불",
+          "안 불",
+          "살아있는 면",
+          "면이 살아",
+          "수타면",
+          "면 컨디션"
         ],
         "negative": [
           "퍼진",
+          "밀가루맛",
+          "불은 면",
+          "불어",
+          "떡진",
+          "끊기는 면"
+        ],
+        "clip_prompt_pos": [
+          "visible jjamppong noodle strands in seafood soup",
+          "chewy jjamppong noodles lifted with chopsticks",
+          "springy noodles visible in a bowl of jjamppong"
+        ],
+        "clip_prompt_neg": [
+          "overcooked soggy clumped noodles"
+        ]
+      },
+      "쫄깃함": {
+        "positive": [
+          "면발",
+          "탱글",
+          "쫄깃",
+          "탱탱",
+          "안불",
+          "안 불",
+          "살아있는 면",
+          "면이 살아",
+          "수타면",
+          "면 컨디션"
+        ],
+        "negative": [
+          "불은 면",
+          "불어",
+          "퍼진 면",
+          "떡진",
+          "끊기는 면",
           "밀가루맛"
         ],
         "clip_prompt_pos": [
-          "noodles in red spicy soup"
+          "close-up jjamppong noodles with chewy elastic strands",
+          "jjamppong noodle strands lifted with chopsticks",
+          "springy yellow noodles visible in Korean seafood noodle soup"
         ],
         "clip_prompt_neg": [
-          "overcooked noodles"
+          "soggy clumped overcooked noodles"
         ]
       },
       "국물맛": {
@@ -1707,37 +2350,157 @@
           "시원",
           "칼칼",
           "진한",
-          "깊은"
+          "깊은",
+          "진한 국물",
+          "깊은 국물",
+          "국물맛"
         ],
         "negative": [
           "싱거",
-          "밍밍"
+          "밍밍",
+          "맹탕",
+          "싱거운 국물",
+          "물맛"
         ],
         "clip_prompt_pos": [
-          "steaming red jjamppong soup"
+          "bright red jjamppong broth filling the bowl",
+          "deep red spicy Korean seafood noodle soup broth",
+          "red chili oil broth in a bowl of jjamppong",
+          "close up red spicy soup broth with noodles and seafood",
+          "steaming red jjamppong soup",
+          "deep red spicy jjamppong seafood broth",
+          "rich steaming red Korean spicy seafood noodle soup"
         ],
         "clip_prompt_neg": [
-          "pale thin soup"
+          "Korean sweet and sour pork tangsuyuk fried pork with sauce",
+          "crispy fried pork pieces without noodles",
+          "deep fried food on a plate without noodle soup",
+          "dry stir fried noodles without red soup broth",
+          "pale thin soup",
+          "pale watery noodle soup"
+        ]
+      },
+      "매운맛": {
+        "positive": [
+          "매운",
+          "얼큰",
+          "칼칼",
+          "화끈",
+          "불짬뽕",
+          "맵칼",
+          "고추짬뽕",
+          "청양고추",
+          "고추 가득",
+          "고추 듬뿍"
+        ],
+        "negative": [
+          "안 매운",
+          "순한",
+          "맵지 않",
+          "매운맛 부족"
+        ],
+        "clip_prompt_pos": [
+          "jjamppong topped with sliced green chili peppers",
+          "spicy jjamppong with visible red and green chili peppers",
+          "red spicy noodle soup with chopped chili peppers on top",
+          "Korean spicy seafood noodle soup with chili peppers floating in red broth",
+          "bright red spicy jjamppong broth with chili oil",
+          "very spicy Korean seafood noodle soup with red broth"
+        ],
+        "clip_prompt_neg": [
+          "mild pale noodle soup without red chili broth",
+          "white seafood noodle soup without chili peppers",
+          "fried pork tangsuyuk without noodle soup",
+          "fried rice without spicy red broth"
+        ]
+      },
+      "담백함": {
+        "positive": [
+          "백짬뽕",
+          "하얀 짬뽕",
+          "하얀국물",
+          "맑은 국물",
+          "해물백짬뽕",
+          "담백",
+          "깔끔",
+          "개운",
+          "느끼하지",
+          "텁텁하지",
+          "맑은 뒷맛"
+        ],
+        "negative": [
+          "빨간 국물",
+          "느끼",
+          "텁텁",
+          "기름짐",
+          "무거운 국물",
+          "기름 많",
+          "매운 기름"
+        ],
+        "clip_prompt_pos": [
+          "white jjamppong in a bowl with pale clear seafood broth and noodles",
+          "white jjamppong noodle soup with pale clear seafood broth",
+          "baek jjamppong Korean white seafood noodle soup",
+          "clean pale seafood noodle soup with vegetables and noodles",
+          "clear light jjamppong broth without red chili oil"
+        ],
+        "clip_prompt_neg": [
+          "red spicy jjamppong broth with chili oil",
+          "dark red spicy noodle soup",
+          "fried rice dish without white soup",
+          "oily heavy noodle soup with greasy surface"
         ]
       },
       "해물양": {
         "positive": [
           "해물가득",
+          "해물 가득",
+          "해물이 산처럼",
+          "해물이 수북",
+          "해물 수북",
           "홍합",
           "오징어",
           "해물",
           "새우",
-          "조개"
+          "조개",
+          "갑오징어",
+          "해산물 듬뿍",
+          "낙지",
+          "문어",
+          "통오징어",
+          "해물 비율",
+          "해물 듬뿍"
         ],
         "negative": [
           "부실",
-          "냉동"
+          "냉동",
+          "해물 적",
+          "냉동해물"
         ],
         "clip_prompt_pos": [
-          "abundant seafood in spicy soup"
+          "jjamppong topped with large octopus legs and mussels",
+          "spicy seafood noodle soup with visible octopus squid shrimp and mussels",
+          "large seafood toppings covering the jjamppong bowl",
+          "large seafood toppings covering most of a jjamppong bowl",
+          "octopus squid shrimp and mussels piled high on jjamppong",
+          "seafood occupies most of the photo in Korean spicy seafood noodle soup",
+          "close-up jjamppong topped with large octopus squid shrimp and mussels covering most of the bowl",
+          "spicy seafood noodle soup where seafood toppings occupy most of the image",
+          "jjamppong with a large octopus or squid piled on top",
+          "jjamppong full of mussels squid shrimp and seafood",
+          "spicy seafood noodle soup with abundant seafood toppings"
         ],
         "clip_prompt_neg": [
-          "soup with no seafood"
+          "Korean sweet and sour pork tangsuyuk fried pork with sauce",
+          "fried pork pieces covered with sweet and sour sauce",
+          "crispy battered pork on a plate without noodles",
+          "deep fried food with sauce and no noodle soup",
+          "mostly broth and noodles with very little seafood",
+          "plain noodle soup with only vegetables and no large seafood",
+          "rice dish without visible seafood toppings",
+          "jjamppong bowl with mostly noodles and broth and few seafood toppings",
+          "soup with no seafood",
+          "spicy noodle soup with almost no seafood"
         ]
       },
       "불맛": {
@@ -1745,16 +2508,85 @@
           "불향",
           "그을린",
           "불맛",
-          "웍향"
+          "웍향",
+          "웍질",
+          "볶음짬뽕",
+          "볶은 짬뽕",
+          "국물 적은",
+          "국물없는 짬뽕",
+          "볶은 채소",
+          "직화",
+          "탄향"
         ],
         "negative": [
-          "조미료맛"
+          "조미료맛",
+          "밋밋",
+          "불향 없음"
         ],
         "clip_prompt_pos": [
-          "charred vegetables in jjamppong"
+          "dry stir fried jjamppong noodles on a plate with little broth",
+          "bokkeum jjamppong stir fried seafood noodles with smoky wok hei",
+          "stir fried jjamppong with charred vegetables and almost no soup",
+          "wok-fried jjamppong noodles with little broth on a plate",
+          "dry stir-fried jjamppong with smoky wok hei and charred vegetables",
+          "bokkeum jjamppong stir-fried seafood noodles with visible charred vegetables",
+          "stir-fried spicy seafood noodles with smoky wok hei",
+          "jjamppong with smoky wok hei and stir fried vegetables",
+          "red seafood noodle soup with charred vegetables and smoky flavor"
         ],
         "clip_prompt_neg": [
-          "plain boiled soup"
+          "stir fried sauce served over rice",
+          "fried rice or rice bowl instead of jjamppong noodles",
+          "ordinary red jjamppong soup bowl full of broth",
+          "wet noodle soup with lots of red broth",
+          "plain boiled jjamppong soup without stir fried noodles",
+          "ordinary red jjamppong soup with lots of broth",
+          "plain boiled soup",
+          "plain boiled noodle soup without stir fried ingredients"
+        ]
+      },
+      "온도": {
+        "positive": [
+          "뜨끈",
+          "뜨거운",
+          "뜨겁",
+          "김나는",
+          "김이 나는",
+          "김이 올라",
+          "연기",
+          "따끈",
+          "따뜻",
+          "따듯",
+          "온기",
+          "팔팔"
+        ],
+        "negative": [
+          "식어",
+          "미지근",
+          "차가운",
+          "김 없음"
+        ],
+        "clip_prompt_pos": [
+          "very hot jjamppong in a metal bowl with visible steam rising",
+          "steaming red jjamppong soup with steam above the bowl",
+          "hot noodle soup bowl with visible steam and red broth",
+          "steaming hot jjamppong noodle soup with visible steam rising and no rice",
+          "hot jjamppong soup bowl with steam rising above the broth",
+          "close up steaming Korean seafood noodle soup in a bowl",
+          "steaming hot jjamppong with visible steam rising from the bowl",
+          "hot spicy noodle soup photographed with visible steam and heat",
+          "close-up bowl of jjamppong with steam rising above the broth",
+          "steaming hot bowl of red jjamppong noodle soup",
+          "hot spicy seafood noodle soup with visible steam rising"
+        ],
+        "clip_prompt_neg": [
+          "fried rice with stir fried sauce on top",
+          "rice bowl with stir fried vegetables and sauce",
+          "dry stir fried food served over rice without noodle soup",
+          "Korean sweet and sour pork tangsuyuk fried pork with sauce",
+          "deep fried food on a plate without hot soup",
+          "cold noodle soup without steam",
+          "lukewarm soup with no visible heat or steam"
         ]
       }
     },
@@ -2491,6 +3323,58 @@
       }
     },
     "커피": {
+      "온도": {
+        "positive": [
+          "뜨거운",
+          "따뜻한",
+          "따끈",
+          "김 모락모락",
+          "모락모락",
+          "김 나는",
+          "김이 나는",
+          "갓 내린",
+          "뜨끈",
+          "온기",
+          "팔팔 끓는",
+          "스팀밀크 따뜻"
+        ],
+        "negative": [
+          "아이스",
+          "차가운",
+          "얼음",
+          "ice",
+          "차가워",
+          "미지근",
+          "식어",
+          "냉커피",
+          "테이크아웃 컵",
+          "플라스틱 컵"
+        ],
+        "clip_prompt_pos": [
+          "close-up of a ceramic mug filled with hot black coffee with visible steam rising clearly above the cup",
+          "steaming hot coffee in a small ceramic mug on a wooden tray with thick steam clouds above the cup",
+          "close-up of a brown ceramic mug with hot coffee and visible white steam swirling above the surface",
+          "warm coffee in a small handmade ceramic cup with steam rising up, served on a wooden tray",
+          "ceramic coffee mug with hot brewed coffee and steam visibly rising from the cup",
+          "freshly brewed hot coffee in a ceramic mug with strong steam rising above the surface",
+          "small ceramic mug of warm pour-over coffee with visible steam wafting up",
+          "close-up shot of hot coffee in a ceramic cup with thick visible steam rising into the air",
+          "homestyle ceramic mug filled with hot black coffee and rising steam, cozy warm vibe",
+          "steaming espresso or pour-over coffee in a small ceramic mug, visible steam clouds above the cup"
+        ],
+        "clip_prompt_neg": [
+          "iced americano cup with visible ice cubes floating on top",
+          "tall plastic takeout cup of iced coffee with ice cubes",
+          "cold coffee with ice cubes in a clear glass cup",
+          "iced latte in a tall glass with ice cubes and milk",
+          "disposable plastic takeout coffee cup",
+          "paper takeout cup of coffee",
+          "single bread roll on a plate without any coffee cup",
+          "muffin or pastry on a plate without any coffee cup",
+          "slice of cake or dessert with no coffee in frame",
+          "empty coffee cup with no liquid"
+        ]
+      },
       "산미": {
         "positive": [
           "산미",
@@ -2530,7 +3414,12 @@
           "묵직한",
           "바디 좋",
           "농밀",
-          "두툼한 맛"
+          "두툼한 맛",
+          "진한 바디",
+          "묵직한 바디",
+          "꽉 찬 바디",
+          "쫀쫀한",
+          "벨벳같은"
         ],
         "negative": [
           "밍밍",
@@ -2539,15 +3428,34 @@
           "밋밋",
           "심심",
           "옅은",
-          "가벼운 물"
+          "가벼운 물",
+          "묽은 커피",
+          "물탄",
+          "아이스",
+          "얼음"
         ],
         "clip_prompt_pos": [
-          "a close-up photo of a dark espresso shot with thick body",
-          "a cup of strong rich black coffee"
+          "close-up top-down view of a ceramic mug filled with very dark rich black coffee with thick body",
+          "top-down shot of black coffee in a ceramic mug showing dense dark color and full body",
+          "ceramic mug filled with dark rich brewed coffee, deep brown color with thick velvety body",
+          "close-up of strong rich black coffee in a ceramic mug, very dark color with full body texture",
+          "top-down photo of a mug of very dark concentrated coffee with thick layer of crema or foam",
+          "ceramic mug of dark espresso style coffee with full bodied dense liquid",
+          "rich dark roast coffee in a ceramic mug with deep brown body and thick texture",
+          "close-up of a mug of black coffee with very dense dark color showing thick body",
+          "espresso in a ceramic mug with thick crema layer indicating full body coffee",
+          "overhead shot of dark concentrated coffee in a mug with deep rich brown surface"
         ],
         "clip_prompt_neg": [
-          "a photo of pale watery coffee",
-          "a photo of very diluted americano"
+          "iced americano with ice cubes and pale watery coffee",
+          "tall glass of light brown watery iced coffee",
+          "single bread roll on a plate without any coffee cup",
+          "muffin or pastry on a plate without any coffee cup",
+          "slice of cake or dessert with no coffee in frame",
+          "empty coffee cup with no liquid",
+          "plain photo of bread or pastry without any cup of coffee",
+          "pale weak coffee in a clear glass",
+          "tea or matcha drink without coffee"
         ]
       },
       "로스팅": {
@@ -2590,22 +3498,45 @@
           "캐러멜향",
           "풍미",
           "아로마",
-          "잔향"
+          "잔향",
+          "테이스팅",
+          "비교 시음",
+          "두 잔 비교",
+          "브라운 커피",
+          "두 컵 비교"
         ],
         "negative": [
           "향이 없",
           "잡내",
           "쩐",
           "쉰 냄새",
-          "탄내"
+          "탄내",
+          "한 잔만"
         ],
         "clip_prompt_pos": [
-          "a photo of an espresso cup with rising aromatic steam",
-          "a close-up photo of fragrant brewed coffee"
+          "extreme close-up of two ceramic coffee mugs side by side with strong contrast — one foreground mug filled with rich warm brown crema espresso, background mug with very dark near-black coffee",
+          "tight close-up of a brown coffee cup in the foreground next to a darker black coffee cup behind, dramatic side-by-side color contrast filling the frame",
+          "two ceramic coffee mugs almost touching, one glowing brown crema espresso the other deep dark black coffee, sharp color contrast comparison",
+          "close-up tasting flight of two coffees in matching ceramic mugs — one obviously brown bodied, one obviously dark black bodied, side by side",
+          "side-by-side comparison shot of two coffee cups, brown crema rich espresso right next to deep dark black coffee, contrasting colors dominate the photo",
+          "two ceramic mugs on a wooden or dark table, one filled with golden brown crema coffee and one with very dark almost black coffee, color contrast as the main subject",
+          "two ceramic coffee cups side by side showing brown vs dark coffee, warm brown crema espresso next to deep black coffee",
+          "espresso with thick golden brown crema in foreground mug and pure dark black coffee in adjacent mug, dramatic color comparison",
+          "two cups of brewed coffee photographed together with distinctly different shades — warm brown and near-black — clearly visible contrast",
+          "comparison shot of light brown roast coffee mug and dark roast coffee mug side by side, color difference as the subject",
+          "close-up of a warm light brown crema coffee cup with a darker black coffee cup beside it in the same frame",
+          "duo of brown and dark coffee cups in ceramic mugs, side by side, color contrast as the dominant visual"
         ],
         "clip_prompt_neg": [
-          "a photo of an old stale cup of coffee",
-          "a photo of coffee without any aroma"
+          "single bread roll on a plate without any coffee cup",
+          "muffin or pastry on a plate without any coffee cup",
+          "slice of cake or dessert with no coffee in frame",
+          "empty coffee cup with no liquid",
+          "plain photo of bread or pastry without any cup of coffee",
+          "iced americano with ice cubes only",
+          "only one coffee cup with no contrasting second cup beside it",
+          "single coffee cup alone with no comparison cup in frame",
+          "tall glass of iced coffee with no second contrasting cup"
         ]
       },
       "크레마": {
@@ -2615,20 +3546,45 @@
           "황금빛 크레마",
           "두꺼운 크레마",
           "에스프레소 좋",
-          "크레마 살아있"
+          "크레마 살아있",
+          "라떼아트",
+          "하트",
+          "로제타",
+          "튤립",
+          "라떼 아트",
+          "우유거품",
+          "예쁜 라떼",
+          "거품 위 그림",
+          "하얀 거품"
         ],
         "negative": [
           "크레마 없",
           "크레마 얇",
-          "거품 없"
+          "거품 없",
+          "라떼아트 없"
         ],
         "clip_prompt_pos": [
-          "a close-up photo of a thick golden crema on top of espresso",
-          "a photo of fresh espresso shot with rich foam"
+          "close-up of beautiful latte art with white milk foam heart on top of a cappuccino or latte",
+          "top-down view of a coffee cup with intricate latte art rosetta in white milk foam",
+          "espresso based coffee with thick white milk foam art heart shape on top",
+          "close-up of cappuccino with white frothed milk foam pattern on dark coffee surface",
+          "latte cup with creamy white foam art swirl on top of coffee in a ceramic mug",
+          "perfectly poured latte art heart in white foam on top of espresso based coffee",
+          "ceramic coffee mug with thick white milk foam decoration on top",
+          "espresso shot with creamy golden crema or white milk foam pattern visible on top",
+          "close-up of cappuccino with foamy white milk crown sitting on dark coffee",
+          "latte art tulip pattern in milk foam on top of a coffee cup"
         ],
         "clip_prompt_neg": [
-          "a photo of espresso without crema",
-          "a photo of stale dark espresso with no foam"
+          "plain black coffee with no foam or crema on top",
+          "iced coffee with no foam or crema visible",
+          "single bread roll on a plate without any coffee cup",
+          "muffin or pastry on a plate without any coffee cup",
+          "slice of cake or dessert with no coffee in frame",
+          "empty coffee cup with no liquid",
+          "plain photo of bread or pastry without any cup of coffee",
+          "iced americano in a tall glass with no foam",
+          "tea or matcha drink without coffee crema"
         ]
       },
       "쓴맛균형": {
@@ -2653,6 +3609,56 @@
         ],
         "clip_prompt_neg": [
           "a photo of bitter dark over-extracted coffee"
+        ]
+      },
+      "양많음": {
+        "positive": [
+          "양 많",
+          "푸짐",
+          "큰 잔",
+          "톨 사이즈",
+          "그란데",
+          "벤티",
+          "양 가득",
+          "얼음 가득",
+          "얼음 듬뿍",
+          "1+1",
+          "원플원",
+          "두 잔",
+          "넉넉한 양",
+          "곱빼기"
+        ],
+        "negative": [
+          "양 적",
+          "양이 적",
+          "작은 잔",
+          "작은 사이즈",
+          "쇼트",
+          "에스프레소 한 잔",
+          "아담한",
+          "양 부족"
+        ],
+        "clip_prompt_pos": [
+          "two very tall glass cups of iced coffee or iced americano packed full with ice cubes and dark coffee, generous large serving",
+          "two big tall glasses of iced americano with abundant ice cubes filling the glasses to the brim, very generous portion",
+          "extra-large iced coffee cups with full of ice and lots of dark coffee, abundant serving",
+          "two tall glass cups of iced cold brew brimming with ice cubes and coffee, large generous amount",
+          "side by side big iced americano glasses packed with ice to the top, dark coffee filling the rest, very full",
+          "huge tall glass of iced coffee with ice cubes piled up to the rim, large generous portion",
+          "close-up of large tall iced coffee glasses overflowing with ice cubes, generous serving size",
+          "two big iced coffees side by side, abundant ice and coffee, very full glasses",
+          "extra-large 1+1 iced americano with ice cubes filling tall glasses to the top, generous portion",
+          "very tall full glasses of iced coffee with abundant ice cubes, large size serving"
+        ],
+        "clip_prompt_neg": [
+          "single small espresso shot in a tiny cup",
+          "small hot coffee cup with no large portion",
+          "single bread roll on a plate without any coffee cup",
+          "muffin or pastry on a plate without any coffee cup",
+          "slice of cake or dessert with no coffee in frame",
+          "empty coffee cup with no liquid",
+          "tea or matcha drink without coffee",
+          "small cup of hot coffee with no ice and small portion"
         ]
       }
     },
@@ -3385,18 +4391,50 @@
           "구수한 향",
           "깊은",
           "진한 향",
-          "콩 향"
+          "콩 향",
+          "전통적",
+          "시골스러운",
+          "할머니 손맛",
+          "구수한 국물",
+          "콩 발효 향",
+          "묵직한 향",
+          "옛날 청국장",
+          "연한 갈색 국물"
         ],
         "negative": [
           "향 없",
           "밍밍",
-          "이상한 냄새"
+          "이상한 냄새",
+          "고기 굽는",
+          "고기 굽기",
+          "삼겹살",
+          "고기구이",
+          "불판",
+          "수박",
+          "오징어 무침",
+          "샐러드"
         ],
         "clip_prompt_pos": [
-          "a bubbling bowl of Korean cheonggukjang fermented soybean stew"
+          "close-up of a stone bowl of pale light brown cheonggukjang broth with simple ingredients and gentle natural aroma look",
+          "rustic homestyle cheonggukjang stew with light golden broth and visible tofu and zucchini and very natural color",
+          "close-up of cheonggukjang ttukbaegi with thin pale clear broth and a few tofu cubes floating, traditional look",
+          "Korean cheonggukjang fermented soybean stew in a stone bowl with light pale broth and simple chunks of tofu and vegetable",
+          "deep traditional cheonggukjang with mild pale color broth and visible fermented soybeans, rustic country style",
+          "homestyle cheonggukjang stew in earthen stone bowl with light broth and small amount of tofu and zucchini, savory aroma vibe",
+          "cheonggukjang ttukbaegi with light yellow brown broth and visible fermented soybeans floating, savory deep flavor look",
+          "close-up of pale earthy cheonggukjang stew with mild broth and a few visible cheonggukjang beans and tofu pieces",
+          "traditional Korean cheonggukjang with shallow pale broth and minimal chili oil, very rustic and aromatic look",
+          "simple deep cheonggukjang stew with light broth color and visible tofu pieces and natural countryside vibe"
         ],
         "clip_prompt_neg": [
-          "clear soup without fermented bean texture"
+          "Korean barbecue grilled meat on a hot iron grill with smoke",
+          "raw or grilled slices of beef or pork on a barbecue plate",
+          "watermelon slices on a plate",
+          "squid muchim cold spicy squid salad without any stew",
+          "side dish bowls of kimchi or vegetables with no main stew",
+          "salad bowl of leafy greens without any soup",
+          "very thick spicy red broth stew with heavy red chili oil",
+          "deep dark red soup with floating seafood and no fermented beans"
         ]
       },
       "건더기양": {
@@ -3405,18 +4443,61 @@
           "두부",
           "야채 많",
           "푸짐",
-          "콩 알갱이"
+          "콩 알갱이",
+          "두부 듬뿍",
+          "재료 가득",
+          "건더기 듬뿍",
+          "두부 가득",
+          "재료 풍성",
+          "건더기 풍성",
+          "푸짐한 건더기",
+          "야채 듬뿍",
+          "버섯 많이",
+          "콩 가득",
+          "건더기 산처럼",
+          "건더기 산더미"
         ],
         "negative": [
           "건더기 적",
           "허전",
-          "묽"
+          "묽",
+          "두부 적",
+          "재료 적",
+          "야채 없음",
+          "건더기 없음",
+          "고기 굽는",
+          "삼겹살",
+          "고기구이",
+          "불판",
+          "수박",
+          "오징어 무침"
         ],
         "clip_prompt_pos": [
-          "cheonggukjang stew packed with tofu vegetables and beans"
+          "stone bowl cheonggukjang stew packed with abundant chunks of tofu vegetables and visible fermented soybeans, ingredients piled high",
+          "close-up of ttukbaegi cheonggukjang overflowing with large chunks of tofu zucchini onion and fermented beans",
+          "Korean cheonggukjang stew loaded with many visible toppings of tofu vegetables and beans, very dense ingredients",
+          "rustic homestyle cheonggukjang with chunky tofu zucchini mushroom and visible fermented bean texture, packed bowl",
+          "spoonful coming out of cheonggukjang piled with tofu cubes vegetables and fermented beans",
+          "cheonggukjang stone bowl with thick ingredients dominating the bowl and little visible broth",
+          "Korean fermented soybean stew with abundant chunks of tofu mushroom zucchini and beans filling the bowl",
+          "very chunky cheonggukjang stew with visible large tofu cubes and many vegetable pieces, dense topping look",
+          "close-up cheonggukjang ttukbaegi where ingredients (tofu, vegetables, beans) occupy more than half of the photo",
+          "cheonggukjang with mountain of tofu and vegetables piled high above the broth surface"
         ],
         "clip_prompt_neg": [
-          "thin cheonggukjang with few ingredients"
+          "Korean stir-fried spicy pork jeyuk bokkeum with red sauce and no stew",
+          "plate of stir-fried pork strips in red gochujang sauce, no soup bowl",
+          "close-up of red spicy stir-fried meat with peppers and no stone bowl stew",
+          "Korean spicy squid stir fry ojingeo bokkeum on a hot plate with no stew bowl",
+          "thin cheonggukjang with few ingredients",
+          "cheonggukjang with mostly broth and almost no visible toppings",
+          "Korean barbecue grilled meat on a hot iron grill with smoke",
+          "raw or grilled slices of beef or pork on a barbecue plate",
+          "watermelon slices on a plate",
+          "squid muchim cold spicy squid salad without any stew",
+          "Korean side dish bowl of pickled radish or kimchi without any stew",
+          "salad bowl of leafy greens without any soup",
+          "stone bowl with thin pale broth and only a couple small tofu pieces"
         ]
       },
       "밥궁합": {
@@ -3424,16 +4505,31 @@
           "밥 도둑",
           "밥에 잘",
           "밥 비벼",
-          "밥과 잘"
+          "밥과 잘",
+          "공깃밥",
+          "공기밥",
+          "쌀밥",
+          "비벼먹기",
+          "밥과 함께"
         ],
         "negative": [
-          "밥과 안 어울"
+          "밥과 안 어울",
+          "밥 따로",
+          "고기 굽는",
+          "수박"
         ],
         "clip_prompt_pos": [
-          "cheonggukjang served with bowl of rice"
+          "cheonggukjang stone bowl stew served beside a bowl of white rice",
+          "Korean meal with cheonggukjang ttukbaegi and a bowl of steamed white rice",
+          "homestyle Korean table with cheonggukjang and rice ready to be mixed",
+          "cheonggukjang served with rice for the perfect bibim combination",
+          "Korean bansang with cheonggukjang stew rice and side dishes ready to eat"
         ],
         "clip_prompt_neg": [
-          "cheonggukjang served alone without rice"
+          "cheonggukjang served alone without rice",
+          "Korean barbecue grilled meat on a hot grill",
+          "watermelon slices on a plate",
+          "squid muchim cold spicy squid salad without any rice"
         ]
       },
       "구수함": {
@@ -3441,17 +4537,88 @@
           "구수",
           "고소",
           "전통",
-          "할머니"
+          "할머니",
+          "두부 많은",
+          "두부 가득",
+          "두부 듬뿍",
+          "푸짐한 두부",
+          "구수한 청국장",
+          "두부 청국장"
         ],
         "negative": [
           "밍밍",
-          "맛 없"
+          "맛 없",
+          "두부 적",
+          "고기 굽는",
+          "수박",
+          "오징어 무침"
         ],
         "clip_prompt_pos": [
-          "rustic homestyle cheonggukjang stew on table"
+          "close-up of a Korean stone bowl cheonggukjang stew packed with many white tofu cubes filling the bowl",
+          "ttukbaegi cheonggukjang overflowing with chunky white tofu cubes and visible fermented soybeans",
+          "Korean cheonggukjang stew with a large quantity of soft white tofu cubes floating on top",
+          "bubbling cheonggukjang ttukbaegi piled with cubed tofu and visible bean texture, rustic homestyle",
+          "close-up of cheonggukjang fermented bean stew with tofu cubes dominating the bowl and earthy aroma look",
+          "stone bowl cheonggukjang with abundant soft tofu cubes and pale yellow brown broth",
+          "deep rustic cheonggukjang with many tofu cubes and visible fermented beans, savory traditional look",
+          "spoonful of cheonggukjang with large chunks of soft white tofu coming out of the bowl",
+          "cheonggukjang stew with very visible tofu cubes piled high and chunky vegetable mix",
+          "Korean fermented bean stew filled with cubed tofu and visible beans, dense ingredients"
         ],
         "clip_prompt_neg": [
-          "bland thin stew without depth"
+          "bland thin stew without depth",
+          "Korean barbecue grilled meat on a hot iron grill with smoke",
+          "raw or grilled slices of beef or pork on a barbecue plate",
+          "watermelon slices on a plate",
+          "squid muchim cold spicy squid salad without any stew",
+          "cheonggukjang stew with very thin broth and almost no tofu visible",
+          "stone bowl with mostly broth and only a few small pieces of tofu",
+          "salad bowl of leafy greens without any soup"
+        ]
+      },
+      "온도": {
+        "positive": [
+          "뜨끈",
+          "뜨거운",
+          "김 모락모락",
+          "모락모락",
+          "김 나는",
+          "김이 나는",
+          "연기 모락",
+          "팔팔",
+          "따끈",
+          "따뜻한 청국장",
+          "갓 끓인",
+          "보글보글",
+          "뚝배기 끓는"
+        ],
+        "negative": [
+          "식어",
+          "차가운",
+          "미지근",
+          "김 없음",
+          "고기 굽는",
+          "수박"
+        ],
+        "clip_prompt_pos": [
+          "steaming hot cheonggukjang stew in a stone bowl with visible steam rising in clouds",
+          "boiling cheonggukjang ttukbaegi with thick steam rising from the bowl and very hot appearance",
+          "stone bowl cheonggukjang with strong visible steam clouds rising above the bowl",
+          "very hot bubbling cheonggukjang fermented soybean stew with steam rising and bubbles on top",
+          "freshly served piping hot cheonggukjang with thick steam swirling above the stone bowl",
+          "close-up Korean cheonggukjang stew with dramatic steam rising and bubbling broth",
+          "stone bowl Korean stew with hot vapor steam rising from the broth surface",
+          "ttukbaegi cheonggukjang fresh from the stove with visible steam and bubbling broth",
+          "hot steaming cheonggukjang served in a black stone bowl with mist of steam above",
+          "bubbling cheonggukjang stew with rising steam clouds and very hot vivid look"
+        ],
+        "clip_prompt_neg": [
+          "cold stew with no steam or vapor visible",
+          "stone bowl stew that looks lukewarm with no visible steam",
+          "Korean barbecue grilled meat on a hot iron grill with smoke",
+          "watermelon slices on a plate",
+          "squid muchim cold spicy squid salad without any stew",
+          "salad bowl of leafy greens without any soup"
         ]
       }
     },
@@ -4522,95 +5689,167 @@
     "마라탕": {
       "마라강도": {
         "positive": [
-          "마라",
           "얼얼",
-          "마비",
-          "산초",
+          "마라",
+          "마라맛",
+          "얼얼한",
           "혀가 얼얼",
-          "강한 마라"
+          "강렬한",
+          "맵고",
+          "알싸"
         ],
         "negative": [
-          "마라 약",
-          "안 매"
+          "약해",
+          "맹맹",
+          "마라맛 부족",
+          "안 얼얼",
+          "심심"
         ],
         "clip_prompt_pos": [
-          "a bowl of red malatang covered in sichuan peppercorns"
+          "a close-up photo of a bowl filled with red spicy malatang soup with meat and vegetables",
+          "a photo of spicy red hot pot broth in a bowl"
         ],
         "clip_prompt_neg": [
-          "plain mild noodle soup without sichuan spice"
+          "a photo of mild plain clear soup",
+          "a photo of fried food without soup",
+          "a photo of raw spices or dry seasonings in a container"
+        ]
+      },
+      "고소함": {
+        "positive": [
+          "땅콩",
+          "마장",
+          "고소",
+          "참깨"
+        ],
+        "negative": [
+          "느끼"
+        ],
+        "clip_prompt_pos": [
+          "a photo of malatang soup with creamy beige peanut sauce majiang",
+          "a photo of cloudy rich nutty broth"
+        ],
+        "clip_prompt_neg": [
+          "a photo of deep fried crispy food",
+          "a photo of clear red oily soup without peanut sauce",
+          "a photo of sliced fried meat on a plate",
+          "a photo of dry food on a plate without soup"
         ]
       },
       "국물농도": {
         "positive": [
-          "국물 진",
+          "진한",
+          "사골",
+          "깊은",
           "걸쭉",
-          "농도 좋",
-          "되직"
+          "국물이 진",
+          "구수",
+          "국물충",
+          "국물"
         ],
         "negative": [
-          "국물 묽",
-          "맹탕"
+          "묽",
+          "연한",
+          "맹탕",
+          "물맛",
+          "싱거"
         ],
         "clip_prompt_pos": [
-          "malatang with rich thick red broth coating ingredients"
+          "a photo of rich thick opaque malatang broth",
+          "a photo of cloudy savory bone broth hot pot",
+          "a close-up of thick creamy soup being scooped with a spoon or ladle",
+          "a bowl of cooked malatang with plenty of visible rich broth"
         ],
         "clip_prompt_neg": [
-          "malatang with thin watery broth"
+          "a photo of thin watery clear soup",
+          "a bowl filled mostly with raw dry ingredients without visible soup",
+          "un-cooked ingredients in a bowl",
+          "ingredients in a bowl without soup",
+          "un-cooked food"
         ]
       },
       "재료선택폭": {
         "positive": [
-          "재료 많",
-          "고를 수 있",
-          "선택 폭",
-          "다양"
+          "다양",
+          "종류가 많",
+          "재료가 많",
+          "골라",
+          "푸주",
+          "건두부",
+          "분모자",
+          "선택",
+          "신선칸"
         ],
         "negative": [
-          "재료 적",
-          "선택 폭 좁"
+          "종류가 적",
+          "비어있",
+          "없어",
+          "부실"
         ],
         "clip_prompt_pos": [
-          "malatang counter with many trays of ingredients to choose"
+          "a photo of a self-serve malatang ingredient display bar",
+          "a photo of various fresh hot pot ingredients in trays"
         ],
         "clip_prompt_neg": [
-          "malatang with only a few ingredient options"
+          "a photo of empty food trays",
+          "a photo of a single bowl of food"
         ]
       },
       "재료신선도": {
         "positive": [
           "신선",
-          "재료 좋",
-          "야채 신선"
+          "싱싱",
+          "깔끔",
+          "깨끗",
+          "청결",
+          "상태가 좋",
+          "야채 신선",
+          "관리"
         ],
         "negative": [
-          "재료 별로",
-          "신선도 떨어"
+          "시든",
+          "위생",
+          "지저분",
+          "벌레",
+          "안 신선",
+          "오래된"
         ],
         "clip_prompt_pos": [
-          "fresh vegetables and meat in a malatang bowl"
+          "a photo of crisp fresh green vegetables and clean ingredients",
+          "a photo of a brightly lit clean food display"
         ],
         "clip_prompt_neg": [
-          "malatang with wilted poor-quality ingredients"
+          "a photo of wilted brown vegetables",
+          "a photo of dirty messy food containers"
         ]
       },
       "향신료밸런스": {
         "positive": [
           "향신료",
-          "팔각",
-          "산초",
-          "균형",
-          "고수"
+          "밸런스",
+          "조화",
+          "마조",
+          "화자오",
+          "거부감 없",
+          "입맛에 맞",
+          "향긋"
         ],
         "negative": [
-          "향신료 강",
-          "약초맛",
-          "이상한 향"
+          "향이 너무",
+          "역해",
+          "거부감",
+          "화장품",
+          "냄새"
         ],
         "clip_prompt_pos": [
-          "malatang broth with balanced sichuan spice aroma"
+          "a photo of a beautifully garnished bowl of malatang with red oil and green herbs",
+          "a well-presented delicious chinese spicy noodle soup",
+          "an appetizing bowl of malatang with balanced spices and toppings",
+          "a perfectly cooked bowl of malatang soup with garnish"
         ],
         "clip_prompt_neg": [
-          "malatang with overwhelming medicinal herb smell"
+          "a photo of unappetizing overly spiced food",
+          "a photo of raw ingredients piled up before cooking"
         ]
       }
     },
@@ -4990,173 +6229,6 @@
         ],
         "clip_prompt_neg": [
           "a cold donburi served without warmth"
-        ]
-      }
-    },
-    "마라탕": {
-      "마라강도": {
-        "positive": [
-          "얼얼",
-          "마라",
-          "마라맛",
-          "얼얼한",
-          "혀가 얼얼",
-          "강렬한",
-          "맵고",
-          "알싸"
-        ],
-        "negative": [
-          "약해",
-          "맹맹",
-          "마라맛 부족",
-          "안 얼얼",
-          "심심"
-        ],
-        "clip_prompt_pos": [
-          "a close-up photo of a bowl filled with red spicy malatang soup with meat and vegetables",
-          "a photo of spicy red hot pot broth in a bowl"
-        ],
-        "clip_prompt_neg": [
-          "a photo of mild plain clear soup",
-          "a photo of fried food without soup",
-          "a photo of raw spices or dry seasonings in a container"
-        ]
-      },
-      "고소함": {
-        "positive": [
-          "땅콩",
-          "마장",
-          "고소",
-          "참깨"
-        ],
-        "negative": [
-          "느끼"
-        ],
-        "clip_prompt_pos": [
-          "a photo of malatang soup with creamy beige peanut sauce majiang",
-          "a photo of cloudy rich nutty broth"
-        ],
-        "clip_prompt_neg": [
-          "a photo of deep fried crispy food",
-          "a photo of clear red oily soup without peanut sauce",
-          "a photo of sliced fried meat on a plate",
-          "a photo of dry food on a plate without soup"
-        ]
-      },
-      "국물농도": {
-        "positive": [
-          "진한",
-          "사골",
-          "깊은",
-          "걸쭉",
-          "국물이 진",
-          "구수",
-          "국물충",
-          "국물"
-        ],
-        "negative": [
-          "묽",
-          "연한",
-          "맹탕",
-          "물맛",
-          "싱거"
-        ],
-        "clip_prompt_pos": [
-          "a photo of rich thick opaque malatang broth",
-          "a photo of cloudy savory bone broth hot pot",
-          "a close-up of thick creamy soup being scooped with a spoon or ladle",
-          "a bowl of cooked malatang with plenty of visible rich broth"
-        ],
-        "clip_prompt_neg": [
-          "a photo of thin watery clear soup",
-          "a bowl filled mostly with raw dry ingredients without visible soup",
-          "un-cooked ingredients in a bowl",
-          "ingredients in a bowl without soup",
-          "un-cooked food"
-        ]
-      },
-      "재료선택폭": {
-        "positive": [
-          "다양",
-          "종류가 많",
-          "재료가 많",
-          "골라",
-          "푸주",
-          "건두부",
-          "분모자",
-          "선택",
-          "신선칸"
-        ],
-        "negative": [
-          "종류가 적",
-          "비어있",
-          "없어",
-          "부실"
-        ],
-        "clip_prompt_pos": [
-          "a photo of a self-serve malatang ingredient display bar",
-          "a photo of various fresh hot pot ingredients in trays"
-        ],
-        "clip_prompt_neg": [
-          "a photo of empty food trays",
-          "a photo of a single bowl of food"
-        ]
-      },
-      "재료신선도": {
-        "positive": [
-          "신선",
-          "싱싱",
-          "깔끔",
-          "깨끗",
-          "청결",
-          "상태가 좋",
-          "야채 신선",
-          "관리"
-        ],
-        "negative": [
-          "시든",
-          "위생",
-          "지저분",
-          "벌레",
-          "안 신선",
-          "오래된"
-        ],
-        "clip_prompt_pos": [
-          "a photo of crisp fresh green vegetables and clean ingredients",
-          "a photo of a brightly lit clean food display"
-        ],
-        "clip_prompt_neg": [
-          "a photo of wilted brown vegetables",
-          "a photo of dirty messy food containers"
-        ]
-      },
-      "향신료밸런스": {
-        "positive": [
-          "향신료",
-          "밸런스",
-          "조화",
-          "마조",
-          "화자오",
-          "거부감 없",
-          "입맛에 맞",
-          "향긋"
-        ],
-        "negative": [
-          "향이 너무",
-          "역해",
-          "거부감",
-          "화장품",
-          "냄새"
-        ],
-        "clip_prompt_pos": [
-          "a photo of a beautifully garnished bowl of malatang with red oil and green herbs",
-          "a well-presented delicious chinese spicy noodle soup",
-          "an appetizing bowl of malatang with balanced spices and toppings",
-          "a perfectly cooked bowl of malatang soup with garnish"
-        ],
-        "clip_prompt_neg": [
-          "a photo of unappetizing overly spiced food",
-          "a photo of raw ingredients piled up before cooking"
         ]
       }
     }

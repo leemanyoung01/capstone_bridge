@@ -321,13 +321,25 @@ def _confidence(vec: dict, axes: list[str]) -> float:
 
 def _user_img_vec(selected_images, axes):
     scores = {ax:[] for ax in axes}
+    selected_axes = set()
     for img in selected_images:
         cv, ma = img.get("clip_vector",{}) or {}, img.get("axis","")
         for ax in axes:
             v = cv.get(ax,0.0)
             if isinstance(v,(int,float)): scores[ax].append(float(v))
-        if ma in scores: scores[ma].append(0.5)
-    return {ax: round(float(np.mean(vs)),4) if vs else 0.0 for ax,vs in scores.items()}
+        if ma in scores:
+            scores[ma].append(1.5)
+            selected_axes.add(ma)
+    result = {}
+    for ax, vs in scores.items():
+        if not vs:
+            result[ax] = 0.0
+            continue
+        mean_val = float(np.mean(vs))
+        if ax not in selected_axes:
+            mean_val *= 0.5
+        result[ax] = round(mean_val, 4)
+    return result
 
 
 def _fuse_dynamic(tv: dict, iv: dict, axes: list[str]) -> tuple[dict, dict, str]:

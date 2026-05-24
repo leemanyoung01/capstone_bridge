@@ -74,6 +74,47 @@
       "shared_taste_allowlist": [
         "매운맛"
       ]
+    },
+    "짜장": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "단맛",
+        "매운맛",
+        "감칠맛",
+        "고소함",
+        "담백함",
+        "쫄깃함",
+        "느끼함",
+        "온도"
+      ]
+    },
+    "짬뽕": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "짠맛",
+        "단맛",
+        "매운맛",
+        "감칠맛",
+        "고소함",
+        "담백함",
+        "쫄깃함",
+        "느끼함",
+        "온도"
+      ]
+    },
+    "청국장": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "촉촉함",
+        "온도"
+      ]
     }
   },
   "meta_axes": {
@@ -142,7 +183,7 @@
       "group": "맛"
     },
     "온도": {
-      "label": "온도감",
+      "label": "따뜻함",
       "group": "기타"
     }
   },
@@ -163,6 +204,10 @@
       "재료퀄리티": {
         "label": "재료 퀄리티",
         "group": "짜장특화"
+      },
+      "온도": {
+        "label": "따뜻함",
+        "group": "기타"
       }
     },
     "떡볶이": {
@@ -445,6 +490,10 @@
       "불맛": {
         "label": "불맛",
         "group": "짬뽕특화"
+      },
+      "온도": {
+        "label": "따뜻함",
+        "group": "기타"
       }
     },
     "탕수육": {
@@ -781,6 +830,10 @@
       "구수함": {
         "label": "구수함",
         "group": "청국장특화"
+      },
+      "온도": {
+        "label": "따뜻함",
+        "group": "기타"
       }
     },
     "조개": {
