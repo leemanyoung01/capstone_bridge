@@ -60,14 +60,6 @@ const AXIS_DISPLAY_LABELS = {
     번식감: '빵 식감',
     패티육즙: '패티 육즙',
   },
-  짜장면: {
-    온도: '따뜻함',
-    온도감: '따뜻함',
-  },
-  짬뽕: {
-    온도: '따뜻함',
-    온도감: '따뜻함',
-  },
 };
 
 const GROUP_DISPLAY_LABELS = {
@@ -85,7 +77,12 @@ const getGroupDisplayName = (groupLabel) => {
 };
 
 const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext, onReset }) => {
-  const { groups = {} } = config;
+  let { groups = {} } = config;
+
+  if (keyword === '뼈해장국' && groups['국밥탕특화']) {
+    groups = { ...groups };
+    delete groups['국밥탕특화'];
+  }
 
   // 1) 특화 그룹 우선 (입력 순서 보존)
   // 2) GROUP_PRIORITY 순서

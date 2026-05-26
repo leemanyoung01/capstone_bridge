@@ -1,9 +1,12 @@
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // AxisMatchBar는 현재 코드에서 사용되지 않아 주석 처리 또는 삭제를 권장합니다.
 // import AxisMatchBar from '../ui/AxisMatchBar'; 
 import RadarChartViz from '../ui/RadarChartViz';
 import EvaluationCard from '../ui/EvaluationCard';
+import CookingLoader from '../ui/CookingLoader';
+import ShareButton from '../ui/ShareButton';
 import { ExternalLink, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'; // HelpCircle도 미사용이라 제외
 
 // ── Background Doodles ──
@@ -75,18 +78,7 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
   }
 
   if (!results) {
-    return (
-      <div style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-gray)' }}>
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
-          style={{ fontSize: '32px', display: 'inline-block', marginBottom: '16px' }}
-        >
-          🍳
-        </motion.div>
-        <p style={{ fontWeight: 700, fontSize: '15px' }}>취향 분석 중...</p>
-      </div>
-    );
+    return <CookingLoader />;
   }
 
   if (results.length === 0) {
@@ -357,6 +349,7 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                                   data={axisScores}
                                   axes={selectedAxisKeys}
                                   labelMap={radarLabelMap}
+                                  minDomainMax={0.1}
                                 />
                               );
                             })()}
@@ -386,26 +379,35 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                   )}
                 </AnimatePresence>
 
-                {/* Naver link */}
-                {
-                  placeUrl && (
-                    <div style={{ borderTop: '1px solid var(--border-color)', padding: '12px 18px', textAlign: 'right', marginTop: '16px' }}>
-                      <a
-                        href={placeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '6px',
-                          fontSize: '12px', fontWeight: 700, color: 'var(--text-dark)',
-                          background: 'var(--bg-color)', border: '1.5px solid var(--border-color)',
-                          borderRadius: '999px', padding: '7px 14px', textDecoration: 'none',
-                        }}
-                      >
-                        {(item.naver_place_url || item.naver_url) ? '네이버 플레이스 보기' : '네이버에서 검색'} <ExternalLink size={12} />
-                      </a>
-                    </div>
-                  )
-                }
+                {/* Card footer — share + naver link side by side */}
+                <div style={{
+                  borderTop: '1px solid var(--border-color)',
+                  padding: '12px 18px',
+                  marginTop: '16px',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  gap: '8px',
+                  flexWrap: 'wrap',
+                }}>
+                  <ShareButton item={item} />
+                  {placeUrl && (
+                    <a
+                      href={placeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        fontSize: '12px', fontWeight: 700, color: 'var(--text-dark)',
+                        background: 'var(--bg-color)', border: '1.5px solid var(--border-color)',
+                        borderRadius: '999px', padding: '7px 14px', textDecoration: 'none',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {(item.naver_place_url || item.naver_url) ? '네이버 플레이스 보기' : '네이버에서 검색'} <ExternalLink size={12} />
+                    </a>
+                  )}
+                </div>
               </motion.div>
             );
           })}

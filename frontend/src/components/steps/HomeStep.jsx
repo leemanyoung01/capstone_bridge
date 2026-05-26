@@ -55,49 +55,65 @@ const WiggleLine = ({ style = {} }) => (
 // ── Category Data ───────────────────────────────────────────────
 
 const CATEGORIES = [
-  {
-    id: 'meat',
-    label: '고기',
-    emoji: '🥩',
-    color: 'var(--primary-light)',
-    items: ['곱창', '닭갈비', '삼겹살', '소고기', '족발'],
-  },
-  {
-    id: 'korean',
-    label: '밥/한식',
-    emoji: '🍚',
-    color: 'var(--accent-yellow)',
-    items: ['김치찌개', '덮밥', '뼈해장국', '순대국', '청국장', '콩나물국밥', '한상'],
-  },
-  {
-    id: 'noodle',
-    label: '면요리',
-    emoji: '🍜',
-    color: 'var(--accent-peach)',
-    items: ['마라탕', '소바', '우동', '짜장면', '짬뽕', '칼국수', '파스타'],
-  },
-  {
-    id: 'seafood',
-    label: '일식/해물',
-    emoji: '🍣',
-    color: 'var(--accent-blue)',
-    items: ['돈까스', '스시', '아구찜', '조개', '회'],
-  },
-  {
-    id: 'western',
-    label: '양식',
-    emoji: '🍕',
-    color: 'var(--accent-green)',
-    items: ['버거', '샐러드', '스테이크', '피자'],
-  },
-  {
-    id: 'snack',
-    label: '분식/야식',
-    emoji: '🥟',
-    color: 'var(--accent-lavender)',
-    items: ['김밥', '딤섬', '떡볶이', '치킨', '커피', '훠궈'],
-  },
+  { id: 'meat',    label: '고기',      emoji: '🥩', color: 'var(--primary-light)'  },
+  { id: 'korean',  label: '밥/한식',   emoji: '🍚', color: 'var(--accent-yellow)'  },
+  { id: 'noodle',  label: '면요리',    emoji: '🍜', color: 'var(--accent-peach)'   },
+  { id: 'seafood', label: '일식/해물', emoji: '🍣', color: 'var(--accent-blue)'    },
+  { id: 'chinese', label: '중식',      emoji: '🥡', color: 'var(--accent-rose)'    },
+  { id: 'western', label: '양식',      emoji: '🍕', color: 'var(--accent-green)'   },
+  { id: 'snack',   label: '분식/야식', emoji: '🥟', color: 'var(--accent-lavender)' },
 ];
+
+// Menus map N:M to categories. The display order inside each
+// category drawer follows this list's order.
+const MENU_ITEMS = [
+  { name: '곱창',        categories: ['meat'] },
+  { name: '닭갈비',      categories: ['meat'] },
+  { name: '삼겹살',      categories: ['meat'] },
+  { name: '소고기',      categories: ['meat'] },
+  { name: '족발',        categories: ['meat'] },
+
+  { name: '김치찌개',    categories: ['korean'] },
+  { name: '덮밥',        categories: ['korean'] },
+  { name: '뼈해장국',    categories: ['korean'] },
+  { name: '순대국',      categories: ['korean'] },
+  { name: '청국장',      categories: ['korean'] },
+  { name: '콩나물국밥',  categories: ['korean'] },
+  { name: '한상',        categories: ['korean'] },
+
+  { name: '마라탕',      categories: ['noodle', 'chinese'] },
+  { name: '소바',        categories: ['noodle'] },
+  { name: '우동',        categories: ['noodle'] },
+  { name: '짜장면',      categories: ['noodle', 'chinese'] },
+  { name: '짬뽕',        categories: ['noodle', 'chinese'] },
+  { name: '칼국수',      categories: ['noodle'] },
+  { name: '파스타',      categories: ['noodle'] },
+
+  { name: '돈까스',      categories: ['seafood'] },
+  { name: '스시',        categories: ['seafood'] },
+  // 아구찜은 한식·해물 두 카테고리에 모두 노출됩니다.
+  { name: '아구찜',      categories: ['korean', 'seafood'] },
+  { name: '조개',        categories: ['seafood'] },
+  { name: '회',          categories: ['seafood'] },
+
+  { name: '버거',        categories: ['western'] },
+  { name: '샐러드',      categories: ['western'] },
+  { name: '스테이크',    categories: ['western'] },
+  { name: '피자',        categories: ['western'] },
+
+  { name: '김밥',        categories: ['snack'] },
+  { name: '딤섬',        categories: ['snack', 'chinese'] },
+  { name: '떡볶이',      categories: ['snack'] },
+  { name: '치킨',        categories: ['snack'] },
+  { name: '커피',        categories: ['snack'] },
+  { name: '훠궈',        categories: ['snack', 'chinese'] },
+];
+
+const itemsForCategory = (catId) =>
+  MENU_ITEMS.filter(m => m.categories.includes(catId)).map(m => m.name);
+
+// Row split — 4 in the first row, 3 in the second.
+const ROW_BREAKS = [4, 7];
 
 const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
   const [query, setQuery] = useState(defaultKeyword || '');
@@ -202,134 +218,80 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* Row 1 */}
-            <div className="category-grid" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '12px',
-            }}>
-              {CATEGORIES.slice(0, 3).map(cat => (
-                <motion.button
-                  key={cat.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setSelectedCat(selectedCat === cat.id ? null : cat.id);
-                  }}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`category-tab ${selectedCat === cat.id ? 'active' : ''}`}
-                >
-                  <span className="cat-emoji">{cat.emoji}</span>
-                  <span className="cat-label">{cat.label}</span>
-                </motion.button>
-              ))}
-            </div>
+            {ROW_BREAKS.map((endIdx, rowIdx) => {
+              const startIdx = rowIdx === 0 ? 0 : ROW_BREAKS[rowIdx - 1];
+              const rowCats = CATEGORIES.slice(startIdx, endIdx);
+              const activeInRow = rowCats.find(c => c.id === selectedCat);
+              const activeCat = CATEGORIES.find(c => c.id === selectedCat);
+              const activeItems = activeInRow ? itemsForCategory(activeInRow.id) : [];
 
-            {/* Subcategory Chips for Row 1 */}
-            <motion.div
-              initial={false}
-              animate={{
-                height: CATEGORIES.slice(0, 3).find(c => c.id === selectedCat) ? 'auto' : 0,
-                opacity: CATEGORIES.slice(0, 3).find(c => c.id === selectedCat) ? 1 : 0,
-                marginTop: CATEGORIES.slice(0, 3).find(c => c.id === selectedCat) ? '4px' : '0px',
-                marginBottom: CATEGORIES.slice(0, 3).find(c => c.id === selectedCat) ? '8px' : '0px',
-              }}
-              style={{ overflow: 'hidden' }}
-            >
-              {CATEGORIES.slice(0, 3).find(c => c.id === selectedCat) && (
-                <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+              return (
+                <React.Fragment key={`row-${rowIdx}`}>
+                  <div className="category-grid" style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${rowCats.length}, 1fr)`,
+                    gap: '12px',
+                  }}>
+                    {rowCats.map(cat => (
+                      <motion.button
+                        key={cat.id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSelectedCat(selectedCat === cat.id ? null : cat.id);
+                        }}
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`category-tab ${selectedCat === cat.id ? 'active' : ''}`}
+                      >
+                        <span className="cat-emoji">{cat.emoji}</span>
+                        <span className="cat-label">{cat.label}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+
                   <motion.div
-                    initial={{ y: -10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="chips-container hide-scrollbar"
-                    style={{ background: CATEGORIES.find(c => c.id === selectedCat)?.color, maxWidth: '100%' }}
+                    initial={false}
+                    animate={{
+                      height: activeInRow ? 'auto' : 0,
+                      opacity: activeInRow ? 1 : 0,
+                      marginTop: activeInRow ? '4px' : '0px',
+                      marginBottom: activeInRow ? '8px' : '0px',
+                    }}
+                    style={{ overflow: 'hidden' }}
                   >
-                  {CATEGORIES.find(c => c.id === selectedCat)?.items.map((item, idx) => (
-                    <motion.button
-                      key={item}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onStart(item);
-                      }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="quick-chip"
-                    >
-                      {item}
-                    </motion.button>
-                  ))}
+                    {activeInRow && (
+                      <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                        <motion.div
+                          initial={{ y: -10, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className="chips-container hide-scrollbar"
+                          style={{ background: activeCat?.color, maxWidth: '100%' }}
+                        >
+                          {activeItems.map((item, idx) => (
+                            <motion.button
+                              key={item}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                onStart(item);
+                              }}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: idx * 0.05 }}
+                              className="quick-chip"
+                            >
+                              {item}
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      </div>
+                    )}
                   </motion.div>
-                </div>
-              )}
-            </motion.div>
-
-            {/* Row 2 */}
-            <div className="category-grid" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '12px',
-            }}>
-              {CATEGORIES.slice(3, 6).map(cat => (
-                <motion.button
-                  key={cat.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setSelectedCat(selectedCat === cat.id ? null : cat.id);
-                  }}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`category-tab ${selectedCat === cat.id ? 'active' : ''}`}
-                >
-                  <span className="cat-emoji">{cat.emoji}</span>
-                  <span className="cat-label">{cat.label}</span>
-                </motion.button>
-              ))}
-            </div>
-
-            {/* Subcategory Chips for Row 2 */}
-            <motion.div
-              initial={false}
-              animate={{
-                height: CATEGORIES.slice(3, 6).find(c => c.id === selectedCat) ? 'auto' : 0,
-                opacity: CATEGORIES.slice(3, 6).find(c => c.id === selectedCat) ? 1 : 0,
-                marginTop: CATEGORIES.slice(3, 6).find(c => c.id === selectedCat) ? '4px' : '0px',
-              }}
-              style={{ overflow: 'hidden' }}
-            >
-              {CATEGORIES.slice(3, 6).find(c => c.id === selectedCat) && (
-                <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                  <motion.div
-                    initial={{ y: -10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="chips-container hide-scrollbar"
-                    style={{ background: CATEGORIES.find(c => c.id === selectedCat)?.color, maxWidth: '100%' }}
-                  >
-                  {CATEGORIES.find(c => c.id === selectedCat)?.items.map((item, idx) => (
-                    <motion.button
-                      key={item}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onStart(item);
-                      }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="quick-chip"
-                    >
-                      {item}
-                    </motion.button>
-                  ))}
-                  </motion.div>
-                </div>
-              )}
-            </motion.div>
+                </React.Fragment>
+              );
+            })}
           </div>
         </div>
 

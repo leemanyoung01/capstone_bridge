@@ -1,7 +1,7 @@
 import React from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 
-const RadarChartViz = ({ data, axes, labelMap = {} }) => {
+const RadarChartViz = ({ data, axes, labelMap = {}, minDomainMax = 1.0 }) => {
   // data format expected: { "단맛": 5, "매운맛": 2, ... }
   
   if (!axes || axes.length === 0) return <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-light)' }}>데이터가 없습니다</div>;
@@ -14,9 +14,9 @@ const RadarChartViz = ({ data, axes, labelMap = {} }) => {
 
   // Determine domain based on max value to make it look "fuller"
   const maxVal = Math.max(...chartData.map(d => d.A), 0.1);
-  // 데이터가 거의 없을 때 차트가 너무 작아 보이지 않도록 최솟값(1.0)을 보장하면서,
+  // 데이터가 거의 없을 때 차트가 너무 작아 보이지 않도록 최솟값(minDomainMax)을 보장하면서,
   // 항상 25% 정도의 여백을 두어 시각적으로 안정감을 줌
-  const domainMax = Math.max(maxVal * 1.25, 1.0);
+  const domainMax = Math.max(maxVal * 1.25, minDomainMax);
 
   return (
     <div style={{ width: '100%', height: '340px', margin: '0 auto' }}>
