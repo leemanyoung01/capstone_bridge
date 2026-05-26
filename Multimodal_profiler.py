@@ -314,15 +314,9 @@ def image_embedding_np(image_path: str, use_cache: bool = True):
         return None
 
 
-def clip_prompt_score(
-    image_path: str,
-    prompts: list[str],
-    use_cache: bool = True,
-    aggregation: str = "avg",
-    top_k: int | None = None,
-) -> float:
+def clip_prompt_score(image_path: str, prompts: list[str], use_cache: bool = True, mode: str = "mean") -> float:
     """
-    이미지와 prompt 리스트의 평균 코사인 유사도. 음식 존재 / 비음식 패널티 등에 사용.
+    이미지와 prompt 리스트의 평균/최대 코사인 유사도. 음식 존재 / 비음식 패널티 등에 사용.
     [0, 1] 범위 (CLIP 유사도는 -1~1이지만 보통 0~0.4 사이)
     """
     try:
@@ -332,16 +326,9 @@ def clip_prompt_score(
         sims = [(ie @ _text_emb(p).T).squeeze().item() for p in prompts]
         if not sims:
             return 0.0
-        aggregation = (aggregation or "avg").lower()
-        if aggregation in ("max", "best"):
-            score = max(sims)
-        elif aggregation in ("topk", "top_k", "topk_avg", "top_k_avg"):
-            k = int(top_k or 2)
-            k = max(1, min(k, len(sims)))
-            score = sum(sorted(sims, reverse=True)[:k]) / k
-        else:
-            score = sum(sims) / len(sims)
-        return float(max(0.0, score))
+        if mode == "max":
+            return float(max(0.0, max(sims)))
+        return float(max(0.0, sum(sims) / len(sims)))
     except Exception:
         return 0.0
 
@@ -742,28 +729,14 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
         image_filtering.get("axis_score_overrides") or {}, keyword, {}
     )
 
-    priority_map = image_filtering.get("image_axis_priority") or {}
-    fallback_map = image_filtering.get("image_axis_fallback") or {}
-    axis_priority_raw, axis_priority_key = _lookup_keyword_setting(priority_map, keyword, [])
-    axis_fallback_raw, axis_fallback_key = _lookup_keyword_setting(fallback_map, keyword, [])
-    axis_priority = [a for a in (axis_priority_raw or []) if a in axes_config]
-    axis_fallback = [
-        a for a in (axis_fallback_raw or [])
-        if a in axes_config and a not in axis_priority
-    ]
+    th = image_filtering.get("thresholds", {}) or {}
+    gate_th = image_filtering.get("representative_gate_thresholds", {})
+    kw_th = gate_th.get(keyword, {})
 
-    base_th = _clean_setting_dict(image_filtering.get("thresholds", {}) or {})
-    override_map = image_filtering.get("representative_gate_thresholds") or {}
-    override_raw, override_key = _lookup_keyword_setting(override_map, keyword, {})
-    override_th = _clean_setting_dict(override_raw)
-    th = dict(base_th)
-    th.update(override_th)
-    min_food   = float(th.get("min_food_presence", 0.18))
-    max_non    = float(th.get("max_non_food_penalty", 0.18))
-    min_cat    = float(th.get("min_category_presence", 0.15))
-    max_wrong  = float(th.get("wrong_food_threshold", th.get("max_wrong_food_penalty", 0.20)))
-    wrong_margin = th.get("wrong_food_margin_threshold")
-    wrong_margin = float(wrong_margin) if wrong_margin is not None else None
+    min_food   = float(kw_th.get("min_food_presence", th.get("min_food_presence", 0.18)))
+    max_non    = float(kw_th.get("max_non_food_penalty", th.get("max_non_food_penalty", 0.18)))
+    min_cat    = float(kw_th.get("min_category_presence", th.get("min_category_presence", 0.15)))
+    max_wrong  = float(kw_th.get("max_wrong_food_penalty", th.get("max_wrong_food_penalty", 0.20)))
     w_food     = float(th.get("food_presence_weight", 0.0))
     w_non      = float(th.get("non_food_penalty_weight", 0.6))
     w_cat      = float(th.get("category_bonus_weight", 0.30))
@@ -848,28 +821,10 @@ def extract_rep_images(df, axes_config, img_vecs, rest_linked, keyword,
             }
             continue
 
-        food = clip_prompt_score(resolved_path, food_prompts, use_cache=use_cache) if food_prompts else 0.0
-        non_food = clip_prompt_score(resolved_path, non_food_prompts, use_cache=use_cache) if non_food_prompts else 0.0
-        category = (
-            clip_prompt_score(
-                resolved_path,
-                cat_prompts,
-                use_cache=use_cache,
-                aggregation=str(cat_aggregation or "avg"),
-                top_k=cat_top_k,
-            )
-            if cat_prompts else 1.0
-        )
-        wrong = (
-            clip_prompt_score(
-                resolved_path,
-                wrong_prompts,
-                use_cache=use_cache,
-                aggregation=str(wrong_aggregation or "avg"),
-                top_k=wrong_top_k,
-            )
-            if wrong_prompts else 0.0
-        )
+        food = clip_prompt_score(resolved_path, food_prompts, use_cache=use_cache, mode="mean") if food_prompts else 0.0
+        non_food = clip_prompt_score(resolved_path, non_food_prompts, use_cache=use_cache, mode="max") if non_food_prompts else 0.0
+        category = clip_prompt_score(resolved_path, cat_prompts, use_cache=use_cache, mode="mean") if cat_prompts else 1.0
+        wrong = clip_prompt_score(resolved_path, wrong_prompts, use_cache=use_cache, mode="max") if wrong_prompts else 0.0
 
         # excluded_reason 표준 명칭 (debug JSON / API 응답 일관성):
         #   rejected_non_food            — 메뉴판/영수증/매장 외관/사람 등 음식이 아닌 사진

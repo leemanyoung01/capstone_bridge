@@ -52,61 +52,56 @@ const WiggleLine = ({ style = {} }) => (
   </svg>
 );
 
-// ── Floating bento card data ────────────────────────────────────
+// ── Category Data ───────────────────────────────────────────────
 
-const CARDS = [
+const CATEGORIES = [
   {
-    id: 1,
-    emoji: '🍣',
-    bg: 'var(--accent-blue)',
-    rotation: -6,
-    pos: { top: '9%', left: '4%' },
-    annotation: '초밥 최고!',
-    annotationPos: { bottom: -28, right: -86 },
-    arrowFlip: false,
-    arrowRotate: 20,
-    delay: 0.25,
-  },
-  {
-    id: 2,
+    id: 'meat',
+    label: '고기',
     emoji: '🥩',
-    bg: 'var(--accent-peach)',
-    rotation: 5,
-    pos: { top: '9%', right: '4%' },
-    annotation: '고기는 진리',
-    annotationPos: { bottom: -28, left: -96 },
-    arrowFlip: true,
-    arrowRotate: -20,
-    delay: 0.35,
+    color: 'var(--primary-light)',
+    items: ['곱창', '닭갈비', '삼겹살', '소고기', '족발'],
   },
   {
-    id: 3,
-    emoji: '🐟',
-    bg: 'var(--accent-green)',
-    rotation: 5,
-    pos: { bottom: '9%', left: '4%' },
-    annotation: '매콤 냠냠',
-    annotationPos: { top: -28, right: -80 },
-    arrowFlip: false,
-    arrowRotate: -160,
-    delay: 0.45,
+    id: 'korean',
+    label: '밥/한식',
+    emoji: '🍚',
+    color: 'var(--accent-yellow)',
+    items: ['김치찌개', '덮밥', '뼈해장국', '순대국', '청국장', '콩나물국밥', '한상'],
   },
   {
-    id: 4,
-    emoji: '🍲',
-    bg: 'var(--accent-lavender)',
-    rotation: -4,
-    pos: { bottom: '9%', right: '4%' },
-    annotation: '추억의 맛',
-    annotationPos: { top: -28, left: -80 },
-    arrowFlip: true,
-    arrowRotate: 160,
-    delay: 0.55,
+    id: 'noodle',
+    label: '면요리',
+    emoji: '🍜',
+    color: 'var(--accent-peach)',
+    items: ['마라탕', '소바', '우동', '짜장면', '짬뽕', '칼국수', '파스타'],
+  },
+  {
+    id: 'seafood',
+    label: '일식/해물',
+    emoji: '🍣',
+    color: 'var(--accent-blue)',
+    items: ['돈까스', '스시', '아구찜', '조개', '회'],
+  },
+  {
+    id: 'western',
+    label: '양식',
+    emoji: '🍕',
+    color: 'var(--accent-green)',
+    items: ['버거', '샐러드', '스테이크', '피자'],
+  },
+  {
+    id: 'snack',
+    label: '분식/야식',
+    emoji: '🥟',
+    color: 'var(--accent-lavender)',
+    items: ['김밥', '딤섬', '떡볶이', '치킨', '커피', '훠궈'],
   },
 ];
 
 const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
   const [query, setQuery] = useState(defaultKeyword || '');
+  const [selectedCat, setSelectedCat] = useState(null);
 
   const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -135,59 +130,7 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
       <WiggleLine style={{ position: 'absolute', top: '14%', right: '30%' }} />
       <WiggleLine style={{ position: 'absolute', bottom: '18%', left: '28%' }} />
 
-      {/* Floating bento cards */}
-      {CARDS.map((card) => (
-        <motion.div
-          key={card.id}
-          className="bento-card"
-          initial={{ opacity: 0, y: 40, rotate: card.rotation }}
-          animate={{ opacity: 1, y: 0, rotate: card.rotation }}
-          transition={{ delay: card.delay, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-          whileHover={{ y: -12, rotate: card.rotation * 0.3, transition: { duration: 0.28 } }}
-          style={{
-            position: 'absolute',
-            ...card.pos,
-            width: 'clamp(140px, 13vw, 180px)',
-            height: 'clamp(140px, 13vw, 180px)',
-            background: card.bg,
-            borderRadius: '28px',
-            boxShadow: 'var(--shadow-card)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 'clamp(54px, 5.5vw, 74px)',
-            userSelect: 'none',
-            cursor: 'default',
-          }}
-        >
-          {card.emoji}
-
-          {/* Handwritten annotation - removed fontFamily override to use Pretendard */}
-          <div style={{
-            position: 'absolute',
-            ...card.annotationPos,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            whiteSpace: 'nowrap',
-            pointerEvents: 'none',
-          }}>
-            <CurvedArrow
-              flip={card.arrowFlip}
-              rotate={card.arrowRotate}
-              style={{ opacity: 0.65 }}
-            />
-            <span style={{
-              fontSize: '16px',
-              fontWeight: 700,
-              color: '#3A3A3A',
-              lineHeight: 1,
-            }}>
-              {card.annotation}
-            </span>
-          </div>
-        </motion.div>
-      ))}
+      {/* Floating animations removed */}
 
       {/* Center hero content */}
       <motion.div
@@ -198,7 +141,7 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
           textAlign: 'center',
           zIndex: 10,
           padding: '24px 20px',
-          maxWidth: '500px',
+          maxWidth: '700px',
           width: '100%',
         }}
       >
@@ -246,6 +189,149 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
             </datalist>
           </div>
         </form>
+
+        {/* Category Browsing */}
+        <div style={{ marginBottom: '32px' }}>
+          <p style={{
+            fontSize: '14px',
+            color: 'var(--text-light)',
+            marginBottom: '16px',
+            fontWeight: 500,
+          }}>
+            또는 아래 카테고리를 터치하세요
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Row 1 */}
+            <div className="category-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '12px',
+            }}>
+              {CATEGORIES.slice(0, 3).map(cat => (
+                <motion.button
+                  key={cat.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setSelectedCat(selectedCat === cat.id ? null : cat.id);
+                  }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`category-tab ${selectedCat === cat.id ? 'active' : ''}`}
+                >
+                  <span className="cat-emoji">{cat.emoji}</span>
+                  <span className="cat-label">{cat.label}</span>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Subcategory Chips for Row 1 */}
+            <motion.div
+              initial={false}
+              animate={{
+                height: CATEGORIES.slice(0, 3).find(c => c.id === selectedCat) ? 'auto' : 0,
+                opacity: CATEGORIES.slice(0, 3).find(c => c.id === selectedCat) ? 1 : 0,
+                marginTop: CATEGORIES.slice(0, 3).find(c => c.id === selectedCat) ? '4px' : '0px',
+                marginBottom: CATEGORIES.slice(0, 3).find(c => c.id === selectedCat) ? '8px' : '0px',
+              }}
+              style={{ overflow: 'hidden' }}
+            >
+              {CATEGORIES.slice(0, 3).find(c => c.id === selectedCat) && (
+                <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                  <motion.div
+                    initial={{ y: -10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="chips-container hide-scrollbar"
+                    style={{ background: CATEGORIES.find(c => c.id === selectedCat)?.color, maxWidth: '100%' }}
+                  >
+                  {CATEGORIES.find(c => c.id === selectedCat)?.items.map((item, idx) => (
+                    <motion.button
+                      key={item}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onStart(item);
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="quick-chip"
+                    >
+                      {item}
+                    </motion.button>
+                  ))}
+                  </motion.div>
+                </div>
+              )}
+            </motion.div>
+
+            {/* Row 2 */}
+            <div className="category-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '12px',
+            }}>
+              {CATEGORIES.slice(3, 6).map(cat => (
+                <motion.button
+                  key={cat.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setSelectedCat(selectedCat === cat.id ? null : cat.id);
+                  }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`category-tab ${selectedCat === cat.id ? 'active' : ''}`}
+                >
+                  <span className="cat-emoji">{cat.emoji}</span>
+                  <span className="cat-label">{cat.label}</span>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Subcategory Chips for Row 2 */}
+            <motion.div
+              initial={false}
+              animate={{
+                height: CATEGORIES.slice(3, 6).find(c => c.id === selectedCat) ? 'auto' : 0,
+                opacity: CATEGORIES.slice(3, 6).find(c => c.id === selectedCat) ? 1 : 0,
+                marginTop: CATEGORIES.slice(3, 6).find(c => c.id === selectedCat) ? '4px' : '0px',
+              }}
+              style={{ overflow: 'hidden' }}
+            >
+              {CATEGORIES.slice(3, 6).find(c => c.id === selectedCat) && (
+                <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                  <motion.div
+                    initial={{ y: -10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="chips-container hide-scrollbar"
+                    style={{ background: CATEGORIES.find(c => c.id === selectedCat)?.color, maxWidth: '100%' }}
+                  >
+                  {CATEGORIES.find(c => c.id === selectedCat)?.items.map((item, idx) => (
+                    <motion.button
+                      key={item}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onStart(item);
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="quick-chip"
+                    >
+                      {item}
+                    </motion.button>
+                  ))}
+                  </motion.div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        </div>
 
         {/* CTA button */}
         <motion.button

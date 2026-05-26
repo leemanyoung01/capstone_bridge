@@ -116,7 +116,9 @@
       "a photo of a person",
       "a photo of people",
       "a photo of customers sitting at a table",
-      "a photo of a logo or graphic design without food"
+      "a photo of a logo or graphic design without food",
+      "a photo of a cold iced soup or frozen broth with ice crystals on surface",
+      "a photo of a cold dish with thin ice layer floating on top"
     ],
     "category_presence_prompts": {
       "_default": [
@@ -166,28 +168,15 @@
         "a photo of korean sweet and sour pork tangsuyuk"
       ],
       "짜장": [
+        "a photo of korean black bean noodles jajangmyeon",
         "a photo of Korean jajangmyeon black bean noodles",
         "black bean sauce noodles with dark glossy sauce",
         "Korean Chinese black bean noodles with onions and pork",
         "jajangmyeon noodles covered with thick black bean sauce",
         "stir-fried black bean noodles served on a plate"
       ],
-      "짜장면": [
-        "a close-up photo of only jajangmyeon black bean noodles with no red soup",
-        "single dish Korean jajangmyeon with dark chunjang sauce and yellow noodles",
-        "jajangmyeon black bean noodles filling the frame without tangsuyuk or jjamppong",
-        "Korean black bean noodles with thick dark sauce as the only main dish",
-        "a photo of Korean jajangmyeon black bean noodles",
-        "black bean sauce noodles with dark glossy sauce",
-        "Korean Chinese black bean noodles with onions and pork",
-        "jajangmyeon noodles covered with thick black bean sauce",
-        "stir-fried black bean noodles served on a plate",
-        "close up of jajangmyeon noodles with dark chunjang black bean sauce",
-        "a single dish of black bean noodles filling the photo",
-        "yellow noodles coated with dark glossy jajang sauce",
-        "Korean black bean noodles with chunky onion in thick dark sauce"
-      ],
       "짬뽕": [
+        "a photo of korean spicy seafood noodle soup jjamppong",
         "a photo of Korean jjamppong seafood noodle soup",
         "Korean seafood noodle soup with vegetables and noodles",
         "a photo of Korean spicy seafood noodle soup jjamppong",
@@ -252,6 +241,8 @@
         "a photo of seaweed-wrapped rice rolls with vegetables and meat"
       ],
       "청국장": [
+        "a photo of korean cheonggukjang fermented soybean stew",
+        "a photo of bubbling korean stew in a stone bowl with side dishes",
         "a photo of Korean cheonggukjang fermented soybean stew in a stone bowl",
         "a photo of bubbling cheonggukjang ttukbaegi with tofu and vegetables",
         "a close-up photo of Korean fermented soybean stew with visible fermented beans and tofu",
@@ -315,7 +306,10 @@
       "곱창": [
         "a grill plate of korean gopchang pork intestines being cooked",
         "korean gopchang grilled to golden brown with charred edges",
-        "close-up of grilled intestines showing creamy gop filling"
+        "close-up of grilled intestines showing creamy gop filling",
+        "a grill plate of korean gopchang pork intestines being cooked on a grill",
+        "korean gopchang grilled to golden brown with charred edges on iron plate",
+        "a photo of sizzling gopchang and makchang on a hot grill with flames"
       ],
       "훠궈": [
         "a chinese hotpot table with bubbling red mala broth and white broth",
@@ -328,6 +322,10 @@
         "close-up of malatang ingredients in red mala broth"
       ],
       "우동": [
+        "a bowl of udon noodles with broth",
+        "thick japanese udon noodles in a bowl",
+        "a photo of udon noodle soup",
+        "japanese udon with various toppings",
         "a bowl of japanese udon thick noodles in light amber dashi broth",
         "kake udon with sliced scallion and tempura piece on top",
         "udon noodles being lifted from a clear dashi broth"
@@ -348,6 +346,10 @@
         "katsudon pork cutlet donburi with egg and onion on rice"
       ],
       "커피": [
+        "a photo of a cup of black coffee on a table",
+        "a close-up photo of an espresso shot with crema",
+        "a top-down photo of an iced americano with ice cubes",
+        "a photo of a clear cup of black coffee",
         "a photo of a ceramic cup or mug of black coffee on a table",
         "a close-up photo of an espresso shot with crema in a ceramic cup",
         "a photo of a clear cup or mug of brewed coffee",
@@ -476,6 +478,21 @@
       ],
       "식빵": [
         "a photo of a loaf of sliced sandwich bread"
+      ],
+      "짜장면": [
+        "a close-up photo of only jajangmyeon black bean noodles with no red soup",
+        "single dish Korean jajangmyeon with dark chunjang sauce and yellow noodles",
+        "jajangmyeon black bean noodles filling the frame without tangsuyuk or jjamppong",
+        "Korean black bean noodles with thick dark sauce as the only main dish",
+        "a photo of Korean jajangmyeon black bean noodles",
+        "black bean sauce noodles with dark glossy sauce",
+        "Korean Chinese black bean noodles with onions and pork",
+        "jajangmyeon noodles covered with thick black bean sauce",
+        "stir-fried black bean noodles served on a plate",
+        "close up of jajangmyeon noodles with dark chunjang black bean sauce",
+        "a single dish of black bean noodles filling the photo",
+        "yellow noodles coated with dark glossy jajang sauce",
+        "Korean black bean noodles with chunky onion in thick dark sauce"
       ]
     },
     "category_presence_aggregation": {
@@ -546,6 +563,42 @@
         "향미",
         "로스팅",
         "양많음"
+      ],
+      "곱창": [
+        "곱고소함",
+        "식감",
+        "기름밸런스",
+        "잡내관리",
+        "쫄깃함",
+        "감칠맛"
+      ],
+      "김밥": [
+        "속재료구성",
+        "김밥상태",
+        "참기름고소함",
+        "재료신선도",
+        "밥의간과양"
+      ],
+      "김치찌개": [
+        "국물맛",
+        "김치풍미",
+        "고기두부양",
+        "매운정도",
+        "밥궁합"
+      ],
+      "돈까스": [
+        "겉바속촉",
+        "두께",
+        "소스맛",
+        "부위",
+        "사이드"
+      ],
+      "떡볶이": [
+        "매운달콤밸런스",
+        "국물양",
+        "토핑",
+        "떡종류",
+        "세트구성"
       ]
     },
     "image_axis_fallback": {
@@ -588,6 +641,32 @@
         "쓴맛균형",
         "전반적만족",
         "가성비"
+      ],
+      "곱창": [
+        "매운맛",
+        "짠맛",
+        "단맛",
+        "느끼함"
+      ],
+      "김밥": [
+        "짠맛",
+        "매운맛",
+        "단맛"
+      ],
+      "김치찌개": [
+        "짠맛",
+        "단맛",
+        "느끼함"
+      ],
+      "돈까스": [
+        "짠맛",
+        "느끼함",
+        "단맛"
+      ],
+      "떡볶이": [
+        "짠맛",
+        "단맛",
+        "느끼함"
       ]
     },
     "representative_gate_thresholds": {
@@ -597,6 +676,20 @@
         "max_non_food_penalty": 0.16,
         "wrong_food_threshold": 0.16,
         "wrong_food_margin_threshold": 0.14
+      },
+      "우동": {
+        "min_food_presence": 0.13,
+        "min_category_presence": 0.11,
+        "max_non_food_penalty": 0.18,
+        "wrong_food_threshold": 0.18,
+        "wrong_food_margin_threshold": 0.13
+      },
+      "버거": {
+        "min_food_presence": 0.15,
+        "min_category_presence": 0.13,
+        "max_non_food_penalty": 0.18,
+        "wrong_food_threshold": 0.16,
+        "wrong_food_margin_threshold": 0.13
       },
       "짜장면": {
         "min_food_presence": 0.18,
@@ -640,6 +733,699 @@
         "max_per_restaurant": 2,
         "max_per_restaurant_axis": 1
       }
+    },
+    "wrong_food_prompts": {
+      "_default": [],
+      "버거": [
+        "a photo of korean fried chicken pieces only",
+        "a photo of french fries alone",
+        "a photo of pizza",
+        "a photo of beverages or drinks only",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a paper menu filled with text",
+        "a photo of grilled mushrooms or stuffed mushrooms alone",
+        "a photo of side dishes alone",
+        "a close-up photo of onion rings alone",
+        "a photo of a salad bowl",
+        "a photo of pasta",
+        "a photo of french fries alone without burger",
+        "a photo of beverages or drinks only without food"
+      ],
+      "햄버거": [
+        "a photo of korean fried chicken pieces only",
+        "a photo of french fries alone",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a paper menu filled with text"
+      ],
+      "치킨": [
+        "a photo of a hamburger sandwich"
+      ],
+      "피자": [
+        "a photo of pasta noodles",
+        "a photo of a burger"
+      ],
+      "파스타": [
+        "a photo of pizza",
+        "a photo of a burger"
+      ],
+      "스테이크": [
+        "a photo of pasta noodles"
+      ],
+      "회": [
+        "a photo of grilled meat",
+        "a photo of fried chicken",
+        "a photo of deep-fried food or tempura",
+        "a photo of french fries or golden breaded fried food",
+        "a photo of grilled clams or steamed clams",
+        "a photo of korean stew or soup",
+        "a photo of mulhoe, korean cold raw fish soup in red broth",
+        "a photo of cold red soup with raw fish and vegetables in a bowl",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a paper menu filled with text"
+      ],
+      "조개": [
+        "a photo of raw fish sashimi or sushi",
+        "a photo of kimbap rice rolls",
+        "a photo of dessert or cake",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a paper menu filled with text"
+      ],
+      "김밥": [
+        "a photo of rice cake or tteok",
+        "a photo of butter rice cake or sweet pastry",
+        "a photo of bread or cake",
+        "a photo of dessert or beverages only",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a paper menu filled with text",
+        "a photo of spicy red tteokbokki rice cakes alone without kimbap rolls",
+        "a plate of dark steaming sundae blood sausages or pork organ meats",
+        "a single bowl of ramen or noodle soup with red broth",
+        "rice cake or tteok in orange chili sauce"
+      ],
+      "샐러드": [
+        "a photo of grilled meat or barbecue",
+        "a photo of bread or pastry",
+        "a photo of dessert or cake",
+        "a photo of coffee or beverage only",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "찜": [
+        "a photo of a salad bowl",
+        "a photo of pizza",
+        "a photo of dessert or cake",
+        "a photo of cafe drinks",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "찜류": [
+        "a photo of a salad bowl",
+        "a photo of pizza",
+        "a photo of dessert or cake",
+        "a photo of cafe drinks",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "청국장": [
+        "a photo of Korean barbecue grilled meat on a hot iron grill with smoke",
+        "a photo of raw or grilled slices of beef or pork on a barbecue plate",
+        "a close-up photo of grilled samgyeopsal pork belly on a metal grill plate",
+        "a photo of meat being grilled on a charcoal or gas grill",
+        "a photo of watermelon slices on a plate",
+        "a photo of cold squid muchim spicy squid salad without any stew",
+        "a photo of side dish bowls of kimchi or vegetables with no main stew",
+        "a photo of an empty table with only side dishes and no stone bowl stew",
+        "a photo of a salad bowl of leafy greens",
+        "a photo of pizza or pasta",
+        "a photo of dessert or cake",
+        "a photo of coffee or cafe drinks",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of Korean barbecue grilled meat on a hot iron grill with smoke",
+        "a photo of raw or grilled slices of beef or pork on a barbecue plate",
+        "a close-up photo of grilled samgyeopsal pork belly on a metal grill plate",
+        "a photo of meat being grilled on a charcoal or gas grill",
+        "a photo of watermelon slices on a plate",
+        "a photo of cold squid muchim spicy squid salad without any stew",
+        "a photo of side dish bowls of kimchi or vegetables with no main stew",
+        "a photo of an empty table with only side dishes and no stone bowl stew",
+        "a photo of a salad bowl of leafy greens",
+        "a photo of a paper menu filled with text",
+        "a photo of people without food",
+        "a photo of alcoholic drinks bottles or glasses without food"
+      ],
+      "칼국수": [
+        "a photo of kimchi side dish only without noodles",
+        "a photo of korean pancake or jeon only",
+        "a photo of dried fried food only",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of an empty bowl or empty table"
+      ],
+      "김치찌개": [
+        "a photo of a salad bowl",
+        "a photo of pizza or pasta",
+        "a photo of dessert or cake",
+        "a photo of coffee or cafe drinks",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "한상": [
+        "a photo of a single dish only without side dishes",
+        "a photo of dessert or cake",
+        "a photo of coffee or cafe drinks",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "삼겹살": [
+        "a photo of raw fish sashimi",
+        "a photo of a hamburger",
+        "a photo of grilled clams or shellfish only",
+        "a photo of korean stew or soup",
+        "a photo of korean steamed egg (gyeranjjim) in a bowl",
+        "a yellow cooked egg dish or omelet",
+        "a bowl of cold noodles naengmyeon",
+        "a bowl of spicy mixed noodles bibim guksu",
+        "a photo of raw uncooked pork belly slices or raw red meat",
+        "a photo of raw meat plates before grilling",
+        "a photo of grilled pork skin or pork rind (껍데기)",
+        "a photo of a paper menu filled with text",
+        "a close-up photo of soju glasses or beer mugs",
+        "a photo of people holding and clinking shot glasses",
+        "a close-up photo of green soju bottles or beer bottles",
+        "a photo of alcoholic drinks and cups without food"
+      ],
+      "라멘": [
+        "a photo of korean instant ramyeon in a tin pot",
+        "a photo of korean kalguksu noodle soup",
+        "a photo of udon thick noodles in clear broth",
+        "a photo of pho vietnamese noodle soup",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "딤섬": [
+        "a photo of korean fried dumplings or mandu only",
+        "a photo of sushi or sashimi",
+        "a photo of a bowl of soup without dumplings",
+        "a photo of dessert or cake",
+        "a photo of a paper menu filled with text",
+        "a photo of stir-fried beef or pork with bean sprouts and vegetables in a white bowl without any dumplings",
+        "a photo of julienned raw vegetables cucumber and carrot arranged on a wooden tray or board without any dumplings",
+        "a photo of crispy deep-fried fish fillet or fried tofu topped with green onion and chili without any steamed dumplings",
+        "a photo of chinese stir-fry dish with sauce and vegetables but no dumplings",
+        "a photo of crispy golden fried shrimp or pork piece held by chopsticks above a plate of rice and stir-fried dishes",
+        "a photo of a divided plate with multiple sections of chinese cold appetizer dishes showing braised meat mushrooms and pickled vegetables without any dumplings",
+        "a photo of chinese cold appetizer spread with small bowls of various seasoned dishes without any steamed dumplings or bamboo steamer",
+        "a photo of fried rice in a dark stone bowl topped with pink shrimp pieces without any dumplings",
+        "a photo of stir-fried or wok-fried rice with seafood toppings in a bowl without any steamed dumplings",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of stir-fried thick flat noodles dao xiao mian with sliced beef or pork and vegetables in a chinese style bowl without any steamed dumplings",
+        "a wide overhead bird's eye view of a chinese restaurant dining table spread showing multiple dishes including noodle soups stir-fries and fried rice in patterned ceramic bowls without any dim sum dumplings",
+        "an overhead top-down view of a full chinese restaurant table with many dishes in decorative patterned porcelain bowls arranged together without any dim sum"
+      ],
+      "콩나물국밥": [
+        "a photo of korean pork bone hangover soup",
+        "a photo of sundae blood sausage soup",
+        "a photo of malatang chinese hotpot",
+        "a photo of grilled meat or barbecue",
+        "a photo of a paper menu filled with text",
+        "a photo of korean savory jeon pancake with green onions or seafood on a cast iron pan",
+        "a photo of green onion pajeon pancake with crispy edges and batter",
+        "a photo of multiple small korean side dish banchan bowls arranged on a wooden table",
+        "a photo of korean stir-fried rice bokkeumbap with corn and vegetables in a black iron pan",
+        "a photo of a green vegetable jeon or haemul seafood pancake on a round dark pan",
+        "a photo of fried tofu or dubu jorim in spicy red sauce",
+        "a photo of a large round flat dark brown korean pancake jeon on a plate viewed from above with crispy surface",
+        "a photo of a korean pancake pajeon with visible dark crispy exterior on a plate without any stone pot",
+        "a close-up photo of a large flat round crispy dark korean seafood pancake haemulpajeon with golden brown fried surface filling most of the frame as the main subject",
+        "a top-down photo of a round flat fried korean savory pancake with dark brown crispy surface and no soup or broth visible anywhere in the image",
+        "a photo of a thick round dark crispy fried korean pajeon savory pancake served on a plate as the main dish with visible golden brown fried batter and sesame seeds on the crispy surface",
+        "a close-up of a large dark round korean pancake jeon with thick crispy fried exterior and chewy inside completely filling the photo frame as the primary food subject",
+        "a flat round dark brown pan-fried food item with a crispy fried batter surface as the only main subject in the image",
+        "a round flat entirely fried food with dark golden brown crispy exterior surface taking up most of the image frame",
+        "a photo of a korean restaurant banchan self-service display counter showing rows of plastic containers filled with various side dishes",
+        "a photo of multiple plastic banchan side dish containers in a display showing assorted korean side dishes like kimchi and seasoned greens",
+        "a photo of multiple stainless steel banchan side dish bowls arranged on a table with seasoned vegetables without any soup or stone pot",
+        "a photo of assorted korean side dishes banchan in small metal bowls showing seasoned greens and kimchi on a table without any main soup dish",
+        "a photo of a korean restaurant meal setup showing white rice in a black bowl surrounded by multiple small stainless steel banchan bowls of kimchi and side dishes as the main subject",
+        "a photo of white steamed rice in a dark bowl and a fried egg in a small bowl and multiple stainless steel side dish bowls on a table together",
+        "a photo of a korean restaurant self-serve banchan buffet station with multiple transparent plastic containers of various seasoned vegetables and kimchi displayed in a row",
+        "a photo of a banchan display case with rows of plastic tubs containing different colored korean side dishes for self-service",
+        "a photo of a sunny side up fried egg in a small bowl surrounded by multiple small stainless steel side dish bowls on a restaurant table as a meal set",
+        "a photo of a korean restaurant table with a fried egg bowl and multiple small metal banchan bowls as the primary subjects without any stone pot soup in view",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "뼈해장국": [
+        "a photo of korean bean sprout soup",
+        "a photo of sundae blood sausage soup",
+        "a photo of pork belly samgyeopsal grill",
+        "a photo of a salad bowl",
+        "a photo of a paper menu filled with text",
+        "a photo of wine glasses or alcoholic drinks",
+        "a photo of pizza",
+        "a photo of fried chicken",
+        "a photo of restaurant exterior or signboard"
+      ],
+      "순대국": [
+        "a photo of korean pork bone hangover soup",
+        "a photo of korean bean sprout soup",
+        "a photo of grilled pork belly",
+        "a photo of a salad bowl",
+        "a photo of a paper menu filled with text",
+        "a photo of grilled pork belly samgyeopsal",
+        "a photo of red spicy seafood or shellfish dish with gochujang sauce",
+        "a photo of red spicy kimchi or seasoned vegetable side dish without any soup",
+        "a photo of red or orange spicy braised tofu dubu jorim or braised radish in a bowl",
+        "a photo of a bright red or orange spicy seasoned side dish banchan served in a small bowl",
+        "a photo of spicy braised dish with red sauce and no milky pork broth",
+        "a photo of boiled chicken pieces or braised chicken without pork",
+        "a photo of steamed dumplings or mandu",
+        "a photo of stainless steel food preparation containers with side dish ingredients",
+        "a photo of kitchen prep trays with raw vegetables or raw ingredients",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "소고기": [
+        "a photo of grilled pork belly samgyeopsal",
+        "a photo of fried chicken pieces",
+        "a photo of raw fish sashimi",
+        "a photo of korean stew or soup",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of korean doenjang jjigae soybean paste stew in a stone pot",
+        "a photo of korean side dish banchan with braised burdock root or vegetables",
+        "a photo of small side dish bowls with vegetables without any beef",
+        "a photo of kimchi side dish only without beef",
+        "a photo of a korean stew or soup without any beef visible",
+        "a photo of round golden fried patties or korean jeon pancakes on a plate",
+        "a photo of a wine bottle prominently placed next to raw beef on a table",
+        "a photo of a wine glass or wine bottle as the main subject without beef focus"
+      ],
+      "닭갈비": [
+        "a photo of fried chicken only",
+        "a photo of korean stir-fried pork jeyuk",
+        "a photo of korean tteokbokki",
+        "a photo of malatang chinese hotpot",
+        "a photo of a paper menu filled with text",
+        "a photo of fried chicken only without any red gochujang sauce",
+        "a photo of korean stir-fried pork jeyuk without chicken",
+        "a photo of korean tteokbokki rice cakes in red sauce without chicken",
+        "a photo of malatang chinese hotpot with broth",
+        "a photo of japanese soba buckwheat noodles on a bamboo mat",
+        "a photo of cold noodles or soup noodles without any stir-fried chicken",
+        "a photo of crab legs or lobster claws in red spicy gochujang sauce being lifted with metal tongs",
+        "a photo of shrimp and mussels and clams seafood cooked in spicy red broth in a large pan",
+        "a photo of korean seafood hot pot haemul with visible shrimp prawns and shellfish in red sauce",
+        "a photo of large whole shrimp prawns and mussels completely filling a large iron pan with red broth",
+        "a photo of haemul dakgalbi seafood stir-fried dakgalbi with abundant shrimp and mussels dominating the pan",
+        "a photo of a large round black pan filled with whole head-on shrimp mussels and clams in thick red spicy stew broth with tofu pieces",
+        "a photo of octopus or squid tentacles being picked up with metal tongs from a pan with melted cheese dripping",
+        "a photo of a grilled whole langoustine or lobster tail placed on top of red spicy stir-fried food in an iron pan",
+        "a photo of grilled pork or beef rib bones galbi placed in the center of a red spicy dakgalbi iron pan with shredded cheese strips",
+        "a photo of a black iron pan showing mussels and golden fried food pieces mixed into red spicy chicken dakgalbi with melted cheese",
+        "a photo of stir-fried glass noodles japchae with mushrooms and colorful vegetables",
+        "a photo of beef bulgogi stir-fried with onions and sesame without any chicken",
+        "a photo of korean cold buckwheat noodles makguksu in a white bowl with clear cold broth cucumber and daikon",
+        "a photo of korean cold naengmyeon noodles in clear cold soup broth",
+        "a photo of korean mixed cold buckwheat noodles bibim makguksu with pink pickled radish dark seaweed and sesame seeds in a white bowl",
+        "a photo of golden fried potato fritters or fried cheese pancakes on a black plate",
+        "a photo of crispy fried square food pieces on a plate without any gochujang sauce",
+        "a photo of raw marbled beef showing white fat veins on a cutting board or plate",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "곱창": [
+        "a photo of grilled pork belly samgyeopsal",
+        "a photo of korean fried chicken",
+        "a photo of raw fish sashimi",
+        "a photo of a salad bowl",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of korean stew or soup bubbling in a pot",
+        "a photo of red jjigae stew in a stone pot",
+        "a photo of fried rice with toppings on a plate",
+        "a photo of bokkeumbap fried rice with egg or seaweed",
+        "a close-up photo of a beer glass or soju bottle",
+        "a photo of alcoholic drinks and glasses without food",
+        "a photo of side dishes banchan only without main dish"
+      ],
+      "훠궈": [
+        "a photo of korean spicy stew kimchi jjigae",
+        "a photo of korean grilled meat",
+        "a photo of japanese ramen noodle bowl",
+        "a photo of pho vietnamese noodle soup",
+        "a photo of yellow deep fried pork guobaorou",
+        "a photo of meat skewers on a grill",
+        "a photo of raw spices or dry seasonings in a plastic container",
+        "a photo of stir-fried tomato and scrambled eggs",
+        "a photo of fried rice on a plate",
+        "a photo of deep fried shrimp",
+        "a photo of raw ingredients in a bowl before cooking",
+        "a photo of raw ingredients in a transparent plastic bowl for weighing",
+        "a photo of raw vegetables and meat in a metal bowl before cooking",
+        "a photo of lamb skewers on a metal rack or grill",
+        "a photo of raw meat on skewers",
+        "a photo of grilled meat sticks",
+        "a photo of raw ingredients in a buffet tray or self-serve bar",
+        "a photo of burning charcoal in a brazier or grill",
+        "a photo of red hot coals"
+      ],
+      "마라탕": [
+        "a photo of korean instant ramyeon",
+        "a photo of japanese ramen with chashu",
+        "a photo of korean kimchi stew",
+        "a photo of pho vietnamese noodle soup",
+        "a photo of dry stir-fried sichuan dish without broth",
+        "a photo of yellow deep fried pork guobaorou",
+        "a photo of meat skewers on a grill",
+        "a photo of raw spices or dry seasonings in a plastic container",
+        "a photo of stir-fried tomato and scrambled eggs",
+        "a photo of fried rice on a plate",
+        "a photo of deep fried shrimp",
+        "a photo of raw ingredients in a bowl before cooking",
+        "a photo of raw ingredients in a transparent plastic bowl for weighing",
+        "a photo of raw vegetables and meat in a metal bowl before cooking"
+      ],
+      "우동": [
+        "a photo of sushi nigiri or sashimi pieces",
+        "a photo of a fried pork cutlet tonkatsu",
+        "a photo of plain white rice in a bowl",
+        "a photo of a hamburger",
+        "a photo of pizza",
+        "a photo of japanese ramen with chashu pork",
+        "a photo of buckwheat soba noodles cold",
+        "a photo of korean kalguksu noodle soup",
+        "a photo of pho vietnamese noodle soup",
+        "a photo of a paper menu filled with text"
+      ],
+      "스시": [
+        "a photo of sliced raw fish sashimi without rice",
+        "a photo of fried tempura without sushi",
+        "a photo of japanese ramen",
+        "a photo of dim sum dumplings",
+        "a photo of donburi rice bowl with cooked toppings",
+        "a photo of a paper menu filled with text"
+      ],
+      "소바": [
+        "a photo of japanese udon thick noodles",
+        "a photo of japanese ramen with chashu",
+        "a photo of mazesoba dry mixed noodles",
+        "a photo of korean kalguksu",
+        "a photo of a paper menu filled with text",
+        "a photo of japanese udon thick white noodles",
+        "a photo of japanese ramen with chashu pork",
+        "a photo of mazesoba dry mixed noodles with egg yolk",
+        "a photo of korean kalguksu noodle soup",
+        "a photo of stir-fried rice or grain dish with sausage and green onions",
+        "a photo of a round yellow fried or steamed food ball in a bowl",
+        "a photo of a yellow creamy soup with seaweed and sesame seeds without noodles",
+        "a photo of a mixed grain bowl or donburi with egg yolk and mushrooms without buckwheat noodles",
+        "a photo of japanese tonkatsu pork cutlet breaded and fried on a tray or plate",
+        "a photo of a breaded deep fried pork or chicken cutlet served with shredded cabbage",
+        "a photo of multiple fried cutlet pieces on a wooden tray with dipping sauces",
+        "a photo of a wine glass or wine bottle on a restaurant table",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "덮밥": [
+        "a photo of sushi nigiri pieces only",
+        "a photo of a bowl of plain rice without toppings",
+        "a photo of japanese ramen noodle bowl",
+        "a photo of buckwheat soba noodles",
+        "a photo of a paper menu filled with text"
+      ],
+      "커피": [
+        "a single bread roll on a plate without any coffee cup in the frame",
+        "a close-up of a muffin or pastry on a plate without any coffee cup",
+        "a slice of cake or dessert on a plate with no coffee cup visible",
+        "a plate of bread or croissant alone without a coffee cup",
+        "a close-up of a scone or madeleine without any coffee",
+        "a photo of bread or pastry as the only subject without coffee",
+        "a tall plastic takeout cup with iced coffee",
+        "a paper takeout coffee cup without ceramic mug",
+        "a clear glass cup of iced coffee with ice cubes",
+        "a photo of korean stew or soup",
+        "a photo of grilled meat or fried chicken",
+        "a photo of a fruit ade or juice without coffee color",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible",
+        "a single bread roll on a plate without any coffee cup in the frame",
+        "a close-up of a muffin or pastry on a plate without any coffee cup",
+        "a slice of cake or dessert on a plate with no coffee cup visible",
+        "a plate of bread or croissant alone without a coffee cup",
+        "a close-up of a scone or madeleine without any coffee",
+        "a photo of bread or pastry as the only subject without coffee",
+        "a tall plastic takeout cup with iced coffee",
+        "a paper takeout coffee cup without ceramic mug",
+        "a clear glass cup of iced coffee with ice cubes"
+      ],
+      "라떼류": [
+        "a photo of black coffee with no milk",
+        "a photo of a slice of cake or dessert alone",
+        "a photo of korean stew or soup",
+        "a photo of grilled meat or fried chicken",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "디저트": [
+        "a photo of a cup of black coffee alone",
+        "a photo of korean stew or soup",
+        "a photo of grilled meat or sashimi",
+        "a photo of bread loaf or savory bakery alone",
+        "a photo of a salad bowl",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "베이커리": [
+        "a photo of a cup of coffee alone",
+        "a photo of a slice of cake alone without bread",
+        "a photo of korean stew or soup",
+        "a photo of grilled meat or fried chicken",
+        "a photo of a salad bowl",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "아메리카노": [
+        "a photo of a cafe latte with milk",
+        "a photo of cake or dessert without coffee",
+        "a photo of fruit ade or juice",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "라떼": [
+        "a photo of black americano without milk",
+        "a photo of cake or pastry alone",
+        "a photo of fruit ade or juice",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "말차": [
+        "a photo of black coffee or americano",
+        "a photo of brown latte without green color",
+        "a photo of cake alone",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "크로아상": [
+        "a photo of a slice of cake",
+        "a photo of a cup of coffee alone",
+        "a photo of a sandwich with vegetables only",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "베이글": [
+        "a photo of a doughnut without hole shape",
+        "a slice of cake alone",
+        "a cup of coffee alone",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "스콘": [
+        "a slice of cake alone",
+        "a photo of a croissant",
+        "a cup of coffee alone",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "마카롱": [
+        "a slice of cake alone",
+        "a photo of cookies without round macaron shape",
+        "a cup of coffee alone",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "티라미수": [
+        "a photo of a cup of coffee alone",
+        "a photo of plain bread or croissant",
+        "a slice of cheesecake or carrot cake",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "치즈케이크": [
+        "a photo of tiramisu with cocoa powder",
+        "a photo of chocolate gateau cake",
+        "a photo of bread or pastry alone",
+        "a cup of coffee alone",
+        "a photo of a paper menu filled with text",
+        "a photo of a receipt or text document",
+        "a photo of a restaurant exterior or signboard",
+        "a photo of a logo or graphic design without food",
+        "a photo of an empty cafe interior with tables and chairs",
+        "a photo of people posing without food visible"
+      ],
+      "아구찜": [
+        "a photo of korean savory pancake, pajeon, buchimgae, or pan-fried batter"
+      ],
+      "짜장": [
+        "a photo of Korean spicy red seafood noodle soup jjamppong",
+        "a photo of fried rice",
+        "a photo of sweet and sour pork tangsuyuk",
+        "a photo of tangsuyuk fried pork covered with sauce",
+        "a close-up photo of crispy fried pork pieces without noodles",
+        "a photo of kkanpunggi fried chicken with sauce",
+        "a photo of palbochae seafood stir fry without noodles",
+        "a photo of yangjangpi assorted seafood and vegetables platter",
+        "a photo of fried dumplings only",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior signboard",
+        "a photo of people without food",
+        "a photo of alcoholic drinks without noodles"
+      ],
+      "짜장면": [
+        "a photo of red jjamppong soup or orange seafood noodle broth next to jajangmyeon",
+        "a photo of jajangmyeon served with a visible bowl of red jjamppong soup",
+        "a photo of tangsuyuk fried pork visible beside jajangmyeon",
+        "a photo of chopsticks holding fried pork tangsuyuk instead of jajangmyeon noodles",
+        "a photo of a spoon scooping black bean sauce instead of chopsticks lifting noodles",
+        "a close-up photo of black bean sauce on a spoon with no chopstick noodle lift",
+        "a photo of crispy battered fried food or tangsuyuk in the same frame as noodles",
+        "a photo of red seafood noodle soup broth with cabbage seafood or squid",
+        "a single bowl of Korean jjamppong red spicy seafood noodle soup with red broth filling the photo",
+        "a close-up of jjamppong red soup broth with mussels squid shrimp or napa cabbage and no black bean sauce",
+        "a bowl of red or orange spicy seafood noodle soup with no black bean sauce",
+        "a deep bowl of jjamppong with red chili oil broth and seafood as the only food in the photo",
+        "Korean spicy seafood noodle soup served in a metal bowl with red broth",
+        "a close-up photo of jjamppong noodles lifted from red spicy broth with no black bean sauce",
+        "samseon jjamppong with whole squid shrimp and crab in red spicy broth",
+        "baek jjamppong white seafood noodle soup with no black bean sauce",
+        "a photo of red jjamppong soup visible beside black bean noodles",
+        "a photo of jajangmyeon served together with jjamppong in the same frame",
+        "a photo of Korean sweet and sour pork tangsuyuk fried pork pieces with red dipping sauce",
+        "a close-up photo of crispy battered fried pork tangsuyuk without any noodles",
+        "a photo of fried pork tangsuyuk visible beside jajangmyeon",
+        "a photo of chopsticks holding fried pork instead of black bean noodles",
+        "a photo of golden battered deep fried food with sauce and no noodles",
+        "a photo of kkanpunggi fried chicken with sauce and no black bean noodles",
+        "a photo of palbochae seafood stir fry without any noodles",
+        "a photo of yangjangpi assorted seafood and vegetables platter without noodles",
+        "a photo of fried dumplings only with no jajangmyeon",
+        "a photo of fried rice without any black bean sauce noodles",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior signboard",
+        "a photo of people without food",
+        "a photo of alcoholic drinks without noodles"
+      ],
+      "짬뽕": [
+        "a photo of Korean black bean noodles jajangmyeon",
+        "a photo of fried rice",
+        "a photo of a rice bowl with stir fried toppings",
+        "a photo of jjamppong rice without noodles",
+        "a photo of sweet and sour pork tangsuyuk",
+        "a photo of tangsuyuk fried pork covered with sauce",
+        "a close-up photo of crispy fried pork pieces without noodles",
+        "a photo of deep fried food on a plate without noodle soup",
+        "a photo of fried dumplings only",
+        "a photo of plain white noodle soup without seafood or vegetables",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior signboard",
+        "a photo of people without food",
+        "a photo of alcoholic drinks without noodles"
+      ],
+      "족발": [
+        "a photo of wine glasses or alcoholic drinks",
+        "a photo of tteokbokki korean spicy rice cakes",
+        "a photo of restaurant exterior or signboard",
+        "a photo of a paper menu"
+      ],
+      "돈까스": [
+        "a photo of fried chicken without breaded cutlet",
+        "a photo of pasta or noodles",
+        "a photo of plain rice without cutlet",
+        "a photo of salad only",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard"
+      ],
+      "떡볶이": [
+        "a photo of plain rice without tteokbokki",
+        "a photo of kimbap rice rolls only",
+        "a photo of fried chicken pieces",
+        "a photo of sundae blood sausage only without tteokbokki",
+        "a photo of a paper menu filled with text",
+        "a photo of a restaurant exterior or signboard"
+      ]
+    },
+    "thresholds": {
+      "_comment": "Foodness hard gate. 종이/메뉴판/영수증/간판처럼 음식이 아닌 사진이 대표로 선정되지 않도록 더 엄격하게 잡았다. 너무 많이 탈락하면 max_non_food_penalty를 0.22로, max_wrong_food_penalty를 0.25로 다시 풀어주면 된다.",
+      "min_food_presence": 0.18,
+      "max_non_food_penalty": 0.18,
+      "min_category_presence": 0.15,
+      "max_wrong_food_penalty": 0.2,
+      "food_presence_weight": 1.0,
+      "non_food_penalty_weight": 0.6,
+      "category_bonus_weight": 0.3,
+      "wrong_food_weight": 0.7,
+      "linked_text_weight": 0.0,
+      "duplicate_threshold": 0.92,
+      "duplicate_penalty_weight": 0.3,
+      "max_per_review": 1,
+      "max_per_review_loose": 2,
+      "max_per_restaurant": 2,
+      "max_per_restaurant_axis": 1,
+      "fallback_target_count": 6,
+      "fallback_min_combined": 0.1
+    },
+    "category_presence_aggregation": {
+      "짜장면": "top_k_avg",
+      "청국장": "top_k_avg",
+      "커피": "top_k_avg"
+    },
+    "category_presence_top_k": {
+      "짜장면": 3,
+      "청국장": 3,
+      "커피": 3
+    },
+    "wrong_food_aggregation": {
+      "짜장면": "top_k_avg",
+      "청국장": "max",
+      "커피": "max"
+    },
+    "wrong_food_top_k": {
+      "짜장면": 2,
+      "청국장": 2,
+      "커피": 2
     },
     "axis_score_overrides": {
       "짜장면": {
@@ -1530,513 +2316,6 @@
           ]
         }
       }
-    },
-    "wrong_food_prompts": {
-      "_default": [],
-      "버거": [
-        "a photo of korean fried chicken pieces only",
-        "a photo of french fries alone without burger",
-        "a photo of pizza",
-        "a photo of beverages or drinks only without food",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a paper menu filled with text"
-      ],
-      "햄버거": [
-        "a photo of korean fried chicken pieces only",
-        "a photo of french fries alone",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a paper menu filled with text"
-      ],
-      "치킨": [
-        "a photo of a hamburger sandwich"
-      ],
-      "피자": [
-        "a photo of pasta noodles",
-        "a photo of a burger"
-      ],
-      "파스타": [
-        "a photo of pizza",
-        "a photo of a burger"
-      ],
-      "스테이크": [
-        "a photo of pasta noodles"
-      ],
-      "회": [
-        "a photo of grilled meat",
-        "a photo of fried chicken",
-        "a photo of deep-fried food or tempura",
-        "a photo of french fries or golden breaded fried food",
-        "a photo of grilled clams or steamed clams",
-        "a photo of korean stew or soup",
-        "a photo of mulhoe, korean cold raw fish soup in red broth",
-        "a photo of cold red soup with raw fish and vegetables in a bowl",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a paper menu filled with text"
-      ],
-      "조개": [
-        "a photo of raw fish sashimi or sushi",
-        "a photo of kimbap rice rolls",
-        "a photo of dessert or cake",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a paper menu filled with text"
-      ],
-      "김밥": [
-        "a photo of rice cake or tteok",
-        "a photo of butter rice cake or sweet pastry",
-        "a photo of bread or cake",
-        "a photo of dessert or beverages only",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a paper menu filled with text"
-      ],
-      "샐러드": [
-        "a photo of grilled meat or barbecue",
-        "a photo of bread or pastry",
-        "a photo of dessert or cake",
-        "a photo of coffee or beverage only",
-        "a photo of a restaurant exterior or signboard"
-      ],
-      "찜": [
-        "a photo of a salad bowl",
-        "a photo of pizza",
-        "a photo of dessert or cake",
-        "a photo of cafe drinks",
-        "a photo of a restaurant exterior or signboard"
-      ],
-      "찜류": [
-        "a photo of a salad bowl",
-        "a photo of pizza",
-        "a photo of dessert or cake",
-        "a photo of cafe drinks",
-        "a photo of a restaurant exterior or signboard"
-      ],
-      "청국장": [
-        "a photo of Korean barbecue grilled meat on a hot iron grill with smoke",
-        "a photo of raw or grilled slices of beef or pork on a barbecue plate",
-        "a close-up photo of grilled samgyeopsal pork belly on a metal grill plate",
-        "a photo of meat being grilled on a charcoal or gas grill",
-        "a photo of watermelon slices on a plate",
-        "a photo of cold squid muchim spicy squid salad without any stew",
-        "a photo of side dish bowls of kimchi or vegetables with no main stew",
-        "a photo of an empty table with only side dishes and no stone bowl stew",
-        "a photo of a salad bowl of leafy greens",
-        "a photo of pizza or pasta",
-        "a photo of dessert or cake",
-        "a photo of coffee or cafe drinks",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a paper menu filled with text",
-        "a photo of people without food",
-        "a photo of alcoholic drinks bottles or glasses without food"
-      ],
-      "칼국수": [
-        "a photo of kimchi side dish only without noodles",
-        "a photo of korean pancake or jeon only",
-        "a photo of dried fried food only",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of an empty bowl or empty table"
-      ],
-      "김치찌개": [
-        "a photo of a salad bowl",
-        "a photo of pizza or pasta",
-        "a photo of dessert or cake",
-        "a photo of coffee or cafe drinks",
-        "a photo of a paper menu filled with text",
-        "a photo of a restaurant exterior or signboard"
-      ],
-      "한상": [
-        "a photo of a single dish only without side dishes",
-        "a photo of dessert or cake",
-        "a photo of coffee or cafe drinks",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard"
-      ],
-      "삼겹살": [
-        "a photo of raw fish sashimi",
-        "a photo of a hamburger",
-        "a photo of grilled clams or shellfish only",
-        "a photo of korean stew or soup",
-        "a photo of korean steamed egg (gyeranjjim) in a bowl",
-        "a yellow cooked egg dish or omelet",
-        "a bowl of cold noodles naengmyeon",
-        "a bowl of spicy mixed noodles bibim guksu",
-        "a photo of raw uncooked pork belly slices or raw red meat",
-        "a photo of raw meat plates before grilling",
-        "a photo of grilled pork skin or pork rind (껍데기)",
-        "a photo of a paper menu filled with text",
-        "a close-up photo of soju glasses or beer mugs",
-        "a photo of people holding and clinking shot glasses",
-        "a close-up photo of green soju bottles or beer bottles",
-        "a photo of alcoholic drinks and cups without food"
-      ],
-      "라멘": [
-        "a photo of korean instant ramyeon in a tin pot",
-        "a photo of korean kalguksu noodle soup",
-        "a photo of udon thick noodles in clear broth",
-        "a photo of pho vietnamese noodle soup",
-        "a photo of a paper menu filled with text",
-        "a photo of a restaurant exterior or signboard"
-      ],
-      "딤섬": [
-        "a photo of korean fried dumplings or mandu only",
-        "a photo of sushi or sashimi",
-        "a photo of a bowl of soup without dumplings",
-        "a photo of dessert or cake",
-        "a photo of a paper menu filled with text"
-      ],
-      "콩나물국밥": [
-        "a photo of korean pork bone hangover soup",
-        "a photo of sundae blood sausage soup",
-        "a photo of malatang chinese hotpot",
-        "a photo of grilled meat or barbecue",
-        "a photo of a paper menu filled with text"
-      ],
-      "뼈해장국": [
-        "a photo of korean bean sprout soup",
-        "a photo of sundae blood sausage soup",
-        "a photo of pork belly samgyeopsal grill",
-        "a photo of a salad bowl",
-        "a photo of a paper menu filled with text"
-      ],
-      "순대국": [
-        "a photo of korean pork bone hangover soup",
-        "a photo of korean bean sprout soup",
-        "a photo of grilled pork belly",
-        "a photo of a salad bowl",
-        "a photo of a paper menu filled with text"
-      ],
-      "소고기": [
-        "a photo of grilled pork belly samgyeopsal",
-        "a photo of fried chicken pieces",
-        "a photo of raw fish sashimi",
-        "a photo of korean stew or soup",
-        "a photo of a paper menu filled with text",
-        "a photo of a restaurant exterior or signboard"
-      ],
-      "닭갈비": [
-        "a photo of fried chicken only",
-        "a photo of korean stir-fried pork jeyuk",
-        "a photo of korean tteokbokki",
-        "a photo of malatang chinese hotpot",
-        "a photo of a paper menu filled with text"
-      ],
-      "곱창": [
-        "a photo of grilled pork belly samgyeopsal",
-        "a photo of korean fried chicken",
-        "a photo of raw fish sashimi",
-        "a photo of a salad bowl",
-        "a photo of a paper menu filled with text"
-      ],
-      "훠궈": [
-        "a photo of korean spicy stew kimchi jjigae",
-        "a photo of korean grilled meat",
-        "a photo of japanese ramen noodle bowl",
-        "a photo of pho vietnamese noodle soup",
-        "a photo of yellow deep fried pork guobaorou",
-        "a photo of meat skewers on a grill",
-        "a photo of raw spices or dry seasonings in a plastic container",
-        "a photo of stir-fried tomato and scrambled eggs",
-        "a photo of fried rice on a plate",
-        "a photo of deep fried shrimp",
-        "a photo of raw ingredients in a bowl before cooking",
-        "a photo of raw ingredients in a transparent plastic bowl for weighing",
-        "a photo of raw vegetables and meat in a metal bowl before cooking",
-        "a photo of lamb skewers on a metal rack or grill",
-        "a photo of raw meat on skewers",
-        "a photo of grilled meat sticks",
-        "a photo of raw ingredients in a buffet tray or self-serve bar",
-        "a photo of burning charcoal in a brazier or grill",
-        "a photo of red hot coals"
-      ],
-      "마라탕": [
-        "a photo of korean instant ramyeon",
-        "a photo of japanese ramen with chashu",
-        "a photo of korean kimchi stew",
-        "a photo of pho vietnamese noodle soup",
-        "a photo of dry stir-fried sichuan dish without broth",
-        "a photo of yellow deep fried pork guobaorou",
-        "a photo of meat skewers on a grill",
-        "a photo of raw spices or dry seasonings in a plastic container",
-        "a photo of stir-fried tomato and scrambled eggs",
-        "a photo of fried rice on a plate",
-        "a photo of deep fried shrimp",
-        "a photo of raw ingredients in a bowl before cooking",
-        "a photo of raw ingredients in a transparent plastic bowl for weighing",
-        "a photo of raw vegetables and meat in a metal bowl before cooking"
-      ],
-      "우동": [
-        "a photo of japanese ramen with chashu pork",
-        "a photo of buckwheat soba noodles cold",
-        "a photo of korean kalguksu noodle soup",
-        "a photo of pho vietnamese noodle soup",
-        "a photo of a paper menu filled with text"
-      ],
-      "스시": [
-        "a photo of sliced raw fish sashimi without rice",
-        "a photo of fried tempura without sushi",
-        "a photo of japanese ramen",
-        "a photo of dim sum dumplings",
-        "a photo of donburi rice bowl with cooked toppings",
-        "a photo of a paper menu filled with text"
-      ],
-      "소바": [
-        "a photo of japanese udon thick noodles",
-        "a photo of japanese ramen with chashu",
-        "a photo of mazesoba dry mixed noodles",
-        "a photo of korean kalguksu",
-        "a photo of a paper menu filled with text"
-      ],
-      "덮밥": [
-        "a photo of sushi nigiri pieces only",
-        "a photo of a bowl of plain rice without toppings",
-        "a photo of japanese ramen noodle bowl",
-        "a photo of buckwheat soba noodles",
-        "a photo of a paper menu filled with text"
-      ],
-      "커피": [
-        "a single bread roll on a plate without any coffee cup in the frame",
-        "a close-up of a muffin or pastry on a plate without any coffee cup",
-        "a slice of cake or dessert on a plate with no coffee cup visible",
-        "a plate of bread or croissant alone without a coffee cup",
-        "a close-up of a scone or madeleine without any coffee",
-        "a photo of bread or pastry as the only subject without coffee",
-        "a tall plastic takeout cup with iced coffee",
-        "a paper takeout coffee cup without ceramic mug",
-        "a clear glass cup of iced coffee with ice cubes",
-        "a photo of korean stew or soup",
-        "a photo of grilled meat or fried chicken",
-        "a photo of a fruit ade or juice without coffee color",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "라떼류": [
-        "a photo of black coffee with no milk",
-        "a photo of a slice of cake or dessert alone",
-        "a photo of korean stew or soup",
-        "a photo of grilled meat or fried chicken",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "디저트": [
-        "a photo of a cup of black coffee alone",
-        "a photo of korean stew or soup",
-        "a photo of grilled meat or sashimi",
-        "a photo of bread loaf or savory bakery alone",
-        "a photo of a salad bowl",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "베이커리": [
-        "a photo of a cup of coffee alone",
-        "a photo of a slice of cake alone without bread",
-        "a photo of korean stew or soup",
-        "a photo of grilled meat or fried chicken",
-        "a photo of a salad bowl",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "아메리카노": [
-        "a photo of a cafe latte with milk",
-        "a photo of cake or dessert without coffee",
-        "a photo of fruit ade or juice",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "라떼": [
-        "a photo of black americano without milk",
-        "a photo of cake or pastry alone",
-        "a photo of fruit ade or juice",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "말차": [
-        "a photo of black coffee or americano",
-        "a photo of brown latte without green color",
-        "a photo of cake alone",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "크로아상": [
-        "a photo of a slice of cake",
-        "a photo of a cup of coffee alone",
-        "a photo of a sandwich with vegetables only",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "베이글": [
-        "a photo of a doughnut without hole shape",
-        "a slice of cake alone",
-        "a cup of coffee alone",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "스콘": [
-        "a slice of cake alone",
-        "a photo of a croissant",
-        "a cup of coffee alone",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "마카롱": [
-        "a slice of cake alone",
-        "a photo of cookies without round macaron shape",
-        "a cup of coffee alone",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "티라미수": [
-        "a photo of a cup of coffee alone",
-        "a photo of plain bread or croissant",
-        "a slice of cheesecake or carrot cake",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "치즈케이크": [
-        "a photo of tiramisu with cocoa powder",
-        "a photo of chocolate gateau cake",
-        "a photo of bread or pastry alone",
-        "a cup of coffee alone",
-        "a photo of a paper menu filled with text",
-        "a photo of a receipt or text document",
-        "a photo of a restaurant exterior or signboard",
-        "a photo of a logo or graphic design without food",
-        "a photo of an empty cafe interior with tables and chairs",
-        "a photo of people posing without food visible"
-      ],
-      "짜장": [
-        "a photo of Korean spicy red seafood noodle soup jjamppong",
-        "a photo of fried rice",
-        "a photo of sweet and sour pork tangsuyuk",
-        "a photo of tangsuyuk fried pork covered with sauce",
-        "a close-up photo of crispy fried pork pieces without noodles",
-        "a photo of kkanpunggi fried chicken with sauce",
-        "a photo of palbochae seafood stir fry without noodles",
-        "a photo of yangjangpi assorted seafood and vegetables platter",
-        "a photo of fried dumplings only",
-        "a photo of a paper menu filled with text",
-        "a photo of a restaurant exterior signboard",
-        "a photo of people without food",
-        "a photo of alcoholic drinks without noodles"
-      ],
-      "짜장면": [
-        "a photo of red jjamppong soup or orange seafood noodle broth next to jajangmyeon",
-        "a photo of jajangmyeon served with a visible bowl of red jjamppong soup",
-        "a photo of tangsuyuk fried pork visible beside jajangmyeon",
-        "a photo of chopsticks holding fried pork tangsuyuk instead of jajangmyeon noodles",
-        "a photo of a spoon scooping black bean sauce instead of chopsticks lifting noodles",
-        "a close-up photo of black bean sauce on a spoon with no chopstick noodle lift",
-        "a photo of crispy battered fried food or tangsuyuk in the same frame as noodles",
-        "a photo of red seafood noodle soup broth with cabbage seafood or squid",
-        "a single bowl of Korean jjamppong red spicy seafood noodle soup with red broth filling the photo",
-        "a close-up of jjamppong red soup broth with mussels squid shrimp or napa cabbage and no black bean sauce",
-        "a bowl of red or orange spicy seafood noodle soup with no black bean sauce",
-        "a deep bowl of jjamppong with red chili oil broth and seafood as the only food in the photo",
-        "Korean spicy seafood noodle soup served in a metal bowl with red broth",
-        "a close-up photo of jjamppong noodles lifted from red spicy broth with no black bean sauce",
-        "samseon jjamppong with whole squid shrimp and crab in red spicy broth",
-        "baek jjamppong white seafood noodle soup with no black bean sauce",
-        "a photo of red jjamppong soup visible beside black bean noodles",
-        "a photo of jajangmyeon served together with jjamppong in the same frame",
-        "a photo of Korean sweet and sour pork tangsuyuk fried pork pieces with red dipping sauce",
-        "a close-up photo of crispy battered fried pork tangsuyuk without any noodles",
-        "a photo of fried pork tangsuyuk visible beside jajangmyeon",
-        "a photo of chopsticks holding fried pork instead of black bean noodles",
-        "a photo of golden battered deep fried food with sauce and no noodles",
-        "a photo of kkanpunggi fried chicken with sauce and no black bean noodles",
-        "a photo of palbochae seafood stir fry without any noodles",
-        "a photo of yangjangpi assorted seafood and vegetables platter without noodles",
-        "a photo of fried dumplings only with no jajangmyeon",
-        "a photo of fried rice without any black bean sauce noodles",
-        "a photo of a paper menu filled with text",
-        "a photo of a restaurant exterior signboard",
-        "a photo of people without food",
-        "a photo of alcoholic drinks without noodles"
-      ],
-      "짬뽕": [
-        "a photo of Korean black bean noodles jajangmyeon",
-        "a photo of fried rice",
-        "a photo of a rice bowl with stir fried toppings",
-        "a photo of jjamppong rice without noodles",
-        "a photo of sweet and sour pork tangsuyuk",
-        "a photo of tangsuyuk fried pork covered with sauce",
-        "a close-up photo of crispy fried pork pieces without noodles",
-        "a photo of deep fried food on a plate without noodle soup",
-        "a photo of fried dumplings only",
-        "a photo of plain white noodle soup without seafood or vegetables",
-        "a photo of a paper menu filled with text",
-        "a photo of a restaurant exterior signboard",
-        "a photo of people without food",
-        "a photo of alcoholic drinks without noodles"
-      ]
-    },
-    "thresholds": {
-      "_comment": "Foodness hard gate. 종이/메뉴판/영수증/간판처럼 음식이 아닌 사진이 대표로 선정되지 않도록 더 엄격하게 잡았다. 너무 많이 탈락하면 max_non_food_penalty를 0.22로, max_wrong_food_penalty를 0.25로 다시 풀어주면 된다.",
-      "min_food_presence": 0.18,
-      "max_non_food_penalty": 0.18,
-      "min_category_presence": 0.15,
-      "max_wrong_food_penalty": 0.2,
-      "food_presence_weight": 1.0,
-      "non_food_penalty_weight": 0.6,
-      "category_bonus_weight": 0.3,
-      "wrong_food_weight": 0.7,
-      "linked_text_weight": 0.0,
-      "duplicate_threshold": 0.92,
-      "duplicate_penalty_weight": 0.3,
-      "max_per_review": 1,
-      "max_per_review_loose": 2,
-      "max_per_restaurant": 2,
-      "max_per_restaurant_axis": 1,
-      "fallback_target_count": 6,
-      "fallback_min_combined": 0.1
     }
   }
 }
