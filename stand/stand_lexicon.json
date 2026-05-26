@@ -1100,26 +1100,6 @@
           "plain tteokbokki with only white rice cakes and absolutely no toppings"
         ]
       },
-      "떡종류": {
-        "positive": [
-          "쌀떡",
-          "쫄깃",
-          "탱글",
-          "탱탱"
-        ],
-        "negative": [
-          "밀떡",
-          "딱딱",
-          "퍼진",
-          "무른"
-        ],
-        "clip_prompt_pos": [
-          "chewy elastic rice cake tteokbokki"
-        ],
-        "clip_prompt_neg": [
-          "mushy soft rice cake"
-        ]
-      },
       "세트구성": {
         "positive": [
           "세트",
@@ -2945,27 +2925,6 @@
         "clip_prompt_neg": [
           "photo of withered brown lettuce in a burger",
           "photo of a burger without any visible vegetables"
-        ]
-      },
-      "소스조화": {
-        "positive": [
-          "단짠",
-          "조화",
-          "소스 넉넉",
-          "중독성"
-        ],
-        "negative": [
-          "짜",
-          "소스 부족",
-          "느끼"
-        ],
-        "clip_prompt_pos": [
-          "close-up photo of creamy sauce and melted cheese dripping from a hamburger",
-          "photo of a burger with glossy sauce on the patty"
-        ],
-        "clip_prompt_neg": [
-          "photo of a dry hamburger without sauce",
-          "photo of a hamburger with sparse plain bread"
         ]
       }
     },

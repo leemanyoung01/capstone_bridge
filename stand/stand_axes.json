@@ -271,7 +271,6 @@
       "use_food_specific_axes": true,
       "shared_taste_allowlist": [
         "짠맛",
-        "단맛",
         "감칠맛",
         "고소함",
         "느끼함",
@@ -336,6 +335,118 @@
         "짠맛",
         "감칠맛",
         "쫄깃함"
+      ]
+    },
+    "칼국수": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "감칠맛",
+        "고소함",
+        "느끼함",
+        "담백함",
+        "매운맛",
+        "짠맛",
+        "쫄깃함",
+        "촉촉함",
+        "온도"
+      ]
+    },
+    "삼겹살": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "감칠맛",
+        "고소함",
+        "느끼함",
+        "담백함",
+        "바삭함",
+        "짠맛",
+        "촉촉함"
+      ]
+    },
+    "족발": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "감칠맛",
+        "고소함",
+        "느끼함",
+        "담백함",
+        "매운맛",
+        "바삭함",
+        "온도",
+        "짠맛",
+        "쫄깃함",
+        "촉촉함"
+      ]
+    },
+    "한상": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "감칠맛",
+        "고소함",
+        "단맛",
+        "담백함",
+        "매운맛",
+        "바삭함",
+        "온도",
+        "짠맛",
+        "쫄깃함",
+        "촉촉함"
+      ]
+    },
+    "파스타": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "감칠맛",
+        "고소함",
+        "느끼함",
+        "담백함",
+        "바삭함",
+        "온도",
+        "짠맛",
+        "쫄깃함",
+        "촉촉함"
+      ]
+    },
+    "조개": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "감칠맛",
+        "고소함",
+        "느끼함",
+        "담백함",
+        "바삭함",
+        "온도",
+        "짠맛",
+        "쫄깃함",
+        "촉촉함"
+      ]
+    },
+    "스테이크": {
+      "include_shared_taste_axes": false,
+      "include_meta_axes": true,
+      "use_food_specific_axes": true,
+      "shared_taste_allowlist": [
+        "감칠맛",
+        "고소함",
+        "느끼함",
+        "담백함",
+        "바삭함",
+        "온도",
+        "짠맛",
+        "쫄깃함",
+        "촉촉함"
       ]
     }
   },
@@ -441,20 +552,8 @@
         "label": "토핑 풍부함",
         "group": "떡볶이특화"
       },
-      "떡종류": {
-        "label": "떡 종류",
-        "group": "떡볶이특화"
-      },
       "세트구성": {
         "label": "세트 구성",
-        "group": "떡볶이특화"
-      },
-      "매운달콤밸런스": {
-        "label": "매운·달콤 밸런스",
-        "group": "떡볶이특화"
-      },
-      "매콤달콤밸런스": {
-        "label": "매콤달콤 밸런스",
         "group": "떡볶이특화"
       }
     },
@@ -769,10 +868,6 @@
       },
       "야채신선도": {
         "label": "야채 신선도",
-        "group": "버거특화"
-      },
-      "소스조화": {
-        "label": "소스 조화",
         "group": "버거특화"
       }
     },
