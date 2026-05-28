@@ -271,6 +271,12 @@ def insert_review(conn, restaurant_id: int, review: dict) -> Optional[int]:
         "ck":      crawl_kw,
     }
 
+    # PostgreSQL은 문자열에 NUL(0x00)을 못 넣는다. 네이버 리뷰 텍스트에 간혹
+    # 섞여 들어오는 \x00을 제거해야 INSERT 전체가 터지지 않는다.
+    for _k, _v in params.items():
+        if isinstance(_v, str) and "\x00" in _v:
+            params[_k] = _v.replace("\x00", "")
+
     with conn.cursor() as cur:
         if _has_crawl_keyword_col(cur):
             cur.execute("""
@@ -874,7 +880,7 @@ def get_profiles_by_keyword(conn, keyword: str) -> list[dict]:
     result = []
     for row in rows:
         d = dict(row)
-        for field in ("text_vector", "image_vector", "fused_vector", "evidence_json", "semantic_vector"):
+        for field in ("text_vector", "image_vector", "fused_vector", "evidence_json", "semantic_vector", "semantic_evidence"):
             raw = d.pop(field, None)
             out_key = {
                 "text_vector": "text_vector",
@@ -882,6 +888,7 @@ def get_profiles_by_keyword(conn, keyword: str) -> list[dict]:
                 "fused_vector": "fused_vector",
                 "evidence_json": "evidence",
                 "semantic_vector": "semantic_vector",
+                "semantic_evidence": "semantic_evidence",
             }[field]
             d[out_key] = json.loads(raw) if isinstance(raw, str) else (raw or {})
         result.append(d)

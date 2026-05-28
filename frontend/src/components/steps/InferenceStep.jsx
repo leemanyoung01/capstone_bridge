@@ -574,7 +574,7 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                                         return (
                                           <>
                                             <div style={{ fontWeight: 800, marginBottom: '8px' }}>
-                                              전체 리뷰 {data.total_reviews}건에서 추출
+                                              이 식당 리뷰 {data.total_reviews}건에서 추출
                                               <span style={{ fontWeight: 400, color: 'var(--text-gray)', fontSize: '11px', marginLeft: '6px' }}>
                                                 {pickedAxes.length > 0
                                                   ? `(고른 ${displayAxes.length}축만 표시)`
@@ -618,10 +618,35 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                                                 </tbody>
                                               </table>
                                             </div>
+                                            {/* BERT가 추가로 찾은 의미 근거 (lex가 놓친 것, 강한 축만) */}
+                                            {(() => {
+                                              const withSemEv = displayAxes.filter(
+                                                a => (a.semantic_evidence_samples || []).length > 0
+                                              );
+                                              if (withSemEv.length === 0) return null;
+                                              return (
+                                                <div style={{ marginTop: '12px', borderTop: '1px dashed var(--border-color)', paddingTop: '10px' }}>
+                                                  <div style={{ fontWeight: 800, marginBottom: '6px', fontSize: '11px' }}>
+                                                    🤖 BERT가 의미로 찾은 근거 (lex 키워드 없이 매칭)
+                                                  </div>
+                                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                    {withSemEv.map((a) => (
+                                                      <div key={a.axis} style={{ fontSize: '11px', background: 'var(--bg-color)', borderRadius: '8px', padding: '6px 10px' }}>
+                                                        <span style={{ fontWeight: 800, color: 'var(--btn-dark)' }}>#{a.label || a.axis}</span>{' '}
+                                                        <span style={{ color: 'var(--text-gray)', fontStyle: 'italic' }}>
+                                                          "{(a.semantic_evidence_samples || [])[0]}"
+                                                        </span>
+                                                      </div>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                              );
+                                            })()}
                                             <div style={{ marginTop: '10px', fontSize: '10px', color: 'var(--text-gray)', lineHeight: 1.5 }}>
                                               ※ 매칭 리뷰 = lex 키워드가 본문에 포함된 리뷰 수.
                                               lex 점수 = Food_profiler 정규화 결과.
-                                              BERT 점수 = KoSBERT 의미 매칭. 둘 다 -1 ~ 1 범위.
+                                              BERT 점수 = KoSBERT 의미 매칭 (둘 다 -1~1).
+                                              🤖 BERT 근거 = lex 키워드 없이 의미로 찾은 문장 (강한 축만, threshold 적용).
                                             </div>
                                           </>
                                         );

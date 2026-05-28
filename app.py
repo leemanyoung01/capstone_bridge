@@ -73,11 +73,13 @@ def _load_all_data() -> tuple[dict, dict, dict]:
                 tv   = p.get("text_vector")  or {}
                 iv   = p.get("image_vector") or {}
                 sv   = p.get("semantic_vector") or {}
+                se   = p.get("semantic_evidence") or {}
                 restaurants[name] = {
                     "fused_vector":     fv if fv else tv,
                     "text_only_vector": tv,
                     "image_sentiment":  iv,
                     "semantic_vector":  sv,
+                    "semantic_evidence": se,
                     "normalized":       tv,
                     "has_image_data":   bool(p.get("has_image_data", False)),
                     "evidence":         p.get("evidence") or {},
@@ -494,17 +496,22 @@ def api_axis_stats():
     text_vec = rest_info.get("text_only_vector") or {}
     sem_vec  = rest_info.get("semantic_vector") or {}
     evidence = rest_info.get("evidence") or {}
+    sem_evidence = rest_info.get("semantic_evidence") or {}
 
-    # 실제 리뷰 본문을 DB에서 fetch — 카운트용
+    # 실제 리뷰 본문을 DB에서 fetch — 카운트용.
+    # 주의: crawl_keyword로 필터하면 안 됨. 일부 키워드(예: 김치찌개)는
+    # 리뷰가 crawl_keyword로 태깅 안 되고 식당명/이미지 prefix로만 매칭됨
+    # (Food_profiler의 source boundary 참고). 식당은 이미 이 키워드 bundle에
+    # 속하므로, 그 식당의 모든 리뷰를 가져오면 됨.
     reviews_texts: list[str] = []
     try:
         with get_conn() as conn, conn.cursor() as cur:
             cur.execute("""
                 SELECT rev.content FROM reviews rev
                 JOIN restaurants r ON r.restaurant_id = rev.restaurant_id
-                WHERE r.name = %s AND rev.crawl_keyword = %s
+                WHERE r.name = %s
                   AND rev.content IS NOT NULL AND rev.content != ''
-            """, (restaurant, kw))
+            """, (restaurant,))
             reviews_texts = [r["content"] for r in cur.fetchall()]
     except Exception as e:
         return jsonify({"error": f"DB read failed: {e}"}), 500
@@ -525,6 +532,9 @@ def api_axis_stats():
         tv_score = text_vec.get(axis_name)
         sv_score = sem_vec.get(axis_name)
         ev_list = evidence.get(axis_name, []) or []
+        # BERT 의미 근거 (semantic_text_profiler가 저장한 문장)
+        sem_ev = sem_evidence.get(axis_name, []) or []
+        sem_ev_sentences = [e.get("sentence", "") for e in sem_ev if isinstance(e, dict)]
 
         axes_stats.append({
             "axis":  axis_name,
@@ -535,6 +545,8 @@ def api_axis_stats():
             "total_hits":    total_hits,
             "hit_rate":      round(total_hits / total, 4) if total else 0.0,
             "lex_keywords_count": len(pos_kws) + len(neg_kws),
+            "semantic_evidence_count": len(sem_ev),
+            "semantic_evidence_samples": sem_ev_sentences[:3],
             "text_vector_score":     (round(float(tv_score), 4) if tv_score is not None else None),
             "semantic_vector_score": (round(float(sv_score), 4) if sv_score is not None else None),
             "evidence_count":  len(ev_list),
