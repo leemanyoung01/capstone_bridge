@@ -874,13 +874,14 @@ def get_profiles_by_keyword(conn, keyword: str) -> list[dict]:
     result = []
     for row in rows:
         d = dict(row)
-        for field in ("text_vector", "image_vector", "fused_vector", "evidence_json"):
+        for field in ("text_vector", "image_vector", "fused_vector", "evidence_json", "semantic_vector"):
             raw = d.pop(field, None)
             out_key = {
                 "text_vector": "text_vector",
                 "image_vector": "image_vector",
                 "fused_vector": "fused_vector",
                 "evidence_json": "evidence",
+                "semantic_vector": "semantic_vector",
             }[field]
             d[out_key] = json.loads(raw) if isinstance(raw, str) else (raw or {})
         result.append(d)

@@ -55,6 +55,30 @@ const getLabel = (key) => AXIS_LABEL_MAP[key] || key;
 const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '', onRestart }) => {
   const [expanded, setExpanded] = useState({});
   const toggle = (idx) => setExpanded(p => ({ ...p, [idx]: !p[idx] }));
+  // 계산 근거 sub-toggle (자세히 보기 안에서만 노출)
+  const [breakdownOpen, setBreakdownOpen] = useState({});
+  const toggleBreakdown = (idx) => setBreakdownOpen(p => ({ ...p, [idx]: !p[idx] }));
+  // 축별 추출 정확도 (작업 A) — lazy load
+  const [statsOpen, setStatsOpen] = useState({});
+  const [statsCache, setStatsCache] = useState({});
+  const [statsLoading, setStatsLoading] = useState({});
+  const toggleStats = async (idx, restaurantName) => {
+    const wasOpen = !!statsOpen[idx];
+    setStatsOpen(p => ({ ...p, [idx]: !wasOpen }));
+    if (!wasOpen && !statsCache[idx] && !statsLoading[idx]) {
+      setStatsLoading(p => ({ ...p, [idx]: true }));
+      try {
+        const url = `/api/axis_stats?restaurant=${encodeURIComponent(restaurantName)}&keyword=${encodeURIComponent(keyword)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        setStatsCache(p => ({ ...p, [idx]: data }));
+      } catch (e) {
+        setStatsCache(p => ({ ...p, [idx]: { error: String(e) } }));
+      } finally {
+        setStatsLoading(p => ({ ...p, [idx]: false }));
+      }
+    }
+  };
 
   if (error) {
     return (
@@ -372,6 +396,243 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                             </div>
                           </div>
                         )}
+
+                        {/* ── 계산 근거 (opt-in sub-toggle) ── */}
+                        {item.match_breakdown && (() => {
+                          const br = item.match_breakdown;
+                          const main = br.main || {};
+                          const ev = br.evidence_split || {};
+                          const tb = ev.text_basis || {};
+                          const ib = ev.image_basis || {};
+                          const isOpen = !!breakdownOpen[idx];
+                          return (
+                            <div style={{ marginTop: '4px' }}>
+                              <motion.button
+                                onClick={() => toggleBreakdown(idx)}
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
+                                style={{
+                                  width: '100%',
+                                  background: 'var(--bg-color)',
+                                  border: '1px dashed var(--border-color)',
+                                  borderRadius: '12px',
+                                  padding: '8px 14px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  color: 'var(--text-gray)',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  fontFamily: 'inherit',
+                                }}
+                              >
+                                <span>🔍 계산 근거 (이 일치도가 어떻게 나왔는지)</span>
+                                {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                              </motion.button>
+                              <AnimatePresence initial={false}>
+                                {isOpen && (
+                                  <motion.div
+                                    key="br"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    style={{ overflow: 'hidden' }}
+                                  >
+                                    <div style={{
+                                      marginTop: '8px',
+                                      background: 'var(--white)',
+                                      border: '1px solid var(--border-color)',
+                                      borderRadius: '12px',
+                                      padding: '14px',
+                                      fontSize: '12px',
+                                      lineHeight: 1.7,
+                                      color: 'var(--text-dark)',
+                                      fontFamily: 'monospace',
+                                    }}>
+                                      {/* ─ 메인 점수 산출식 ─ */}
+                                      <div style={{ fontWeight: 800, marginBottom: '8px', fontFamily: 'inherit' }}>
+                                        일치도 {br.final_percent}% — 메인 산출식
+                                      </div>
+                                      <div style={{ color: 'var(--text-gray)', marginBottom: '10px', fontSize: '11px' }}>
+                                        {main.formula}
+                                      </div>
+                                      <div style={{ background: 'var(--bg-color)', padding: '10px 12px', borderRadius: '8px', marginBottom: '12px' }}>
+                                        <div>taste 코사인 = <strong>{main.taste_cosine}</strong> (취향 축 유사도)</div>
+                                        <div>meta 코사인 = {main.meta_cosine} (가성비/양많음 등)</div>
+                                        <div>meta 부스트 = {main.meta_boost_weight} × max(0, {main.meta_cosine}) = {main.meta_boost_amount}</div>
+                                        <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '6px', marginTop: '6px' }}>
+                                          합계 = {main.sim_raw} → clamp(-1~1) = {main.sim_clamped}
+                                        </div>
+                                        <div>→ × 100 = <strong>{br.final_percent}%</strong></div>
+                                      </div>
+
+                                      {/* ─ 텍스트/이미지 영향 비중 (별도 설명) ─ */}
+                                      <div style={{ fontWeight: 800, marginBottom: '6px', fontFamily: 'inherit', marginTop: '6px' }}>
+                                        텍스트 vs 이미지 영향 비중
+                                      </div>
+                                      <div style={{ color: 'var(--text-gray)', marginBottom: '8px', fontSize: '11px' }}>
+                                        ※ 위 일치도와 별개. 이 식당에서 텍스트/이미지 데이터가 각각 얼마나 기여했는지의 비율 표시용.
+                                      </div>
+                                      <div style={{ background: 'var(--bg-color)', padding: '10px 12px', borderRadius: '8px', marginBottom: '6px' }}>
+                                        <div style={{ fontWeight: 700 }}>📝 텍스트 영향 = {tb.value}</div>
+                                        <div style={{ color: 'var(--text-gray)', fontSize: '11px', marginTop: '2px' }}>
+                                          {tb.input_text_w} × {tb.text_match_score} × {tb.text_support}
+                                        </div>
+                                      </div>
+                                      <div style={{ background: 'var(--bg-color)', padding: '10px 12px', borderRadius: '8px', marginBottom: '8px' }}>
+                                        <div style={{ fontWeight: 700 }}>📷 이미지 영향 = {ib.value}</div>
+                                        <div style={{ color: 'var(--text-gray)', fontSize: '11px', marginTop: '2px' }}>
+                                          {ib.input_img_w} × {ib.image_match_score} × {ib.image_support}
+                                        </div>
+                                      </div>
+                                      <div style={{ fontSize: '11px', color: 'var(--text-gray)' }}>
+                                        → {tb.value} + {ib.value} = {ev.basis_total}, 비율 텍스트 {Math.round((ev.text_ratio || 0) * 100)}% / 이미지 {Math.round((ev.image_ratio || 0) * 100)}%
+                                      </div>
+
+                                      <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--text-gray)', fontFamily: 'inherit' }}>
+                                        <span>모델: <strong>{br.model_variant}</strong></span>
+                                        {br.model_variant === 'semantic' && (
+                                          <span> · BERT 가중치 {br.semantic_weight}</span>
+                                        )}
+                                        <span> · 이미지 {br.use_image ? 'ON' : 'OFF'}</span>
+                                        <span> · ablation: <code>{br.ablation_tag}</code></span>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          );
+                        })()}
+
+                        {/* ── 축별 추출 정확도 (작업 A, opt-in sub-toggle) ── */}
+                        {(() => {
+                          const isStatsOpen = !!statsOpen[idx];
+                          const isStatsLoading = !!statsLoading[idx];
+                          const data = statsCache[idx];
+                          return (
+                            <div style={{ marginTop: '4px' }}>
+                              <motion.button
+                                onClick={() => toggleStats(idx, item.name)}
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
+                                style={{
+                                  width: '100%',
+                                  background: 'var(--bg-color)',
+                                  border: '1px dashed var(--border-color)',
+                                  borderRadius: '12px',
+                                  padding: '8px 14px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  color: 'var(--text-gray)',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  fontFamily: 'inherit',
+                                }}
+                              >
+                                <span>📊 축별 추출 정확도 (lex/BERT가 리뷰에서 얼마나 잡았나)</span>
+                                {isStatsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                              </motion.button>
+                              <AnimatePresence initial={false}>
+                                {isStatsOpen && (
+                                  <motion.div
+                                    key="stats"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    style={{ overflow: 'hidden' }}
+                                  >
+                                    <div style={{
+                                      marginTop: '8px',
+                                      background: 'var(--white)',
+                                      border: '1px solid var(--border-color)',
+                                      borderRadius: '12px',
+                                      padding: '14px',
+                                      fontSize: '12px',
+                                      color: 'var(--text-dark)',
+                                    }}>
+                                      {isStatsLoading && (
+                                        <div style={{ color: 'var(--text-gray)' }}>불러오는 중...</div>
+                                      )}
+                                      {data && data.error && (
+                                        <div style={{ color: '#D94452' }}>에러: {data.error}</div>
+                                      )}
+                                      {data && !data.error && (() => {
+                                        // 사용자가 TasteStep에서 고른 축만 필터링
+                                        const userPickedAxes = new Set(
+                                          Object.keys(scores || {}).filter(ax => (scores[ax] || 0) > 0)
+                                        );
+                                        const allAxes = data.axes || [];
+                                        const pickedAxes = allAxes.filter(a => userPickedAxes.has(a.axis));
+                                        // 사용자 픽이 없으면 (예: 이미지만 고른 경우) top 5로 폴백
+                                        const displayAxes = pickedAxes.length > 0 ? pickedAxes : allAxes.slice(0, 5);
+                                        return (
+                                          <>
+                                            <div style={{ fontWeight: 800, marginBottom: '8px' }}>
+                                              전체 리뷰 {data.total_reviews}건에서 추출
+                                              <span style={{ fontWeight: 400, color: 'var(--text-gray)', fontSize: '11px', marginLeft: '6px' }}>
+                                                {pickedAxes.length > 0
+                                                  ? `(고른 ${displayAxes.length}축만 표시)`
+                                                  : `(취향 픽 없음 — top ${displayAxes.length}축 표시)`}
+                                              </span>
+                                            </div>
+                                            <div style={{ overflowX: 'auto' }}>
+                                              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                                                <thead>
+                                                  <tr style={{ background: 'var(--bg-color)' }}>
+                                                    <th style={{ textAlign: 'left',  padding: '6px 8px' }}>축</th>
+                                                    <th style={{ textAlign: 'right', padding: '6px 8px' }}>매칭 리뷰</th>
+                                                    <th style={{ textAlign: 'right', padding: '6px 8px' }}>매칭률</th>
+                                                    <th style={{ textAlign: 'right', padding: '6px 8px' }}>lex 점수</th>
+                                                    <th style={{ textAlign: 'right', padding: '6px 8px' }}>BERT 점수</th>
+                                                    <th style={{ textAlign: 'right', padding: '6px 8px' }}>근거 sentence</th>
+                                                  </tr>
+                                                </thead>
+                                                <tbody>
+                                                  {displayAxes.map((a) => (
+                                                    <tr key={a.axis} style={{ borderTop: '1px solid var(--border-color)' }}>
+                                                      <td style={{ padding: '6px 8px', fontWeight: 700 }}>{a.label || a.axis}</td>
+                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
+                                                        {a.total_hits}
+                                                        <span style={{ color: 'var(--text-gray)', fontSize: '10px' }}>
+                                                          {' '}({a.positive_hits}+/{a.negative_hits}-)
+                                                        </span>
+                                                      </td>
+                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
+                                                        {(a.hit_rate * 100).toFixed(1)}%
+                                                      </td>
+                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
+                                                        {a.text_vector_score != null ? a.text_vector_score.toFixed(3) : '-'}
+                                                      </td>
+                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
+                                                        {a.semantic_vector_score != null ? a.semantic_vector_score.toFixed(3) : '-'}
+                                                      </td>
+                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{a.evidence_count}</td>
+                                                    </tr>
+                                                  ))}
+                                                </tbody>
+                                              </table>
+                                            </div>
+                                            <div style={{ marginTop: '10px', fontSize: '10px', color: 'var(--text-gray)', lineHeight: 1.5 }}>
+                                              ※ 매칭 리뷰 = lex 키워드가 본문에 포함된 리뷰 수.
+                                              lex 점수 = Food_profiler 정규화 결과.
+                                              BERT 점수 = KoSBERT 의미 매칭. 둘 다 -1 ~ 1 범위.
+                                            </div>
+                                          </>
+                                        );
+                                      })()}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          );
+                        })()}
 
                         <EvaluationCard />
                       </div>

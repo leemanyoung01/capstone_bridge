@@ -72,10 +72,12 @@ def _load_all_data() -> tuple[dict, dict, dict]:
                 fv   = p.get("fused_vector") or {}
                 tv   = p.get("text_vector")  or {}
                 iv   = p.get("image_vector") or {}
+                sv   = p.get("semantic_vector") or {}
                 restaurants[name] = {
                     "fused_vector":     fv if fv else tv,
                     "text_only_vector": tv,
                     "image_sentiment":  iv,
+                    "semantic_vector":  sv,
                     "normalized":       tv,
                     "has_image_data":   bool(p.get("has_image_data", False)),
                     "evidence":         p.get("evidence") or {},
@@ -319,6 +321,40 @@ def _confidence(vec: dict, axes: list[str]) -> float:
     return float(min(mean_abs * 2.0, 1.0))  # 0.5 이상이면 confidence 1.0
 
 
+def _clamp01(v: float) -> float:
+    return max(0.0, min(1.0, float(v)))
+
+
+def _axis_preference_match(user_vec: dict, target_vec: dict, axes: list[str]) -> float:
+    """User-selected axis direction vs a restaurant modality vector, normalized to 0~1."""
+    if not user_vec or not target_vec or not axes:
+        return 0.0
+
+    weighted, total = 0.0, 0.0
+    for ax in axes:
+        u = float(user_vec.get(ax, 0.0) or 0.0)
+        if abs(u) <= 0.001:
+            continue
+        r = max(-1.0, min(1.0, float(target_vec.get(ax, 0.0) or 0.0)))
+        axis_score = (r + 1.0) / 2.0 if u >= 0 else (1.0 - r) / 2.0
+        weighted += abs(u) * axis_score
+        total += abs(u)
+
+    if total > 1e-6:
+        return _clamp01(weighted / total)
+
+    u_arr = [float(user_vec.get(ax, 0.0) or 0.0) for ax in axes]
+    r_arr = [float(target_vec.get(ax, 0.0) or 0.0) for ax in axes]
+    return _clamp01((_cosine(u_arr, r_arr) + 1.0) / 2.0)
+
+
+def _relative_support(value: float, max_value: float, floor: float = 0.55) -> float:
+    """Weakly supported restaurants still count, but high-review restaurants get a small lift."""
+    if max_value <= 0:
+        return floor
+    return _clamp01(floor + (1.0 - floor) * math.sqrt(max(0.0, float(value)) / max_value))
+
+
 def _user_img_vec(selected_images, axes):
     scores = {ax:[] for ax in axes}
     selected_axes = set()
@@ -433,6 +469,89 @@ def api_health():
 @app.route("/api/keywords")
 def api_keywords():
     return jsonify(sorted(ALL_DATA.keys()))
+
+
+# ── 축별 추출 정확도 (작업 A) ───────────────────────────────────
+# 식당 × 축마다 실제 리뷰에서 lex 키워드가 얼마나 잡혔는지,
+# BERT semantic 점수는 얼마인지를 한 번에 보여주는 endpoint.
+# 프론트의 '계산 근거' 토글에서 lazy-load해서 표시.
+@app.route("/api/axis_stats")
+def api_axis_stats():
+    restaurant = (request.args.get("restaurant") or "").strip()
+    kw         = _norm_kw(request.args.get("keyword", DEFAULT_KW))
+    if not restaurant:
+        return jsonify({"error": "restaurant required"}), 400
+
+    bundle = ALL_DATA.get(kw)
+    if not bundle:
+        return jsonify({"error": f"'{kw}' 키워드 없음"}), 404
+
+    cfg = bundle.get("axes_config") or {}
+    rest_info = (bundle.get("restaurants") or {}).get(restaurant)
+    if not rest_info:
+        return jsonify({"error": f"'{restaurant}' 데이터 없음"}), 404
+
+    text_vec = rest_info.get("text_only_vector") or {}
+    sem_vec  = rest_info.get("semantic_vector") or {}
+    evidence = rest_info.get("evidence") or {}
+
+    # 실제 리뷰 본문을 DB에서 fetch — 카운트용
+    reviews_texts: list[str] = []
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute("""
+                SELECT rev.content FROM reviews rev
+                JOIN restaurants r ON r.restaurant_id = rev.restaurant_id
+                WHERE r.name = %s AND rev.crawl_keyword = %s
+                  AND rev.content IS NOT NULL AND rev.content != ''
+            """, (restaurant, kw))
+            reviews_texts = [r["content"] for r in cur.fetchall()]
+    except Exception as e:
+        return jsonify({"error": f"DB read failed: {e}"}), 500
+
+    total = len(reviews_texts)
+
+    axes_stats = []
+    for axis_name, axis_info in cfg.items():
+        if axis_info.get("is_meta"):
+            continue
+        pos_kws = axis_info.get("positive_keywords", []) or []
+        neg_kws = axis_info.get("negative_keywords", []) or []
+
+        pos_hits = sum(1 for r in reviews_texts if any(kw_str and kw_str in r for kw_str in pos_kws))
+        neg_hits = sum(1 for r in reviews_texts if any(kw_str and kw_str in r for kw_str in neg_kws))
+        total_hits = pos_hits + neg_hits
+
+        tv_score = text_vec.get(axis_name)
+        sv_score = sem_vec.get(axis_name)
+        ev_list = evidence.get(axis_name, []) or []
+
+        axes_stats.append({
+            "axis":  axis_name,
+            "label": axis_info.get("label", axis_name) if isinstance(axis_info, dict) else axis_name,
+            "group": axis_info.get("group", "기타"),
+            "positive_hits": pos_hits,
+            "negative_hits": neg_hits,
+            "total_hits":    total_hits,
+            "hit_rate":      round(total_hits / total, 4) if total else 0.0,
+            "lex_keywords_count": len(pos_kws) + len(neg_kws),
+            "text_vector_score":     (round(float(tv_score), 4) if tv_score is not None else None),
+            "semantic_vector_score": (round(float(sv_score), 4) if sv_score is not None else None),
+            "evidence_count":  len(ev_list),
+            "evidence_samples": ev_list[:3],
+            "positive_keywords": pos_kws,
+            "negative_keywords": neg_kws,
+        })
+
+    # 축 정렬: total_hits 많은 순
+    axes_stats.sort(key=lambda x: -x["total_hits"])
+
+    return jsonify({
+        "restaurant":    restaurant,
+        "keyword":       kw,
+        "total_reviews": total,
+        "axes":          axes_stats,
+    })
 
 
 @app.route("/api/config")
@@ -700,11 +819,18 @@ def api_recommend():
         user_prefs      = body.get("text_preferences", {})
         selected_images = body.get("selected_images", [])
         use_fusion      = body.get("use_image_fusion", False)
+        use_semantic    = body.get("use_semantic", True)   # BERT semantic 가산 (default ON)
+        semantic_weight = float(body.get("semantic_weight", 0.5))  # 0=baseline, 1=semantic only
+        # 평가 ablation용: false면 식당 벡터에서 image_vector 영향 제거 (text_only_vector만 사용)
+        use_image       = bool(body.get("use_image", True))
     else:
         kw              = _norm_kw(body.get("_keyword", DEFAULT_KW))
         user_prefs      = {k:v for k,v in body.items() if k != "_keyword"}
         selected_images = []
         use_fusion      = False
+        use_semantic    = True
+        semantic_weight = 0.5
+        use_image       = True
 
     bundle = ALL_DATA.get(kw)
     if not bundle:
@@ -719,6 +845,7 @@ def api_recommend():
 
     # 사용자 벡터
     user_tv = {ax: float(user_prefs.get(ax, 0.0)) for ax in all_axes}
+    user_iv = {}
     if use_fusion and selected_images:
         user_iv = _user_img_vec(selected_images, all_axes)
         user_vec_dict, user_weights, fusion_mode = _fuse_dynamic(user_tv, user_iv, all_axes)
@@ -728,14 +855,24 @@ def api_recommend():
     user_taste = [user_vec_dict.get(ax, 0.0) for ax in taste_axes]
     user_meta  = [user_vec_dict.get(ax, 0.0) for ax in meta_axes]
 
+    restaurants = bundle.get("restaurants") or {}
+    max_keyword_reviews = max(
+        [float(info.get("keyword_reviews", 0) or 0) for info in restaurants.values() if isinstance(info, dict)] or [1.0]
+    )
+
     results = []
-    for name, info in (bundle.get("restaurants") or {}).items():
+    for name, info in restaurants.items():
         if not isinstance(info, dict):
             continue
 
-        # 식당 벡터: fused → text → normalized 우선순위
+        # 식당 벡터: 4-way ablation을 위해 use_image 따라 후보 키 결정
+        #   use_image=True  → fused → text → normalized (CLIP image 포함)
+        #   use_image=False → text_only_vector → normalized (lex만)
         vec_dict = None
-        for key in ("fused_vector", "text_only_vector", "normalized"):
+        candidate_keys = (("fused_vector", "text_only_vector", "normalized")
+                          if use_image
+                          else ("text_only_vector", "normalized"))
+        for key in candidate_keys:
             if isinstance(info.get(key), dict):
                 vec_dict = info[key]
                 break
@@ -744,6 +881,22 @@ def api_recommend():
 
         text_vec = info.get("text_only_vector") or vec_dict
         img_vec  = info.get("image_sentiment") or {}
+        sem_vec  = info.get("semantic_vector") or {}
+
+        # ── BERT semantic 가산 (옵트인) ───────────────────────────
+        # use_semantic이 False면 baseline 동작.
+        # True이고 semantic_vector가 있으면 (1-w)*baseline + w*semantic 으로 fuse.
+        # 평가 파이프라인에서 toggle 가능 → before/after 비교용.
+        if use_semantic and sem_vec:
+            w = max(0.0, min(1.0, semantic_weight))
+            fused_with_sem = {}
+            for ax in set(vec_dict.keys()) | set(sem_vec.keys()):
+                if str(ax).startswith("_"):
+                    fused_with_sem[ax] = vec_dict.get(ax, 0.0)
+                    continue
+                v = (1.0 - w) * float(vec_dict.get(ax, 0.0)) + w * float(sem_vec.get(ax, 0.0))
+                fused_with_sem[ax] = round(v, 4)
+            vec_dict = fused_with_sem
 
         rest_taste = [float(vec_dict.get(ax, 0.0)) for ax in taste_axes]
         rest_meta  = [float(vec_dict.get(ax, 0.0)) for ax in meta_axes]
@@ -770,13 +923,49 @@ def api_recommend():
         top_axes = sorted(axis_contributions.items(), key=lambda x: -x[1])[:5]
         top_axes_names = [ax for ax, _ in top_axes]
 
-        # confidence
-        text_conf = _confidence(text_vec, taste_axes)
+        # Display-only evidence ratio.
+        # Keep ranking/match_percent on the fused cosine above; only explain how much
+        # each restaurant is supported by text vs image evidence for this user input.
+        text_explain_vec = text_vec
+        if use_semantic and sem_vec:
+            w = max(0.0, min(1.0, semantic_weight))
+            text_explain_vec = {}
+            for ax in set(text_vec.keys()) | set(sem_vec.keys()):
+                if str(ax).startswith("_"):
+                    text_explain_vec[ax] = text_vec.get(ax, 0.0)
+                    continue
+                text_explain_vec[ax] = round(
+                    (1.0 - w) * float(text_vec.get(ax, 0.0) or 0.0)
+                    + w * float(sem_vec.get(ax, 0.0) or 0.0),
+                    4,
+                )
+
+        text_conf = _confidence(text_explain_vec, taste_axes)
         img_conf  = _confidence(img_vec, taste_axes) if info.get("has_image_data") else 0.0
         total_conf = text_conf + img_conf
         if total_conf > 1e-6:
-            text_w = round(text_conf / total_conf, 3)
-            img_w  = round(1.0 - text_w, 3)
+            profile_text_w = round(text_conf / total_conf, 3)
+            profile_img_w  = round(1.0 - profile_text_w, 3)
+        else:
+            profile_text_w, profile_img_w = 1.0, 0.0
+
+        input_text_w = round(float(user_weights.get("text", 1.0)), 3)
+        input_img_w  = round(float(user_weights.get("image", 0.0)), 3)
+        text_match_score = _axis_preference_match(user_tv, text_explain_vec, taste_axes)
+        image_match_score = (
+            _axis_preference_match(user_iv, img_vec, taste_axes)
+            if input_img_w > 0 and info.get("has_image_data")
+            else 0.0
+        )
+        text_support = _relative_support(info.get("keyword_reviews", 0) or 0, max_keyword_reviews)
+        image_support = _clamp01(float(info.get("image_coverage", 0) or 0)) if info.get("has_image_data") else 0.0
+
+        text_basis = input_text_w * text_match_score * text_support
+        image_basis = input_img_w * image_match_score * image_support
+        basis_total = text_basis + image_basis
+        if basis_total > 1e-6:
+            text_w = round(text_basis / basis_total, 3)
+            img_w = round(1.0 - text_w, 3)
         else:
             text_w, img_w = 1.0, 0.0
 
@@ -817,6 +1006,52 @@ def api_recommend():
         # pseudo-label lookup (없으면 None)
         pseudo_rel = _pseudo_relevance(kw, user_prefs, name)
 
+        # ── '계산 근거' 묶음 (B 작업) ──
+        # 정직한 분해: match_percent는 코사인 기반.
+        # text_basis/image_basis는 별도 — '이 점수의 텍스트/이미지 영향 비중' 표시용.
+        # (이전 버전에서 두 개를 혼동해서 표시한 것을 수정)
+        match_breakdown = {
+            "final_percent": max(0, min(100, round(float(sim) * 100))),
+
+            # ▶ 메인 점수 (랭킹/match_percent 산출식)
+            "main": {
+                "formula": "match% = clamp(taste_cosine + META_BOOST × max(0, meta_cosine)) × 100",
+                "taste_cosine":      round(float(taste_sim), 4),
+                "meta_cosine":       round(float(meta_sim), 4),
+                "meta_boost_weight": META_BOOST,
+                "meta_boost_amount": round(float(META_BOOST * max(meta_sim, 0)), 4),
+                "sim_raw":           round(float(taste_sim + META_BOOST * max(meta_sim, 0)), 4),
+                "sim_clamped":       round(float(sim), 4),
+            },
+
+            # ▶ 텍스트 vs 이미지 영향 비중 (UI의 '텍스트 N% / 이미지 M%' 출처)
+            "evidence_split": {
+                "note": "위 일치도와 별개 — 이 식당에서 텍스트/이미지가 각각 얼마나 기여했는지의 ratio 표시용",
+                "text_basis": {
+                    "value":  round(text_basis, 4),
+                    "formula": "input_text_w × text_match_score × text_support",
+                    "input_text_w":     round(input_text_w, 3),
+                    "text_match_score": round(text_match_score, 4),
+                    "text_support":     round(text_support, 4),
+                },
+                "image_basis": {
+                    "value":  round(image_basis, 4),
+                    "formula": "input_img_w × image_match_score × image_support",
+                    "input_img_w":       round(input_img_w, 3),
+                    "image_match_score": round(image_match_score, 4),
+                    "image_support":     round(image_support, 4),
+                },
+                "basis_total":  round(basis_total, 4),
+                "text_ratio":   text_w,
+                "image_ratio":  img_w,
+            },
+
+            "model_variant": ("semantic" if use_semantic else "baseline"),
+            "semantic_weight": (semantic_weight if use_semantic else 0.0),
+            "use_image": use_image,
+            "ablation_tag": f"{'I' if use_image else '-'}{'S' if use_semantic else '-'}",
+        }
+
         results.append({
             # 기존 필드 (frontend fallback 호환)
             "name":           name,
@@ -833,6 +1068,7 @@ def api_recommend():
             "similarity_score":   round(float(sim), 4),
             "rank_score":         round(float(sim), 4),
             "match_percent":      max(0, min(100, round(float(sim) * 100))),
+            "match_breakdown":    match_breakdown,
             "top_axes":           top_axes_names[:3],
             "top_axes_labels":    [label_map.get(a, a) for a in top_axes_names[:3]],
             "axis_scores":        axis_scores,
@@ -844,6 +1080,14 @@ def api_recommend():
             "fusion_weights":     {"text": text_w, "image": img_w},
             "text_evidence_ratio":  text_w,
             "image_evidence_ratio": img_w,
+            "input_fusion_weights": {"text": input_text_w, "image": input_img_w},
+            "profile_fusion_weights": {"text": profile_text_w, "image": profile_img_w},
+            "profile_text_evidence_ratio":  profile_text_w,
+            "profile_image_evidence_ratio": profile_img_w,
+            "text_match_score": round(text_match_score, 4),
+            "image_match_score": round(image_match_score, 4),
+            "text_support": round(text_support, 4),
+            "image_support": round(image_support, 4),
             "evidence_sentences": evidence_sentences,
             "evidence_sentences_labels": {label_map.get(a, a): v for a, v in evidence_sentences.items()},
             "representative_image": rep_img,
@@ -878,6 +1122,10 @@ def api_recommend():
         "results":         results[:limit],
         "user_vector":     user_vec_dict,
         "label_type":      _RELEVANCE_CACHE.get("label_type", "pseudo-label"),
+        "model_variant":   ("semantic" if use_semantic else "baseline"),
+        "semantic_weight": semantic_weight if use_semantic else 0.0,
+        "use_image":       use_image,
+        "ablation_tag":    f"{'I' if use_image else '-'}{'S' if use_semantic else '-'}",
     }))
 
 
@@ -923,7 +1171,7 @@ def api_reload():
 
 
 if __name__ == "__main__":
-    port  = int(os.environ.get("PORT", 5000))
+    port  = int(os.environ.get("PORT", 5050))  # 5000은 Neo4j Desktop이 점유 → 5050으로 변경
     debug = os.environ.get("FLASK_DEBUG","1") == "1"
     print(f"🚀 http://127.0.0.1:{port}  debug={debug}  keyword={DEFAULT_KW}")
     app.run(debug=debug, host="127.0.0.1", port=port)

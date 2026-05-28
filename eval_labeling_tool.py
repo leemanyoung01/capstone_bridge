@@ -40,7 +40,7 @@ from typing import Optional
 
 import requests
 
-DEFAULT_API = "http://127.0.0.1:5000"
+DEFAULT_API = "http://127.0.0.1:5050"
 DEFAULT_OUTPUT = "eval_labels_human.csv"
 RELEVANT_THRESHOLD = 2     # grade >= 2 → relevance=1 (binary 변환)
 DEFAULT_SCENARIO_LIMIT = 4
