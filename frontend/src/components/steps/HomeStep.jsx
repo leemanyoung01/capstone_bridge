@@ -122,9 +122,6 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
   const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!query.trim()) return alert('음식명을 입력해주세요!');
-    if (!availableKeywords.includes(query.trim())) {
-      return alert(`'${query}' 데이터가 없습니다.`);
-    }
     onStart(query.trim());
   };
 
@@ -139,12 +136,12 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
       overflow: 'hidden',
     }}>
       {/* Background doodles */}
-      <StarDoodle size={14} opacity={0.3} style={{ position: 'absolute', top: '18%', left: '48%' }} />
-      <StarDoodle size={10} opacity={0.25} style={{ position: 'absolute', bottom: '28%', left: '40%' }} />
-      <SparkDoodle style={{ position: 'absolute', top: '40%', left: '28%', opacity: 0.35 }} />
-      <SparkDoodle style={{ position: 'absolute', top: '38%', right: '28%', opacity: 0.3 }} />
-      <WiggleLine style={{ position: 'absolute', top: '14%', right: '30%' }} />
-      <WiggleLine style={{ position: 'absolute', bottom: '18%', left: '28%' }} />
+      <StarDoodle size={14} opacity={0.3} style={{ position: 'absolute', top: '10%', left: '45%' }} />
+      <StarDoodle size={10} opacity={0.25} style={{ position: 'absolute', bottom: '22%', right: '35%' }} />
+      <SparkDoodle style={{ position: 'absolute', top: '30%', left: '20%', opacity: 0.35 }} />
+      <SparkDoodle style={{ position: 'absolute', top: '32%', right: '18%', opacity: 0.3 }} />
+      <WiggleLine style={{ position: 'absolute', top: '12%', right: '25%' }} />
+      <WiggleLine style={{ position: 'absolute', bottom: '15%', left: '25%' }} />
 
       {/* Floating animations removed */}
 
@@ -159,6 +156,7 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
           padding: '24px 20px',
           maxWidth: '700px',
           width: '100%',
+          marginTop: '-8vh',
         }}
       >
         <h1 style={{
@@ -167,14 +165,15 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart }) => {
           lineHeight: 1.12,
           letterSpacing: '-1.5px',
           color: 'var(--text-dark)',
-          marginBottom: '32px',
+          marginBottom: '12px',
           whiteSpace: 'pre-line',
+          textAlign: 'center',
         }}>
           {'오늘 당신의\n미식 여행은?'}
         </h1>
 
         {/* Search bar */}
-        <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
+        <form onSubmit={handleSubmit} style={{ marginBottom: '12px' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',

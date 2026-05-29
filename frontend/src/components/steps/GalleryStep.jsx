@@ -75,7 +75,7 @@ const GalleryStep = ({ keyword, images, selectedImageIdx, onImageToggle, onPrev,
       <WavyLine              style={{ position: 'absolute', bottom: '18%', right: '1%' }} />
 
       {/* ── Heading ── */}
-      <div style={{ textAlign: 'center', padding: '52px 24px 36px' }}>
+      <div style={{ textAlign: 'center', padding: '24px 24px 16px' }}>
         <h2 style={{
           fontSize: 'clamp(28px, 4vw, 46px)',
           fontWeight: 900,
@@ -152,7 +152,8 @@ const GalleryStep = ({ keyword, images, selectedImageIdx, onImageToggle, onPrev,
                   onClick={() => onImageToggle(idx)}
                   style={{
                     // ── Polaroid frame ──
-                    width: '200px',
+                    width: '100%',
+                    maxWidth: '280px',
                     flexShrink: 0,
                     background: 'white',
                     padding: '10px 10px 36px',

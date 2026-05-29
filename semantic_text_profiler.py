@@ -385,7 +385,7 @@ def main():
                         help="prompt당 top-k 리뷰 평균")
     parser.add_argument("--batch-size", type=int, default=32,
                         help="임베딩 배치 크기 (4GB GPU=32 권장)")
-    parser.add_argument("--max-sentences", type=int, default=100000,
+    parser.add_argument("--max-sentences", type=int, default=10000,
                         help="식당당 임베딩할 최대 문장 (메모리/시간 절약)")
     parser.add_argument("--evidence-topk", type=int, default=3,
                         help="축별 BERT 근거 문장 최대 개수")

@@ -28,6 +28,7 @@ import argparse
 import json
 import math
 import sys
+import time
 from itertools import combinations
 from pathlib import Path
 
@@ -52,15 +53,38 @@ VARIANTS = {
 
 # ── 시나리오 생성 ────────────────────────────────────────────
 
-def generate_scenarios(labels: dict[str, dict[str, float]],
-                       n: int = N_SCENARIOS_PER_KEYWORD) -> list[dict]:
-    """라벨 데이터에서 자주 등장하는 축 2개씩 조합 → 시나리오."""
-    axis_freq: dict[str, int] = {}
+def _axis_discrimination(labels: dict[str, dict[str, float]]) -> dict[str, float]:
+    """축별 변별력 = 식당 간 점수 표준편차. 클수록 식당을 잘 가름."""
+    vals: dict[str, list[float]] = {}
     for scores in labels.values():
-        for ax in scores:
-            axis_freq[ax] = axis_freq.get(ax, 0) + 1
-    sorted_axes = [a for a, _ in sorted(axis_freq.items(), key=lambda x: -x[1])]
-    top_axes = sorted_axes[:6]
+        for ax, v in scores.items():
+            vals.setdefault(ax, []).append(float(v))
+    disc: dict[str, float] = {}
+    for ax, xs in vals.items():
+        if len(xs) < 2:
+            disc[ax] = 0.0
+            continue
+        m = sum(xs) / len(xs)
+        disc[ax] = (sum((x - m) ** 2 for x in xs) / len(xs)) ** 0.5
+    return disc
+
+
+def generate_scenarios(labels: dict[str, dict[str, float]],
+                       n: int = N_SCENARIOS_PER_KEYWORD,
+                       valid_axes: set | None = None) -> list[dict]:
+    """변별력(분산) 높은 순으로 축 2개씩 조합 → 시나리오.
+
+    valid_axes(= 시스템이 실제로 점수 매길 수 있는 축, label∩system 교집합)를 주면
+    그 축들로만 시나리오를 만든다. 시스템에 없는 라벨 축(예: 김밥의 '육질')으로
+    평가하면 추천이 0점이라 무의미하므로 반드시 교집합으로 제한해야 한다.
+    """
+    disc = _axis_discrimination(labels)
+    # 변별력 0(모든 식당 동일)인 축은 랭킹에 무의미하므로 제외
+    pool = [ax for ax in disc if disc[ax] > 0 and (valid_axes is None or ax in valid_axes)]
+    pool.sort(key=lambda a: -disc[a])           # 변별력 큰 순 (전반적만족 등 비변별 축은 뒤로)
+    top_axes = pool[:6]
+    if len(top_axes) < 2:
+        return []                                # 평가 가능한 공유 축 부족
     pairs = list(combinations(top_axes, 2))[:n]
     return [
         {"id": f"S{i+1:02d}", "name": f"{a1} + {a2}", "prefs": {a1: 9, a2: 6}}
@@ -96,10 +120,17 @@ def system_ranking(api: str, keyword: str, prefs: dict, *,
         "semantic_weight": semantic_weight,
         "use_image_fusion": False,   # 사용자 이미지 픽은 평가에서 사용 안 함
     }
-    r = requests.post(f"{api}/api/recommend", json=payload, timeout=15)
-    r.raise_for_status()
-    data = r.json()
-    return [item.get("name", "") for item in (data.get("results") or [])[:limit]]
+    last_err = None
+    for attempt in range(3):
+        try:
+            r = requests.post(f"{api}/api/recommend", json=payload, timeout=60)
+            r.raise_for_status()
+            data = r.json()
+            return [item.get("name", "") for item in (data.get("results") or [])[:limit]]
+        except requests.exceptions.RequestException as e:
+            last_err = e
+            time.sleep(1.0 * (attempt + 1))   # 일시적 지연/타임아웃 재시도
+    raise last_err
 
 
 # ── 메트릭 ───────────────────────────────────────────────────
@@ -247,6 +278,8 @@ def main():
                         help=f"콤마구분. 사용 가능: {list(VARIANTS.keys())}")
     parser.add_argument("--labels-dir", default=str(DEFAULT_LABELS_DIR))
     parser.add_argument("--out", default=str(DEFAULT_REPORT_DIR / "evaluation_results.json"))
+    parser.add_argument("--resume", action="store_true",
+                        help="out 파일에 이미 있는 keyword는 건너뜀 (중단 후 이어돌리기)")
     args = parser.parse_args()
 
     variants = [v.strip() for v in args.variants.split(",") if v.strip() in VARIANTS]
@@ -261,30 +294,66 @@ def main():
     except Exception as e:
         sys.exit(f"❌ 백엔드({args.api}) 미응답: {e}\n   → 다른 터미널에서 python app.py 먼저")
 
+    out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def _save(reps):
+        # 기존 파일과 keyword 기준 병합 → 배치로 나눠 돌려도 결과 누적
+        merged: dict = {}
+        if out_path.exists():
+            try:
+                prev = json.load(open(out_path, encoding="utf-8")).get("reports", [])
+                for r in prev:
+                    merged[r.get("keyword")] = r
+            except Exception:
+                pass
+        for r in reps:
+            merged[r.get("keyword")] = r
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "ablation_variants": variants,
+                "semantic_weight": args.semantic_weight,
+                "reports": list(merged.values()),
+            }, f, ensure_ascii=False, indent=2)
+
+    # 시스템(stand) 축 계산용 — label∩system 교집합으로 시나리오 제한
+    sys.path.insert(0, str(ROOT))
+    import Food_profiler as fp
+
+    done_kws = set()
+    if args.resume and out_path.exists():
+        try:
+            done_kws = {r.get("keyword") for r in
+                        json.load(open(out_path, encoding="utf-8")).get("reports", [])}
+            print(f"  ⏭️  --resume: 이미 완료된 {len(done_kws)}개 건너뜀")
+        except Exception:
+            pass
+
     reports = []
     for kw in args.keywords:
+        if kw in done_kws:
+            print(f"  ⏭️  '{kw}' 이미 완료 — skip")
+            continue
         label_file = labels_dir / f"labels_{kw}.json"
         if not label_file.exists():
             print(f"⚠️ '{kw}' 라벨 없음: {label_file}")
             continue
         with open(label_file, encoding="utf-8") as f:
             labels = json.load(f)["labels"]
-        scenarios = generate_scenarios(labels, n=args.n_scenarios)
+        taste, meta = fp.compose_axes(kw)
+        sys_axes = set(taste) | set(meta)
+        scenarios = generate_scenarios(labels, n=args.n_scenarios, valid_axes=sys_axes)
+        if not scenarios:
+            print(f"  ⚠️ '{kw}' 평가 가능한 공유 축 부족(label∩system<2) → skip")
+            continue
         report = evaluate_keyword(args.api, kw, labels, scenarios=scenarios,
                                   variants=variants,
                                   semantic_weight=args.semantic_weight)
         reports.append(report)
+        _save(reports)   # 키워드마다 중간 저장 — 중단/크래시에도 완료분은 보존
 
     print_ablation_table(reports, variants)
-
-    out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "ablation_variants": variants,
-            "semantic_weight": args.semantic_weight,
-            "reports": reports,
-        }, f, ensure_ascii=False, indent=2)
+    _save(reports)
     print(f"\n💾 결과 저장: {out_path.relative_to(ROOT)}")
 
 

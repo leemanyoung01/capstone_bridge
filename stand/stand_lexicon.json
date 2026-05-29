@@ -6635,7 +6635,7 @@
       }
     },
     "스시": {
-      "네타신선도": {
+      "신선도": {
         "positive": [
           "네타",
           "신선",
@@ -6650,28 +6650,14 @@
           "신선도 떨어"
         ],
         "clip_prompt_pos": [
-          "sushi nigiri with bright fresh fish slices on rice"
+          "sushi nigiri with bright fresh fish slices on rice",
+          "a close-up photo of multiple fresh vivid orange salmon nigiri pieces lined up on a wooden board showing brilliant glossy shiny surfaces with vibrant saturated orange color representing premium freshly prepared sushi",
+          "a photo of a plate of fresh salmon nigiri sushi pieces with vivid bright orange glossy fish slices showing top quality freshness just prepared"
         ],
         "clip_prompt_neg": [
-          "dull-colored sushi with old-looking fish"
-        ]
-      },
-      "샤리간": {
-        "positive": [
-          "샤리",
-          "초밥 간",
-          "단촛물",
-          "밥 간 좋"
-        ],
-        "negative": [
-          "밥 간 별로",
-          "샤리 별로"
-        ],
-        "clip_prompt_pos": [
-          "nigiri sushi with well-seasoned vinegared rice"
-        ],
-        "clip_prompt_neg": [
-          "nigiri with bland rice and no vinegar seasoning"
+          "dull-colored sushi with old-looking fish",
+          "a photo of grilled or blowtorch torched aburi sushi with charred brown cooked surface showing burn marks",
+          "a photo of a blue empty ceramic bowl on a woven mat with chopsticks and no food"
         ]
       },
       "밥양균형": {
@@ -6751,16 +6737,6 @@
         "clip_prompt_neg": [
           "a photo of two pieces of blowtorch torched aburi sushi on a white ceramic plate with orange fish roe and green onion garnish on top",
           "a photo of a dark empty ceramic bowl with chopsticks placed on top and absolutely no food inside"
-        ]
-      },
-      "신선함": {
-        "clip_prompt_pos": [
-          "a close-up photo of multiple fresh vivid orange salmon nigiri pieces lined up on a wooden board showing brilliant glossy shiny surfaces with vibrant saturated orange color representing premium freshly prepared sushi",
-          "a photo of a plate of fresh salmon nigiri sushi pieces with vivid bright orange glossy fish slices showing top quality freshness just prepared"
-        ],
-        "clip_prompt_neg": [
-          "a photo of grilled or blowtorch torched aburi sushi with charred brown cooked surface showing burn marks",
-          "a photo of a blue empty ceramic bowl on a woven mat with chopsticks and no food"
         ]
       },
       "쫄깃함": {

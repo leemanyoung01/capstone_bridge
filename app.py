@@ -135,8 +135,31 @@ except Exception as e:
 # ── 유틸 ─────────────────────────────────────────────────────
 
 def _norm_kw(kw: str) -> str:
-    kw = str(kw or "").strip()
-    return kw[:-len("_multimodal")] if kw.endswith("_multimodal") else kw
+    kw = str(kw or "").strip().lower()
+    kw = kw[:-len("_multimodal")] if kw.endswith("_multimodal") else kw
+
+    # 이미 정규 키워드면 그대로
+    if kw in ALL_DATA:
+        return kw
+
+    # stand_axes의 별명 사전으로 정규 키워드 해석 (오타·줄임말·하위메뉴 → 루트 카테고리)
+    stand = _load_stand_axes()
+    alias_to_category = stand.get("alias_to_category", {})
+    if kw in alias_to_category:
+        canonical = alias_to_category[kw]
+        if canonical in ALL_DATA:
+            return canonical
+
+    aliases = stand.get("keyword_aliases", {})
+    for canonical, alias_group in aliases.items():
+        if kw == canonical or kw in alias_group:
+            if canonical in ALL_DATA:
+                return canonical
+            for word in alias_group:
+                if word in ALL_DATA:
+                    return word
+
+    return kw
 
 
 def _all_axes(bundle: dict) -> list[str]:
@@ -279,12 +302,33 @@ def _split_axes(bundle: dict) -> tuple[list[str], list[str]]:
 
 
 def _axis_label_map(bundle: dict) -> dict:
-    """axes_config의 label 필드에서 {axis_key: display_label} 맵을 만든다."""
+    """axes_config의 label 필드에서 {axis_key: display_label} 맵을 만든다.
+    DB label에 띄어쓰기가 빠졌으면 stand_axes의 표준 label로 보정."""
     out = {}
+    stand = _load_stand_axes()
+    stand_labels = {}
+    if stand:
+        for axes in (stand.get("food_specific_axes") or {}).values():
+            if isinstance(axes, dict):
+                for ax, i in axes.items():
+                    if isinstance(i, dict) and i.get("label"):
+                        stand_labels[ax] = i["label"]
+        for ax, i in (stand.get("taste_axes") or {}).items():
+            if isinstance(i, dict) and i.get("label"):
+                stand_labels[ax] = i["label"]
+        for ax, i in (stand.get("meta_axes") or {}).items():
+            if isinstance(i, dict) and i.get("label"):
+                stand_labels[ax] = i["label"]
+
     for name, info in (bundle.get("axes_config") or {}).items():
         if name.startswith("_"):
             continue
-        out[name] = info.get("label") or name
+        db_label = info.get("label")
+        # DB label이 비었거나 key와 동일(띄어쓰기 누락 가능)하면 stand 표준 label 우선
+        if name in stand_labels and (not db_label or db_label == name):
+            out[name] = stand_labels[name]
+        else:
+            out[name] = db_label or name
     return out
 
 
@@ -1148,13 +1192,18 @@ def api_evaluation():
     파일이 없거나 읽기 실패해도 항상 200 OK + ok:false 형태로 응답
     (frontend는 ok:false면 카드를 숨김 또는 안내 메시지 표시).
     """
-    path = os.path.join(BASE_DIR, "evaluation_results.json")
-    if not os.path.exists(path):
+    # evaluate_ranking.py는 eval/ 에 저장. 옛 evaluation.py는 루트에 저장 → 둘 다 시도.
+    candidates = [
+        os.path.join(BASE_DIR, "eval", "evaluation_results.json"),
+        os.path.join(BASE_DIR, "evaluation_results.json"),
+    ]
+    path = next((p for p in candidates if os.path.exists(p)), None)
+    if path is None:
         return jsonify({
             "ok": False,
             "available": False,
-            "message": "evaluation_results.json이 없습니다. evaluation.py를 먼저 실행하세요.",
-            "hint": "python evaluation.py --labels eval_labels.csv --k 5 --output evaluation_results.json",
+            "message": "evaluation_results.json이 없습니다. evaluate_ranking.py를 먼저 실행하세요.",
+            "hint": "python scripts/evaluate_ranking.py <키워드들>",
         })
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -1186,4 +1235,4 @@ if __name__ == "__main__":
     port  = int(os.environ.get("PORT", 5050))  # 5000은 Neo4j Desktop이 점유 → 5050으로 변경
     debug = os.environ.get("FLASK_DEBUG","1") == "1"
     print(f"🚀 http://127.0.0.1:{port}  debug={debug}  keyword={DEFAULT_KW}")
-    app.run(debug=debug, host="127.0.0.1", port=port)
+    app.run(debug=debug, host="127.0.0.1", port=port, threaded=True)

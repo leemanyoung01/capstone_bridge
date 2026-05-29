@@ -5,10 +5,19 @@ import HomeStep from './components/steps/HomeStep';
 import TasteStep from './components/steps/TasteStep';
 import GalleryStep from './components/steps/GalleryStep';
 import InferenceStep from './components/steps/InferenceStep';
+import EvalDashboard from './components/ui/EvalDashboard';
 
 function App() {
   const [step, setStep] = useState(0); // 0: Home, 1: Taste, 2: Gallery, 3: Inference
   const [isLoading, setIsLoading] = useState(true);
+
+  // 시연 전용 성능표: URL 해시 #eval 일 때만 대시보드 표시 (평소 UI엔 미노출)
+  const [hash, setHash] = useState(typeof window !== 'undefined' ? window.location.hash : '');
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
   
   // Data from API
   const [availableKeywords, setAvailableKeywords] = useState([]);
@@ -44,11 +53,16 @@ function App() {
   const handleStart = async (keyword) => {
     try {
       const res = await fetch(`/api/config?keyword=${encodeURIComponent(keyword)}`);
-      if (!res.ok) throw new Error('설정을 불러올 수 없습니다.');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        if (errData && errData.error) throw new Error(errData.error);
+        throw new Error('설정을 불러올 수 없습니다.');
+      }
       const data = await res.json();
-      
+
       setConfig(data);
-      setCurrentKeyword(keyword);
+      // 백엔드가 별명(돈가스→돈까스)으로 교정한 정규 키워드를 저장 (갤러리 필터 버그 방지)
+      setCurrentKeyword(data.keyword || keyword);
       
       // Initialize scores shape based on all axes
       let initialScores = {};
@@ -182,6 +196,10 @@ function App() {
     setRepImages([]);
     setInferenceResults(null);
   };
+
+  if (hash === '#eval') {
+    return <EvalDashboard />;
+  }
 
   if (isLoading) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--text-gray)' }}>로딩 중...</div>;

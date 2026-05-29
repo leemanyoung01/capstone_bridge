@@ -24,3 +24,68 @@ input[type=number] {
   appearance: textfield;
   /* 표준 속성 추가 */
 }
+
+/* --- Mobile Touch Optimization --- */
+button, a, input {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS 입력 시 자동 줌 방지 (input 폰트 최소 16px) */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* --- Responsive Layouts --- */
+
+/* TasteStep & InferenceStep: 모바일 레이아웃 전환 (2단 → 세로) */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 40px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .responsive-grid {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 20px;
+  }
+
+  /* 레이더 차트 컨테이너 모바일에서 중앙 정렬 */
+  .radar-container-mobile-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* HomeStep 카테고리 탭 모바일 최적화 */
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(65px, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .category-tab .cat-emoji {
+    font-size: 28px !important;
+  }
+  .category-tab .cat-label {
+    font-size: 13px !important;
+  }
+
+  /* 모바일 좌우 여백 */
+  .mobile-pad {
+    padding: 0 16px !important;
+  }
+  .mobile-pad-top {
+    padding-top: 32px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}

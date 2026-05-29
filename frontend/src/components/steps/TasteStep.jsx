@@ -68,7 +68,10 @@ const GROUP_DISPLAY_LABELS = {
   버거특화: '버거 특화',
 };
 
-const getAxisDisplayName = (keyword, axis) => {
+const getAxisDisplayName = (keyword, axis, config) => {
+  if (config && config.axis_label_map && config.axis_label_map[axis]) {
+    return config.axis_label_map[axis];
+  }
   return AXIS_DISPLAY_LABELS?.[keyword]?.[axis] || axis;
 };
 
@@ -121,7 +124,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
   }, {});
 
   const radarLabelMap = selectedAxisKeys.reduce((acc, ax) => {
-    acc[ax] = getAxisDisplayName(keyword, ax);
+    acc[ax] = getAxisDisplayName(keyword, ax, config);
     return acc;
   }, {});
 
@@ -147,7 +150,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
       <div style={{ maxWidth: '980px', margin: '0 auto', padding: '0 28px 60px' }}>
 
         {/* ── Top-left asymmetric header ── */}
-        <div style={{ padding: '52px 0 36px', textAlign: 'left' }}>
+        <div style={{ padding: '24px 0 16px', textAlign: 'left' }}>
           <h2 style={{
             fontSize: 'clamp(28px, 4vw, 46px)',
             fontWeight: 900,
@@ -159,7 +162,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
             <span style={{ color: 'var(--primary)' }}>{keyword}</span>{' '}
             <span style={{ color: 'var(--text-gray)', fontWeight: 500 }}>{headingSuffix}</span>
           </h2>
-          <p style={{ fontSize: '15px', color: 'var(--text-gray)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <p className="hide-on-mobile" style={{ fontSize: '15px', color: 'var(--text-gray)', display: 'flex', alignItems: 'center', gap: '10px' }}>
             끌리는 단어를 자유롭게 선택해주세요
             <AnimatePresence>
               {selectedCount > 0 && (
@@ -182,12 +185,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
         </div>
 
         {/* ── Two-column layout ── */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 380px',
-          gap: '40px',
-          alignItems: 'start',
-        }}>
+        <div className="responsive-grid mobile-pad">
           {/* Left: chip groups with airy dividers */}
           <div>
             {groupOrder.map((group, gIdx) => {
@@ -197,7 +195,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
                   key={group.label}
                   style={{
                     borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.07)',
-                    padding: '24px 0',
+                    padding: '16px 0',
                   }}
                 >
                   <h3 style={{
@@ -242,7 +240,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
                             transition: 'background 0.18s, color 0.18s, box-shadow 0.22s, border 0.18s',
                           }}
                         >
-                          <span>{getAxisDisplayName(keyword, axis)}</span>
+                          <span>{getAxisDisplayName(keyword, axis, config)}</span>
 
                           {isSelected && (
                             <div
@@ -311,15 +309,18 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
           </div>
 
           {/* Right: sticky radar panel */}
-          <div style={{
-            background: 'rgba(255,255,255,0.95)',
-            borderRadius: '24px',
-            padding: '26px',
-            position: 'sticky',
-            top: '24px',
-            boxShadow: '0 6px 28px rgba(0,0,0,0.08)',
-            border: '1px solid rgba(0,0,0,0.06)',
-          }}>
+          <div className="radar-container-mobile-wrapper">
+            <div style={{
+              background: 'rgba(255,255,255,0.95)',
+              borderRadius: '24px',
+              padding: '26px',
+              position: 'sticky',
+              top: '24px',
+              boxShadow: '0 6px 28px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(0,0,0,0.06)',
+              width: '100%',
+              maxWidth: '380px',
+            }}>
             <h3 style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.4px', marginBottom: '2px', color: 'var(--text-dark)' }}>
               나의 취향 프로필
             </h3>
@@ -368,6 +369,7 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
                 다음 단계 →
               </motion.button>
             </div>
+          </div>
           </div>
         </div>
       </div>
