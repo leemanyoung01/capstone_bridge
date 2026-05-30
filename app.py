@@ -919,7 +919,9 @@ def api_recommend():
         [float(info.get("keyword_reviews", 0) or 0) for info in restaurants.values() if isinstance(info, dict)] or [1.0]
     )
 
-    results = []
+    # ── Pass 1: 랭킹에 필요한 값만 계산 (전 식당) ──
+    # 표시용 무거운 계산은 정렬 후 상위 N개에만 수행 → 결과 동일, 속도만 개선.
+    scored = []
     for name, info in restaurants.items():
         if not isinstance(info, dict):
             continue
@@ -966,6 +968,28 @@ def api_recommend():
         sim = taste_sim + META_BOOST * max(meta_sim, 0)
         sim = max(-1.0, min(1.0, sim))
 
+        scored.append((sim, taste_sim, meta_sim, name, info,
+                       vec_dict, text_vec, img_vec, sem_vec))
+
+    # 전체 후보 정렬 (랭킹 확정)
+    scored.sort(key=lambda x: x[0], reverse=True)
+    total_count = len(scored)
+
+    # limit 파싱을 앞으로 이동 → 표시용 계산을 보여줄 만큼만 수행
+    try:
+        limit_req = int(request.args.get("limit", DEFAULT_RESULT_LIMIT))
+    except (TypeError, ValueError):
+        limit_req = DEFAULT_RESULT_LIMIT
+    limit = max(1, min(MAX_RESULT_LIMIT, limit_req))
+
+    # 표시용 계산 대상: 보여줄 개수(limit)만. (이후 results와 1:1)
+    heavy_n = min(limit, total_count)
+    top_scored = scored[:heavy_n]
+
+    # ── Pass 2: 상위 N개만 표시용 상세 계산 ──
+    results = []
+    for (sim, taste_sim, meta_sim, name, info,
+         vec_dict, text_vec, img_vec, sem_vec) in top_scored:
         # axis 기여도 (taste 축만)
         contrib = {}
         for ax in taste_axes:
@@ -1175,13 +1199,10 @@ def api_recommend():
     for i, item in enumerate(results, start=1):
         item["rank"] = i
 
-    # Top-N 결정: ?limit=... query param (기본 5, 1~50 클램프).
-    # 추천 결과를 화면에 너무 많이 노출하지 않도록 백엔드 단에서 1차 제한.
-    try:
-        limit_req = int(request.args.get("limit", DEFAULT_RESULT_LIMIT))
-    except (TypeError, ValueError):
-        limit_req = DEFAULT_RESULT_LIMIT
-    limit = max(1, min(MAX_RESULT_LIMIT, limit_req))
+
+    # 랭크 부여 (이미 정렬된 순서)
+    for i, item in enumerate(results, start=1):
+        item["rank"] = i
 
     return jsonify(_clean({
         "keyword":         kw,
@@ -1190,9 +1211,9 @@ def api_recommend():
         "taste_axes":      taste_axes,
         "meta_axes":       meta_axes,
         "axis_label_map":  label_map,
-        "count":           len(results),
+        "count":           total_count,
         "limit":           limit,
-        "results":         results[:limit],
+        "results":         results,
         "user_vector":     user_vec_dict,
         "label_type":      _RELEVANCE_CACHE.get("label_type", "pseudo-label"),
         "model_variant":   ("semantic" if use_semantic else "baseline"),
