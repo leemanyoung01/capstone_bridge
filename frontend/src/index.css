@@ -158,7 +158,16 @@ a {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 20px;
+  padding: 0 20px;
+  min-height: 75vh;
+  text-align: center;
+}
+
+.transition-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
@@ -244,5 +253,105 @@ a {
   .ingredient,
   .pan-steam {
     animation: none;
+  }
+}
+
+/* ── Result Card Layout (InferenceStep) ── */
+.result-card-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.result-card-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.result-card-image-wrapper {
+  flex-shrink: 0;
+  background: white;
+  padding: 6px 6px 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.05);
+  border-radius: 3px;
+  transform: rotate(-2deg);
+  align-self: center;
+}
+
+.result-card-content {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.result-card-header {
+  padding-right: 60px;
+}
+
+.result-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.result-card-ratios {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 데스크탑 뷰 */
+@media (min-width: 768px) {
+  .desktop-heading {
+    display: block;
+  }
+  .transition-container {
+    min-height: 60vh;
+  }
+  .result-card-layout {
+    flex-direction: row;
+  }
+  .result-card-image-wrapper {
+    width: 200px; /* 데스크탑에서는 이미지를 더 크게 설정 */
+  }
+}
+
+/* 모바일 뷰 */
+@media (max-width: 767px) {
+  .desktop-heading {
+    display: none;
+  }
+  .result-card-layout {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .result-card-image-wrapper {
+    width: 85%;
+    max-width: 280px;
+    margin-bottom: 12px;
+  }
+  .result-card-content {
+    padding-top: 0;
+    width: 100%;
+  }
+  .result-card-header {
+    padding-right: 0;
+  }
+  .transition-container {
+    padding: 0 20px;
+    min-height: 75vh;
+  }
+  .result-card-tags, .result-card-ratios {
+    justify-content: center;
+  }
+  .result-card-tags {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
   }
 }

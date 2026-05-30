@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // AxisMatchBar는 현재 코드에서 사용되지 않아 주석 처리 또는 삭제를 권장합니다.
 // import AxisMatchBar from '../ui/AxisMatchBar'; 
@@ -55,6 +55,19 @@ const getLabel = (key) => AXIS_LABEL_MAP[key] || key;
 const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '', onRestart }) => {
   const [expanded, setExpanded] = useState({});
   const toggle = (idx) => setExpanded(p => ({ ...p, [idx]: !p[idx] }));
+  const [showTransition, setShowTransition] = useState(false);
+
+  useEffect(() => {
+    if (results && results.length > 0) {
+      if (window.innerWidth < 768) {
+        setShowTransition(true);
+        const timer = setTimeout(() => {
+          setShowTransition(false);
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [results]);
   // 계산 근거 sub-toggle (자세히 보기 안에서만 노출)
   const [breakdownOpen, setBreakdownOpen] = useState({});
   const toggleBreakdown = (idx) => setBreakdownOpen(p => ({ ...p, [idx]: !p[idx] }));
@@ -110,11 +123,27 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      style={{ position: 'relative', minHeight: '100vh' }}
-    >
+    <AnimatePresence mode="wait">
+      {showTransition ? (
+        <motion.div
+          key="transition-view"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.05 }}
+          transition={{ duration: 0.5, ease: 'easeInOut' }}
+          className="transition-container"
+        >
+          <h2 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, color: 'var(--text-dark)' }}>
+            나만의 맛 스니펫 <span style={{ color: 'var(--text-gray)' }}>생성 완료!</span> 🎉
+          </h2>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="result-view"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ position: 'relative', minHeight: '100vh', paddingTop: '24px' }}
+        >
       {/* Scattered decorative doodles */}
       <StarDoodle size={18} style={{ position: 'absolute', top: '8%', left: '3%' }} />
       <PlusDoodle style={{ position: 'absolute', top: '25%', left: '2%' }} />
@@ -123,25 +152,26 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
       <PlusDoodle style={{ position: 'absolute', top: '35%', right: '2%' }} />
       <WavyLine style={{ position: 'absolute', top: '55%', right: '1%' }} />
 
-      {/* ── Heading ── */}
-      <div style={{ textAlign: 'center', padding: '52px 24px 36px' }}>
-        <h2 style={{
-          fontSize: 'clamp(32px, 5vw, 48px)',
-          fontWeight: 900,
-          letterSpacing: '-1px',
-          lineHeight: 1.15,
-          color: 'var(--text-dark)',
-          marginBottom: '10px',
-        }}>
-          나만의 맛 스니펫 <span style={{ color: 'var(--text-gray)' }}>완성!</span> 🎉
-        </h2>
-        <p style={{ color: 'var(--text-gray)', fontSize: '15px' }}>
-          취향 벡터와 가장 가까운 식당을 순위로 제시합니다.
-        </p>
+      <div className="desktop-heading">
+        <div style={{ textAlign: 'center', padding: '0 24px 24px' }}>
+          <h2 style={{
+            fontSize: 'clamp(32px, 5vw, 48px)',
+            fontWeight: 900,
+            letterSpacing: '-1px',
+            lineHeight: 1.15,
+            color: 'var(--text-dark)',
+            marginBottom: '10px',
+          }}>
+            나만의 맛 스니펫 <span style={{ color: 'var(--text-gray)' }}>완성!</span> 🎉
+          </h2>
+          <p style={{ color: 'var(--text-gray)', fontSize: '15px' }}>
+            취향 벡터와 가장 가까운 식당을 순위로 제시합니다.
+          </p>
+        </div>
       </div>
 
       {/* ── Card list container ── */}
-      <div style={{ maxWidth: '680px', margin: '0 auto', padding: '0 24px' }}>
+      <div className="result-card-container">
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '32px' }}>
           {/* Top-N 안전 컷 — 백엔드도 기본 5건만 내려주지만, 더 와도 화면에는 5건만. */}
@@ -219,17 +249,10 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                 </div>
 
                 {/* ── 3. 가로 배치 레이아웃 (Image Left, Details Right) ── */}
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                <div className="result-card-layout">
 
                   {/* 왼쪽: 큼직한 대표 이미지 (폴라로이드 프레임) */}
-                  <div style={{
-                    width: '130px', flexShrink: 0,
-                    background: 'white', padding: '6px 6px 18px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.05)',
-                    borderRadius: '3px',
-                    transform: 'rotate(-2deg)',
-                    alignSelf: 'center',
-                  }}>
+                  <div className="result-card-image-wrapper">
                     {repImg ? (
                       <img
                         src={repImg.image_src}
@@ -247,10 +270,10 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                   </div>
 
                   {/* 오른쪽: 상세 정보 */}
-                  <div style={{ flex: 1, minWidth: 0, paddingTop: '4px' }}>
+                  <div className="result-card-content">
 
                     {/* 식당 이름 & 주소 */}
-                    <div style={{ paddingRight: '60px' }}>
+                    <div className="result-card-header">
                       <h3 style={{
                         fontSize: '28px',
                         fontWeight: 800,
@@ -268,7 +291,7 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
 
                     {/* 특징 태그 (마스킹 테이프 스타일) */}
                     {topAxes.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '16px' }}>
+                      <div className="result-card-tags hide-scrollbar">
                         {topAxes.slice(0, 3).map(r => {
                           const c = axisContribs[r];
                           const pct = typeof c === 'number' ? Math.round(c * 100) : null;
@@ -287,7 +310,7 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                     )}
 
                     {/* 반영 비율 (귀여운 스티커 스타일) */}
-                    <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <div className="result-card-ratios">
                       <span style={{
                         fontSize: '14px',
                         background: '#EEF2FF', color: '#4338CA',
@@ -725,7 +748,9 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
           </motion.button>
         </div>
       </div>
-    </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
