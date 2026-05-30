@@ -46,6 +46,7 @@ app = Flask(__name__)
 USER_ALPHA_BASE = 0.7
 USER_BETA_BASE  = 0.3
 META_BOOST      = 0.05  # 메타축 일치 시 cosine에 더하는 부스트 비율
+BERT_EVIDENCE_GATE = 0.40  # BERT 근거 문장 채택 최소 score(pos-neg diff). generic 노이즈 차단
 DEFAULT_KEYWORD_PREF = os.environ.get("DEFAULT_KEYWORD", "삼겹살")
 
 
@@ -576,9 +577,11 @@ def api_axis_stats():
         tv_score = text_vec.get(axis_name)
         sv_score = sem_vec.get(axis_name)
         ev_list = evidence.get(axis_name, []) or []
-        # BERT 의미 근거 (semantic_text_profiler가 저장한 문장)
+        # BERT 의미 근거 (semantic_text_profiler가 저장한 문장) — 강한 매칭만(노이즈 차단)
         sem_ev = sem_evidence.get(axis_name, []) or []
-        sem_ev_sentences = [e.get("sentence", "") for e in sem_ev if isinstance(e, dict)]
+        sem_ev_sentences = [e.get("sentence", "") for e in sem_ev
+                            if isinstance(e, dict)
+                            and float(e.get("score") or 0) >= BERT_EVIDENCE_GATE]
 
         axes_stats.append({
             "axis":  axis_name,
@@ -1025,10 +1028,24 @@ def api_recommend():
         else:
             text_w, img_w = 1.0, 0.0
 
-        # axis별 evidence
-        evidence_map = info.get("evidence") or {}
-        evidence_sentences = {ax: evidence_map.get(ax, [])[:2]
-                              for ax in top_axes_names if evidence_map.get(ax)}
+        # axis별 evidence — 메인 근거는 '사용자가 고른 축'만 (표/BERT섹션과 동일 기준).
+        # lex 근거 우선, lex가 못 잡은 고른 축은 BERT 강한 근거(0.40+)로 채움.
+        evidence_map = info.get("evidence") or {}            # lex: {ax: [str]}
+        sem_ev_map   = info.get("semantic_evidence") or {}   # BERT: {ax: [{sentence,score}]}
+        evidence_sentences = {}
+        # 고른 축만. 안 고르면(이미지만 선택 등) 기여 상위 축으로 폴백.
+        pref_axes = [ax for ax in all_axes if float(user_prefs.get(ax, 0) or 0) > 0]
+        ev_axes = pref_axes if pref_axes else list(top_axes_names)
+        for ax in ev_axes:
+            lex_sents = evidence_map.get(ax) or []
+            if lex_sents:
+                evidence_sentences[ax] = lex_sents[:2]
+            else:
+                sem_sents = [e.get("sentence", "") for e in (sem_ev_map.get(ax) or [])
+                             if isinstance(e, dict) and e.get("sentence")
+                             and float(e.get("score") or 0) >= BERT_EVIDENCE_GATE]
+                if sem_sents:
+                    evidence_sentences[ax] = sem_sents[:1]
 
         # flat evidence (fallback 호환)
         flat_evidence = []

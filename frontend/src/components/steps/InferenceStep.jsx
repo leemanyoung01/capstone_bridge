@@ -387,7 +387,7 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                           <div>
                             <div style={{ fontSize: '12px', fontWeight: 800, marginBottom: '8px' }}>축별 추천 근거</div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                              {Object.entries(evSentences).slice(0, 4).map(([ax, sents]) => (
+                              {Object.entries(evSentences).slice(0, 10).map(([ax, sents]) => (
                                 <div key={ax} style={{ fontSize: '12px', background: 'var(--bg-color)', borderRadius: '10px', padding: '8px 12px' }}>
                                   <span style={{ fontWeight: 800, color: 'var(--btn-dark)' }}>#{getLabel(ax)}</span>{' '}
                                   <span style={{ color: 'var(--text-gray)', fontStyle: 'italic' }}>"{(sents || [])[0]}"</span>
@@ -402,8 +402,8 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                           const br = item.match_breakdown;
                           const main = br.main || {};
                           const ev = br.evidence_split || {};
-                          const tb = ev.text_basis || {};
-                          const ib = ev.image_basis || {};
+                          const txtPct = Math.round((ev.text_ratio || 0) * 100);
+                          const imgPct = Math.round((ev.image_ratio || 0) * 100);
                           const isOpen = !!breakdownOpen[idx];
                           return (
                             <div style={{ marginTop: '4px' }}>
@@ -445,59 +445,56 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                                       background: 'var(--white)',
                                       border: '1px solid var(--border-color)',
                                       borderRadius: '12px',
-                                      padding: '14px',
-                                      fontSize: '12px',
-                                      lineHeight: 1.7,
+                                      padding: '16px',
+                                      fontSize: '12.5px',
+                                      lineHeight: 1.6,
                                       color: 'var(--text-dark)',
-                                      fontFamily: 'monospace',
                                     }}>
-                                      {/* ─ 메인 점수 산출식 ─ */}
-                                      <div style={{ fontWeight: 800, marginBottom: '8px', fontFamily: 'inherit' }}>
-                                        일치도 {br.final_percent}% — 메인 산출식
+                                      {/* ─ 일치도 설명 + 계산식 한 줄 ─ */}
+                                      <div style={{ fontWeight: 800, marginBottom: '4px' }}>
+                                        일치도 {br.final_percent}%
                                       </div>
-                                      <div style={{ color: 'var(--text-gray)', marginBottom: '10px', fontSize: '11px' }}>
-                                        {main.formula}
+                                      <div style={{ color: 'var(--text-gray)', fontSize: '12px', marginBottom: '10px' }}>
+                                        고른 취향 축과 이 식당 리뷰가 얼마나 닮았는지(코사인 유사도)를 나타내요.
                                       </div>
-                                      <div style={{ background: 'var(--bg-color)', padding: '10px 12px', borderRadius: '8px', marginBottom: '12px' }}>
-                                        <div>taste 코사인 = <strong>{main.taste_cosine}</strong> (취향 축 유사도)</div>
-                                        <div>meta 코사인 = {main.meta_cosine} (가성비/양많음 등)</div>
-                                        <div>meta 부스트 = {main.meta_boost_weight} × max(0, {main.meta_cosine}) = {main.meta_boost_amount}</div>
-                                        <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '6px', marginTop: '6px' }}>
-                                          합계 = {main.sim_raw} → clamp(-1~1) = {main.sim_clamped}
-                                        </div>
-                                        <div>→ × 100 = <strong>{br.final_percent}%</strong></div>
-                                      </div>
-
-                                      {/* ─ 텍스트/이미지 영향 비중 (별도 설명) ─ */}
-                                      <div style={{ fontWeight: 800, marginBottom: '6px', fontFamily: 'inherit', marginTop: '6px' }}>
-                                        텍스트 vs 이미지 영향 비중
-                                      </div>
-                                      <div style={{ color: 'var(--text-gray)', marginBottom: '8px', fontSize: '11px' }}>
-                                        ※ 위 일치도와 별개. 이 식당에서 텍스트/이미지 데이터가 각각 얼마나 기여했는지의 비율 표시용.
-                                      </div>
-                                      <div style={{ background: 'var(--bg-color)', padding: '10px 12px', borderRadius: '8px', marginBottom: '6px' }}>
-                                        <div style={{ fontWeight: 700 }}>📝 텍스트 영향 = {tb.value}</div>
-                                        <div style={{ color: 'var(--text-gray)', fontSize: '11px', marginTop: '2px' }}>
-                                          {tb.input_text_w} × {tb.text_match_score} × {tb.text_support}
-                                        </div>
-                                      </div>
-                                      <div style={{ background: 'var(--bg-color)', padding: '10px 12px', borderRadius: '8px', marginBottom: '8px' }}>
-                                        <div style={{ fontWeight: 700 }}>📷 이미지 영향 = {ib.value}</div>
-                                        <div style={{ color: 'var(--text-gray)', fontSize: '11px', marginTop: '2px' }}>
-                                          {ib.input_img_w} × {ib.image_match_score} × {ib.image_support}
-                                        </div>
-                                      </div>
-                                      <div style={{ fontSize: '11px', color: 'var(--text-gray)' }}>
-                                        → {tb.value} + {ib.value} = {ev.basis_total}, 비율 텍스트 {Math.round((ev.text_ratio || 0) * 100)}% / 이미지 {Math.round((ev.image_ratio || 0) * 100)}%
-                                      </div>
-
-                                      <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--text-gray)', fontFamily: 'inherit' }}>
-                                        <span>모델: <strong>{br.model_variant}</strong></span>
-                                        {br.model_variant === 'semantic' && (
-                                          <span> · BERT 가중치 {br.semantic_weight}</span>
+                                      <div style={{ background: 'var(--bg-color)', borderRadius: '8px', padding: '10px 12px', marginBottom: '16px', fontSize: '12px', lineHeight: 1.9 }}>
+                                        <span>맛 취향 유사도 <strong>{Math.round((main.taste_cosine || 0) * 100)}%</strong></span>
+                                        {(main.meta_boost_amount || 0) > 0 && (
+                                          <span style={{ color: 'var(--text-gray)' }}>
+                                            {' '}＋ 부가 만족도 <strong>{Math.round(main.meta_boost_amount * 100)}%</strong>
+                                          </span>
                                         )}
-                                        <span> · 이미지 {br.use_image ? 'ON' : 'OFF'}</span>
-                                        <span> · ablation: <code>{br.ablation_tag}</code></span>
+                                        <span style={{ fontWeight: 700 }}>
+                                          {' '}→ 최종 <span style={{ color: 'var(--primary)' }}>{br.final_percent}%</span>
+                                        </span>
+                                        {(main.meta_boost_amount || 0) > 0 && (
+                                          <div style={{ color: 'var(--text-gray)', fontSize: '10px', marginTop: '5px', lineHeight: 1.5 }}>
+                                            * 맛 취향(감칠맛·담백함 등)이 주 판단 기준이고, 가성비·양많음·재주문의사 같은
+                                            부가 만족도는 5%만 가산해요.
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* ─ 텍스트/이미지 기여 비중 (막대) ─ */}
+                                      <div style={{ fontWeight: 800, marginBottom: '8px' }}>점수 근거 비중</div>
+                                      <div style={{ display: 'flex', height: '30px', borderRadius: '8px', overflow: 'hidden', marginBottom: '6px', fontSize: '11px', fontWeight: 700 }}>
+                                        {txtPct > 0 && (
+                                          <div style={{ width: `${txtPct}%`, background: '#FCE7C8', color: '#92400E', display: 'flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }}>
+                                            📝 텍스트 {txtPct}%
+                                          </div>
+                                        )}
+                                        {imgPct > 0 && (
+                                          <div style={{ width: `${imgPct}%`, background: '#D6E4F5', color: '#1E40AF', display: 'flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }}>
+                                            📷 이미지 {imgPct}%
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div style={{ color: 'var(--text-gray)', fontSize: '11px' }}>
+                                        리뷰 텍스트 분석과 음식 사진 분석이 각각 기여한 정도예요.
+                                        <div style={{ fontSize: '10px', marginTop: '5px', lineHeight: 1.5 }}>
+                                          * 비중 = 입력 비중 × 취향 정렬도 × 데이터 신뢰도
+                                          (텍스트=리뷰 수, 이미지=사진 커버리지) 로 산출해 정규화한 값이에요.
+                                        </div>
                                       </div>
                                     </div>
                                   </motion.div>
@@ -594,7 +591,17 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                                                   </tr>
                                                 </thead>
                                                 <tbody>
-                                                  {displayAxes.map((a) => (
+                                                  {/* 근거 sentence = lex 근거(있으면) 또는 BERT 게이트통과 근거 수.
+                                                      둘 다 0인 stale 축(쫄깃함 등)만 숨김. */}
+                                                  {displayAxes
+                                                    .map(a => ({
+                                                      ...a,
+                                                      _evCount: (a.evidence_count || 0) > 0
+                                                        ? (a.evidence_count || 0)
+                                                        : (a.semantic_evidence_samples || []).length,
+                                                    }))
+                                                    .filter(a => a._evCount > 0)
+                                                    .map((a) => (
                                                     <tr key={a.axis} style={{ borderTop: '1px solid var(--border-color)' }}>
                                                       <td style={{ padding: '6px 8px', fontWeight: 700 }}>{a.label || a.axis}</td>
                                                       <td style={{ padding: '6px 8px', textAlign: 'right' }}>
@@ -612,16 +619,18 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                                                       <td style={{ padding: '6px 8px', textAlign: 'right' }}>
                                                         {a.semantic_vector_score != null ? a.semantic_vector_score.toFixed(3) : '-'}
                                                       </td>
-                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{a.evidence_count}</td>
+                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{a._evCount}</td>
                                                     </tr>
                                                   ))}
                                                 </tbody>
                                               </table>
                                             </div>
-                                            {/* BERT가 추가로 찾은 의미 근거 (lex가 놓친 것, 강한 축만) */}
+                                            {/* BERT가 추가로 찾은 의미 근거 — lex가 1건도 못 잡은 축만.
+                                                lex가 잡은 축은 메인 근거에 lex로 뜨므로 여기선 중복 제외 (노이즈 차단). */}
                                             {(() => {
                                               const withSemEv = displayAxes.filter(
                                                 a => (a.semantic_evidence_samples || []).length > 0
+                                                     && (a.total_hits || 0) === 0
                                               );
                                               if (withSemEv.length === 0) return null;
                                               return (
@@ -646,7 +655,7 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
                                               ※ 매칭 리뷰 = lex 키워드가 본문에 포함된 리뷰 수.
                                               lex 점수 = Food_profiler 정규화 결과.
                                               BERT 점수 = KoSBERT 의미 매칭 (둘 다 -1~1).
-                                              🤖 BERT 근거 = lex 키워드 없이 의미로 찾은 문장 (강한 축만, threshold 적용).
+                                              🤖 BERT 근거 = lex 키워드 없이 의미로 찾은 문장.
                                             </div>
                                           </>
                                         );
