@@ -1,0 +1,8 @@
+-r requirements-server.txt
+
+# 오프라인 추론/크롤링 전용 (배포 서버에는 설치하지 않음)
+pandas>=2.2
+requests>=2.31
+torch>=2.2
+open_clip_torch>=2.24
+Pillow>=10.0

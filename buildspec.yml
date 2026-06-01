@@ -1,0 +1,23 @@
+version: 0.2
+
+# CodeBuild는 그냥 소스 + appspec + scripts를 묶어서 CodeDeploy에 넘기는 역할.
+# 실제 Docker 빌드는 EC2에서 함 (ECR 안 씀).
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+
+  build:
+    commands:
+      - echo "✅ source bundle 준비 (빌드는 EC2에서 수행)"
+
+artifacts:
+  files:
+    - '**/*'
+  exclude-paths:
+    - 'frontend/node_modules/**/*'
+    - 'clip_cache/**/*'
+    - 'images/**/*'
+    - 'scratch/**/*'
+    - '.git/**/*'

@@ -1,0 +1,294 @@
+/* Pretendard (본문) + Google: Jua(라운드/Pop), Archivo(숫자) */
+@import url('https://fonts.googleapis.com/css2?family=Jua&family=Archivo:wght@400;700;800&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+/* ============================================================
+   Bridge — Pop 방향, Vermilion 팔레트, 라이트 고정
+   ============================================================ */
+
+:root {
+  /* Vermilion 팔레트 */
+  --c-tomato:   oklch(0.64 0.20 34);
+  --c-tomato-d: oklch(0.56 0.19 32);
+  --c-mustard:  oklch(0.83 0.13 60);
+  --c-terra:    oklch(0.67 0.17 26);
+  --c-paprika:  oklch(0.54 0.19 30);
+
+  /* 라이트 모드 */
+  --bg:        #FFFFFF;
+  --bg-tint:   #F5F3F0;
+  --surface:   #FFFFFF;
+  --card:      #FFFFFF;
+  --ink:       #211C17;
+  --ink-2:     #6E655B;
+  --ink-3:     #A79E93;
+  --line:      #ECE7E0;
+  --line-2:    #DCD5CB;
+  --on-accent: #FFFFFF;
+  --good:      oklch(0.62 0.13 150);
+  --shade:     rgba(40,30,20,.10);
+
+  /* Pop 방향 */
+  --font-display:     "Jua", "Pretendard", sans-serif;
+  --display-weight:   400;
+  --display-spacing:  0.005em;
+  --radius:           24px;
+  --radius-sm:        18px;
+  --radius-xs:        13px;
+  --chip-radius:      999px;
+  --bw:               1.5px;
+  --accent:           var(--c-tomato);
+  --accent-2:         var(--c-mustard);
+  --accent-3:         var(--c-terra);
+  --eyebrow-spacing:  0.14em;
+  --shadow:    0 14px 32px -16px color-mix(in oklab, var(--accent) 42%, transparent), 0 4px 12px -8px var(--shade);
+  --shadow-sm: 0 8px 18px -10px color-mix(in oklab, var(--accent) 38%, transparent), 0 2px 6px -4px var(--shade);
+
+  --ease:     cubic-bezier(.22,.61,.36,1);
+  --ease-pop: cubic-bezier(.34,1.56,.64,1);
+  --maxw:     1080px;
+  --gutter:   clamp(16px, 4vw, 40px);
+}
+
+/* ---------- base ---------- */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: "Pretendard", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+#root { min-height: 100vh; }
+
+.num { font-family: "Archivo", sans-serif; font-variant-numeric: tabular-nums; font-weight: 800; }
+.display { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-spacing); }
+.eyebrow {
+  font-family: "Archivo", "Pretendard", sans-serif;
+  font-weight: 700; font-size: 12px;
+  letter-spacing: var(--eyebrow-spacing); text-transform: uppercase;
+  color: var(--accent);
+}
+
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; }
+ul, li { list-style: none; margin: 0; padding: 0; }
+
+::selection { background: var(--accent); color: var(--on-accent); }
+* { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+
+/* ---------- 앱 레이아웃 ---------- */
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.app-main {
+  flex: 1; width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--gutter) 120px;
+}
+
+/* ---------- 상단 바 ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  backdrop-filter: blur(14px);
+  background: color-mix(in oklab, var(--bg) 78%, transparent);
+  border-bottom: var(--bw) solid var(--line);
+}
+.topbar-inner {
+  max-width: var(--maxw); margin: 0 auto;
+  padding: 14px var(--gutter);
+  display: flex; align-items: center; gap: 16px;
+}
+.brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.brand-mark {
+  width: 34px; height: 34px; border-radius: 13px;
+  background: var(--accent); color: var(--on-accent);
+  display: grid; place-items: center; flex: none;
+  box-shadow: var(--shadow-sm);
+}
+.brand-name {
+  font-family: var(--font-display); font-weight: var(--display-weight);
+  font-size: 21px; letter-spacing: var(--display-spacing);
+}
+.brand-name .accent { color: var(--accent); }
+
+/* ---------- 스텝 진행 표시 ---------- */
+.progress { display: flex; align-items: center; gap: 0; padding: 26px 0 8px; }
+.progress-step { display: flex; align-items: center; gap: 12px; }
+.progress-dot {
+  width: 30px; height: 30px; border-radius: 999px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Archivo"; font-weight: 800; font-size: 13px; line-height: 1;
+  border: var(--bw) solid var(--line-2); color: var(--ink-3);
+  background: var(--surface);
+  transition: all .35s var(--ease);
+}
+.progress-step.active .progress-dot {
+  background: var(--accent); color: var(--on-accent);
+  border-color: var(--accent); transform: scale(1.05);
+}
+.progress-step.done .progress-dot {
+  background: color-mix(in oklab, var(--accent) 16%, var(--surface));
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--line));
+}
+.progress-label { font-size: 13.5px; font-weight: 600; color: var(--ink-3); white-space: nowrap; }
+.progress-step.active .progress-label { color: var(--ink); }
+.progress-line { flex: 1; height: var(--bw); min-width: 18px; background: var(--line-2); margin: 0 12px; }
+.progress-step.done + .progress-line { background: color-mix(in oklab, var(--accent) 45%, var(--line)); }
+@media (max-width: 600px) { .progress-label { display: none; } .progress-line { margin: 0 6px; } }
+
+/* ---------- 공용 버튼 ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  font-size: 15px; font-weight: 700; border: var(--bw) solid transparent;
+  border-radius: var(--chip-radius); padding: 13px 22px;
+  transition: transform .18s var(--ease), background .2s var(--ease), box-shadow .2s var(--ease), border-color .2s;
+}
+.btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow-sm); }
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 30px -12px color-mix(in oklab, var(--accent) 60%, transparent);
+}
+.btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--line-2); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-lg { padding: 16px 30px; font-size: 16.5px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ---------- 칩 ---------- */
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: var(--bw) solid var(--line-2); background: var(--surface);
+  color: var(--ink); border-radius: var(--chip-radius);
+  padding: 9px 15px; font-size: 14px; font-weight: 600;
+  transition: all .18s var(--ease);
+}
+.chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+.chip.on {
+  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
+  box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--accent) 55%, transparent);
+}
+
+/* ---------- 카드 ---------- */
+.card {
+  background: var(--card); border: var(--bw) solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+
+/* ---------- 배지 ---------- */
+.badge-count {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 700; color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+  border: var(--bw) solid color-mix(in oklab, var(--accent) 30%, transparent);
+  padding: 5px 12px; border-radius: var(--chip-radius);
+}
+
+/* ---------- 유틸 ---------- */
+.muted { color: var(--ink-2); }
+.center { text-align: center; }
+.divider { height: var(--bw); background: var(--line); border: none; margin: 0; }
+
+/* Hide scrollbar */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Hide number input spinners */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+
+/* iOS zoom fix */
+@media screen and (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
+/* Touch optimization */
+button, a, input { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+/* ---------- 애니메이션 ---------- */
+@keyframes fadeUp { from { transform: translateY(16px); } to { transform: none; } }
+@keyframes fadeIn { from { opacity: .35; } to { opacity: 1; } }
+@keyframes popIn { 0% { transform: scale(.92); } 100% { transform: scale(1); } }
+.reveal { animation: fadeUp .5s var(--ease) both; }
+.step-enter { animation: fadeUp .45s var(--ease) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ---------- 쿠킹 로더 (프라이팬 볶음 애니메이션) ---------- */
+.cooker-wrap {
+  min-height: 60vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 38px; text-align: center;
+  animation: fadeIn .4s var(--ease) both;
+}
+
+.pan-stage { position: relative; width: 220px; height: 170px; }
+
+.pan-body {
+  position: absolute; bottom: 0; left: 50%;
+  transform-origin: 50% 100%;
+  font-size: 100px; line-height: 1;
+  animation: panShake 1.3s ease-in-out infinite;
+  filter: drop-shadow(0 8px 6px var(--shade));
+  user-select: none;
+}
+
+@keyframes panShake {
+  0%, 100% { transform: translate(-50%, 0)    rotate(-6deg); }
+  25%       { transform: translate(-50%, -10px) rotate(4deg); }
+  50%       { transform: translate(-50%, -3px)  rotate(-2deg); }
+  70%       { transform: translate(-50%, -12px) rotate(5deg); }
+}
+
+.pan-ingredient {
+  position: absolute; bottom: 62px; left: 50%;
+  font-size: 28px; line-height: 1;
+  transform: translate(-50%, 0);
+  animation: stirFry 1.3s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  will-change: transform;
+  user-select: none;
+}
+
+@keyframes stirFry {
+  0%   { transform: translate(calc(-50% + var(--tx, 0px)), 0)    rotate(0deg)   scale(1); }
+  30%  { transform: translate(calc(-50% + var(--tx, 0px)), -80px) rotate(210deg) scale(1.1); }
+  65%  { transform: translate(calc(-50% - var(--tx, 0px)), -26px) rotate(370deg) scale(0.95); }
+  100% { transform: translate(calc(-50% + var(--tx, 0px)), 0)    rotate(540deg) scale(1); }
+}
+
+.pan-smoke {
+  position: absolute; bottom: 118px; left: 50%;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: color-mix(in oklab, var(--ink-3) 35%, transparent);
+  filter: blur(3px); opacity: 0;
+  animation: smokeRise 2.2s ease-in infinite;
+}
+.pan-smoke:nth-child(2){ left: calc(50% + 18px); animation-delay: .6s; }
+.pan-smoke:nth-child(3){ left: calc(50% - 16px); animation-delay: 1.2s; }
+
+@keyframes smokeRise {
+  0%   { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+  20%  { opacity: 0.65; }
+  100% { transform: translate(-50%, -60px) scale(2.2); opacity: 0; }
+}
+
+.cooker-text { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.cooker-text .eyebrow { white-space: nowrap; }
+.cooker-line { font-size: clamp(18px, 3.5vw, 26px); max-width: 24em; line-height: 1.45; }
+.cooker-dots { display: flex; gap: 7px; }
+.cooker-dots span { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); animation: blink 1.2s infinite; }
+.cooker-dots span:nth-child(2){ animation-delay: .2s; }
+.cooker-dots span:nth-child(3){ animation-delay: .4s; }
+@keyframes blink {
+  0%,100%{ opacity: .25; transform: scale(.8); }
+  50%{ opacity: 1; transform: scale(1); }
+}
+
+/* ---------- 모바일 여백 ---------- */
+.mobile-pad { padding: 0 !important; }
+@media (max-width: 900px) {
+  .mobile-pad { padding: 0 4px !important; }
+}
