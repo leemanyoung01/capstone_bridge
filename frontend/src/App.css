@@ -60,6 +60,31 @@
 .home-hero-art .art-a { width: 62%; height: 64%; top: 0; right: 0; z-index: 2; transform: rotate(2deg); }
 .home-hero-art .art-b { width: 52%; height: 52%; bottom: 0; left: 0; z-index: 3; transform: rotate(-3deg); }
 .home-hero-art .art-c { width: 40%; height: 40%; bottom: 8%; right: 6%; z-index: 1; transform: rotate(4deg); }
+
+/* 사진 준비중 (fallback / 로드 실패) */
+.home-hero-art .photo-prep {
+  position: absolute; inset: 0; z-index: 4;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; text-align: center;
+  background: color-mix(in oklab, var(--ink) 34%, transparent);
+  backdrop-filter: blur(1.5px);
+}
+.photo-prep-emoji {
+  font-size: clamp(28px, 4.4vw, 44px); line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
+  animation: prepBob 1.8s var(--ease, ease-in-out) infinite;
+}
+.photo-prep-text {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(12px, 1.5vw, 15px); color: #fff; letter-spacing: -0.2px;
+  background: color-mix(in oklab, var(--ink) 60%, transparent);
+  padding: 5px 13px; border-radius: 999px;
+  box-shadow: 0 4px 12px -4px rgba(0,0,0,.4);
+}
+@keyframes prepBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
 @media (max-width: 860px) {
   .home-hero { grid-template-columns: 1fr; }
   .home-hero-art { height: 200px; order: -1; }
@@ -184,12 +209,12 @@
 }
 
 /* ===================== GALLERY (Step 2) ===================== */
-.gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 @media (max-width: 700px) { .gallery-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 440px) { .gallery-grid { grid-template-columns: 1fr; } }
 
 .gallery-cell {
-  position: relative; aspect-ratio: 4/5; padding: 0; border: var(--bw) solid var(--line);
+  position: relative; aspect-ratio: 4/3; padding: 0; border: var(--bw) solid var(--line);
   border-radius: var(--radius-sm); overflow: hidden; background: var(--card);
   animation: popIn .45s var(--ease-pop) both;
   transition: transform .18s var(--ease), border-color .18s, box-shadow .18s;
@@ -217,10 +242,10 @@
 }
 .gallery-cell-caption {
   position: absolute; bottom: 0; left: 0; right: 0;
-  padding: 36px 14px 14px;
-  background: linear-gradient(transparent, rgba(0,0,0,.60));
-  color: #fff; font-size: 17px; font-weight: 700; text-align: center;
-  letter-spacing: -0.2px;
+  padding: 44px 14px 12px;
+  background: linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.6) 45%, transparent 100%);
+  color: #fff; font-size: 16px; font-weight: 700; text-align: center;
+  letter-spacing: -0.2px; text-shadow: 0 1px 4px rgba(0,0,0,.6);
 }
 
 .gallery-empty {

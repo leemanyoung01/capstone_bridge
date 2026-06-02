@@ -58,19 +58,39 @@ function App() {
         setAvailableKeywords(keywords);
         setDefaultKeyword(data.default_keyword || keywords[0] || '');
         setIsLoading(false);
-        // 히어로 사진: 키워드별 대표 이미지 1장씩 수집
+        // 히어로 사진: 키워드별 대표 이미지 1장씩 수집 → 무작위 3개 선택
         Promise.allSettled(
-          keywords.slice(0, 6).map(kw =>
+          keywords.slice(0, 12).map(kw =>
             fetch(`/api/representative_images?keyword=${encodeURIComponent(kw)}`)
               .then(r => r.json())
-              .then(d => (d.images || [])[0])
+              .then(d => {
+                const img = (d.images || [])[0];
+                return img?.image_src ? { ...img, keyword: kw } : null;
+              })
           )
         ).then(results => {
-          const imgs = results
+          // 히어로에서 제외할 (키워드, 축/라벨) 조합
+          const EXCLUDED = [
+            { keyword: '샐러드', meta: '토핑풍부' },
+            { keyword: '딤섬', meta: '육즙' },
+          ];
+          const isExcluded = (img) => {
+            const meta = `${img.axis || ''} ${img.label || ''} ${img.axis_label || ''}`;
+            return EXCLUDED.some(e => img.keyword === e.keyword && meta.includes(e.meta));
+          };
+          const pool = results
             .filter(r => r.status === 'fulfilled' && r.value?.image_src)
-            .map(r => r.value);
-          if (imgs.length > 0)
-            setHeroImages([0, 1, 2].map(i => imgs[i % imgs.length]));
+            .map(r => r.value)
+            .filter(img => !isExcluded(img));
+
+          // Fisher-Yates 셔플 후 앞 3개 선택
+          for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+          }
+          const picked = pool.slice(0, 3);
+          if (picked.length > 0)
+            setHeroImages([0, 1, 2].map(i => picked[i % picked.length]));
         }).catch(() => {});
       })
       .catch(() => setIsLoading(false));

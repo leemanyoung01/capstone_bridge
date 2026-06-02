@@ -25,30 +25,57 @@ const normSrc = (src) => {
 
 const HERO_RADIUS = 'clamp(18px, 2.5vw, 28px)';
 
-const Photo = ({ src, name, tag, className = '' }) => (
-  <div
-    className={`photo ${className}`}
-    style={{ background: 'var(--bg-tint)', borderRadius: HERO_RADIUS, overflow: 'hidden' }}
-  >
-    <img
-      src={normSrc(src)}
-      alt={name}
-      style={{
-        position: 'absolute', inset: 0, width: '100%', height: '100%',
-        objectFit: 'cover',
-        borderRadius: HERO_RADIUS,   /* img에도 직접 적용해 클리핑 보장 */
-        display: 'block',
-      }}
-      onError={e => { e.target.style.display = 'none'; }}
-    />
-    <div className="photo-stripes" style={{ borderRadius: HERO_RADIUS }} />
-    <div className="photo-shade" />
-    <div className="photo-label">
-      <span className="photo-tag">{tag}</span>
-      <span className="photo-name display">{name}</span>
+const Photo = ({ src, name, tag, className = '', isPlaceholder = false, fallbackSrc = '' }) => {
+  // 'primary' → (실패 시) 'fallback' → (또 실패 시) 'prep'
+  const [stage, setStage] = useState('primary');
+
+  const canFallback = fallbackSrc && fallbackSrc !== src;
+  const activeSrc = stage === 'fallback' ? fallbackSrc : src;
+
+  const handleError = () => {
+    setStage(prev => (prev === 'primary' && canFallback ? 'fallback' : 'prep'));
+  };
+
+  // 준비중 표시: 로딩 전 임의 사진(isPlaceholder)이거나, 보여줄 이미지가 없거나, 모든 후보 로드 실패
+  const showPrep = isPlaceholder || !activeSrc || stage === 'prep';
+
+  return (
+    <div
+      className={`photo ${className}`}
+      style={{ background: 'var(--bg-tint)', borderRadius: HERO_RADIUS, overflow: 'hidden' }}
+    >
+      {activeSrc && stage !== 'prep' && (
+        <img
+          src={normSrc(activeSrc)}
+          alt={name}
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            objectFit: 'cover',
+            borderRadius: HERO_RADIUS,   /* img에도 직접 적용해 클리핑 보장 */
+            display: 'block',
+          }}
+          onError={handleError}
+        />
+      )}
+
+      {showPrep ? (
+        <div className="photo-prep">
+          <span className="photo-prep-emoji" role="img" aria-label="요리 중">🍳</span>
+          <span className="photo-prep-text">사진 준비중</span>
+        </div>
+      ) : (
+        <>
+          <div className="photo-stripes" style={{ borderRadius: HERO_RADIUS }} />
+          <div className="photo-shade" />
+          <div className="photo-label">
+            <span className="photo-tag">{tag}</span>
+            <span className="photo-name display">{name}</span>
+          </div>
+        </>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 /* ── Category Data ───────────────────────────────────────── */
 const CATEGORIES = [
@@ -104,15 +131,20 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart, heroImages = [] 
   const [query, setQuery] = useState(defaultKeyword || '');
   const [activeCat, setActiveCat] = useState(CATEGORIES[0].id);
 
-  // DB 이미지가 있으면 사용, 없으면 fallback
+  // DB 이미지가 있으면 사용, 없으면 fallback(로딩 전 임의 사진 + 준비중)
+  // DB 이미지가 깨지면 Photo 내부에서 fallbackSrc(unsplash)로 자동 교체
   const displayPhotos = HERO_FALLBACKS.map((fb, i) => {
     const dbImg = heroImages[i];
-    if (!dbImg?.image_src) return fb;
+    if (!dbImg?.image_src) {
+      return { ...fb, fallbackSrc: fb.src, isPlaceholder: true };
+    }
     return {
       src: dbImg.image_src,
       name: fb.name,
       tag: dbImg.label || dbImg.axis || fb.tag,
       className: fb.className,
+      fallbackSrc: fb.src,
+      isPlaceholder: false,
     };
   });
 
@@ -163,7 +195,7 @@ const HomeStep = ({ availableKeywords, defaultKeyword, onStart, heroImages = [] 
 
         <div className="home-hero-art reveal" style={{ animationDelay: '.1s' }}>
           {displayPhotos.map(p => (
-            <Photo key={p.className} {...p} />
+            <Photo key={`${p.className}|${p.src || ''}`} {...p} />
           ))}
         </div>
       </section>
