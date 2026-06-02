@@ -1,80 +1,31 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-// AxisMatchBar는 현재 코드에서 사용되지 않아 주석 처리 또는 삭제를 권장합니다.
-// import AxisMatchBar from '../ui/AxisMatchBar'; 
 import RadarChartViz from '../ui/RadarChartViz';
 import EvaluationCard from '../ui/EvaluationCard';
 import CookingLoader from '../ui/CookingLoader';
 import ShareButton from '../ui/ShareButton';
-import { ExternalLink, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'; // HelpCircle도 미사용이라 제외
+import { ExternalLink, ChevronDown, ChevronUp, RotateCcw, MapPin } from 'lucide-react';
 
-// ── Background Doodles ──
-const StarDoodle = ({ size = 14, style = {} }) => (
-  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" style={style}>
-    <path d="M10 1 L12 7.5 L19 7.5 L13.5 11.5 L15.5 18 L10 14 L4.5 18 L6.5 11.5 L1 7.5 L8 7.5 Z" fill="#333" opacity="0.12" />
-  </svg>
-);
-
-const WavyLine = ({ style = {} }) => (
-  <svg width="48" height="14" viewBox="0 0 48 14" fill="none" style={style}>
-    <path d="M2 7 C6 2 10 12 14 7 C18 2 22 12 26 7 C30 2 34 12 38 7 C42 2 46 12 50 7" stroke="#888" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.2" />
-  </svg>
-);
-
-const PlusDoodle = ({ style = {} }) => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={style}>
-    <line x1="10" y1="2" x2="10" y2="18" stroke="#555" strokeWidth="2.2" strokeLinecap="round" opacity="0.18" />
-    <line x1="2" y1="10" x2="18" y2="10" stroke="#555" strokeWidth="2.2" strokeLinecap="round" opacity="0.18" />
-  </svg>
-);
-
-// Pastel accent pool for rank cards
-const CARD_ACCENTS = [
-  { bg: '#FFF3C4', border: '#F5D45E', rank: '#B87A00' },
-  { bg: '#E8DCFF', border: '#C4A8F5', rank: '#6B3FA0' },
-  { bg: '#D4EDD4', border: '#9DD09D', rank: '#2E7D32' },
-  { bg: '#DAEAFF', border: '#90BFFF', rank: '#1A56B0' },
-  { bg: '#FFE4D6', border: '#F5A07A', rank: '#B84E00' },
-];
-
-// 추천 결과 화면 상한. 백엔드도 기본 5건만 내려주지만, 백엔드 실수로 더 내려와도
-// 프론트에서 한 번 더 자른다 (이중 방어).
 const FRONT_RESULT_LIMIT = 5;
 
-// ── Axis Label Mapping (For UI Display Only) ──
 const AXIS_LABEL_MAP = {
   '번식감': '빵 식감',
   '패티육즙': '패티 육즙',
-  '혼밥': '혼밥하기 좋은'
-  // 필요한 경우 여기에 추가 매핑을 넣을 수 있습니다.
+  '혼밥': '혼밥하기 좋은',
 };
-
 const getLabel = (key) => AXIS_LABEL_MAP[key] || key;
 
 const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '', onRestart }) => {
   const [expanded, setExpanded] = useState({});
   const toggle = (idx) => setExpanded(p => ({ ...p, [idx]: !p[idx] }));
-  const [showTransition, setShowTransition] = useState(false);
 
-  useEffect(() => {
-    if (results && results.length > 0) {
-      if (window.innerWidth < 768) {
-        setShowTransition(true);
-        const timer = setTimeout(() => {
-          setShowTransition(false);
-        }, 1500);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [results]);
-  // 계산 근거 sub-toggle (자세히 보기 안에서만 노출)
   const [breakdownOpen, setBreakdownOpen] = useState({});
   const toggleBreakdown = (idx) => setBreakdownOpen(p => ({ ...p, [idx]: !p[idx] }));
-  // 축별 추출 정확도 (작업 A) — lazy load
+
   const [statsOpen, setStatsOpen] = useState({});
   const [statsCache, setStatsCache] = useState({});
   const [statsLoading, setStatsLoading] = useState({});
+
   const toggleStats = async (idx, restaurantName) => {
     const wasOpen = !!statsOpen[idx];
     setStatsOpen(p => ({ ...p, [idx]: !wasOpen }));
@@ -82,8 +33,7 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
       setStatsLoading(p => ({ ...p, [idx]: true }));
       try {
         const url = `/api/axis_stats?restaurant=${encodeURIComponent(restaurantName)}&keyword=${encodeURIComponent(keyword)}`;
-        const res = await fetch(url);
-        const data = await res.json();
+        const data = await fetch(url).then(r => r.json());
         setStatsCache(p => ({ ...p, [idx]: data }));
       } catch (e) {
         setStatsCache(p => ({ ...p, [idx]: { error: String(e) } }));
@@ -95,662 +45,371 @@ const InferenceStep = ({ results, error, scores = {}, config = {}, keyword = '',
 
   if (error) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <div style={{ fontSize: '44px', marginBottom: '16px' }}>⚠️</div>
-        <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#D94452' }}>추천을 불러오지 못했습니다</h2>
-        <p style={{ color: 'var(--text-gray)', marginTop: '8px', marginBottom: '24px' }}>{error}</p>
-        <motion.button
-          onClick={onRestart}
-          whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-          style={{
-            background: 'var(--btn-dark)', color: 'white', border: 'none',
-            borderRadius: '999px', padding: '14px 32px', fontSize: '15px',
-            fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-          }}
-        >
-          처음으로 돌아가기
-        </motion.button>
+      <div className="infer-error step-enter">
+        <span style={{ fontSize: 48 }}>⚠️</span>
+        <h2>추천을 불러오지 못했습니다</h2>
+        <p className="muted">{error}</p>
+        <button className="btn btn-primary btn-lg" onClick={onRestart}>
+          <RotateCcw size={16} /> 처음으로 돌아가기
+        </button>
       </div>
     );
   }
 
-  if (!results) {
-    return <CookingLoader />;
-  }
+  if (!results) return <CookingLoader />;
 
   if (results.length === 0) {
-    return <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-gray)' }}>추천 결과가 없습니다.</div>;
+    return (
+      <div className="infer-error step-enter">
+        <p className="muted">추천 결과가 없습니다.</p>
+      </div>
+    );
   }
 
   return (
-    <AnimatePresence mode="wait">
-      {showTransition ? (
-        <motion.div
-          key="transition-view"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ duration: 0.5, ease: 'easeInOut' }}
-          className="transition-container"
-        >
-          <h2 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, color: 'var(--text-dark)' }}>
-            나만의 맛 스니펫 <span style={{ color: 'var(--text-gray)' }}>생성 완료!</span> 🎉
-          </h2>
-        </motion.div>
-      ) : (
-        <motion.div
-          key="result-view"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ position: 'relative', minHeight: '100vh', paddingTop: '24px' }}
-        >
-      {/* Scattered decorative doodles */}
-      <StarDoodle size={18} style={{ position: 'absolute', top: '8%', left: '3%' }} />
-      <PlusDoodle style={{ position: 'absolute', top: '25%', left: '2%' }} />
-      <WavyLine style={{ position: 'absolute', top: '45%', left: '4%' }} />
-      <StarDoodle size={12} style={{ position: 'absolute', top: '15%', right: '3%' }} />
-      <PlusDoodle style={{ position: 'absolute', top: '35%', right: '2%' }} />
-      <WavyLine style={{ position: 'absolute', top: '55%', right: '1%' }} />
-
-      <div className="desktop-heading">
-        <div style={{ textAlign: 'center', padding: '0 24px 24px' }}>
-          <h2 style={{
-            fontSize: 'clamp(32px, 5vw, 48px)',
-            fontWeight: 900,
-            letterSpacing: '-1px',
-            lineHeight: 1.15,
-            color: 'var(--text-dark)',
-            marginBottom: '10px',
-          }}>
-            나만의 맛 스니펫 <span style={{ color: 'var(--text-gray)' }}>완성!</span> 🎉
-          </h2>
-          <p style={{ color: 'var(--text-gray)', fontSize: '15px' }}>
-            취향 벡터와 가장 가까운 식당을 순위로 제시합니다.
-          </p>
-        </div>
+    <div className="step-enter">
+      {/* Header */}
+      <div className="infer-head">
+        <span className="eyebrow">Step 3</span>
+        <h2 className="infer-title display">
+          나만의 맛 스니펫 <span className="muted" style={{ fontWeight: 500 }}>완성!</span>
+        </h2>
+        <p className="muted" style={{ marginTop: 8 }}>취향 벡터와 가장 가까운 식당을 순위로 제시합니다.</p>
       </div>
 
-      {/* ── Card list container ── */}
-      <div className="result-card-container">
+      {/* Result list */}
+      <div className="infer-list">
+        {results.slice(0, FRONT_RESULT_LIMIT).map((item, idx) => {
+          const rank = item.rank || idx + 1;
+          const matchPct = item.match_percent != null
+            ? item.match_percent
+            : Math.round((item.similarity || 0) * 100);
+          const isExpanded = !!expanded[idx];
+          const placeUrl = item.naver_place_url || item.place_url || item.naver_url || item.fallback_search_url;
+          const topAxes = (item.top_axes || item.reasons || []).slice(0, 5);
+          const axisScores = item.axis_scores || {};
+          const axisContribs = item.axis_contributions || {};
+          const textPct = Math.round((item.text_evidence_ratio ?? item.fusion_weights?.text ?? 1) * 100);
+          const imgPct = Math.round((item.image_evidence_ratio ?? item.fusion_weights?.image ?? 0) * 100);
+          const hasImageBasis = imgPct > 0 && (item.image_confidence || 0) > 0.05;
+          const repImg = item.representative_image?.image_src ? item.representative_image : null;
+          const evSentences = item.evidence_sentences && typeof item.evidence_sentences === 'object'
+            ? item.evidence_sentences : null;
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '32px' }}>
-          {/* Top-N 안전 컷 — 백엔드도 기본 5건만 내려주지만, 더 와도 화면에는 5건만. */}
-          {results.slice(0, FRONT_RESULT_LIMIT).map((item, idx) => {
-            const rank = item.rank || idx + 1;
-            const accent = CARD_ACCENTS[(rank - 1) % CARD_ACCENTS.length];
-            const matchPct = item.match_percent != null
-              ? item.match_percent
-              : Math.round((item.similarity || 0) * 100);
-
-            const isExpanded = !!expanded[idx];
-            const placeUrl = item.naver_place_url || item.place_url || item.naver_url || item.fallback_search_url;
-
-            const topAxes = (item.top_axes || item.reasons || []).slice(0, 5);
-            const axisScores = item.axis_scores || {};
-            const axisContribs = item.axis_contributions || {};
-            const matchData = topAxes.map(name => ({
-              name, value: axisScores[name] ?? 0, contribution: axisContribs[name],
-            }));
-
-            const textRatio = item.text_evidence_ratio != null ? item.text_evidence_ratio : (item.fusion_weights?.text ?? 1);
-            const imageRatio = item.image_evidence_ratio != null ? item.image_evidence_ratio : (item.fusion_weights?.image ?? 0);
-            const textPct = Math.round(textRatio * 100);
-            const imgPct = Math.round(imageRatio * 100);
-            const hasImageBasis = imgPct > 0 && (item.image_confidence || 0) > 0.05;
-
-            const repImg = item.representative_image?.image_src ? item.representative_image : null;
-            const evSentences = item.evidence_sentences && typeof item.evidence_sentences === 'object' ? item.evidence_sentences : null;
-
-            // 유기적인 스크랩북 느낌을 위한 미세한 기울기
-            const rotation = (idx % 2 === 0 ? -0.7 : 0.7) + (idx * 0.1 % 0.5);
-
-            return (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 30, rotate: 0 }}
-                animate={{ opacity: 1, y: 0, rotate: rotation }}
-                transition={{ delay: idx * 0.08, type: 'spring', stiffness: 200, damping: 20 }}
-                whileHover={{ y: -5, rotate: 0 }}
-                style={{
-                  backgroundColor: 'var(--white)',
-                  borderRadius: '8px',
-                  overflow: 'visible',
-                  boxShadow: '0 12px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
-                  border: '1px solid var(--border-color)',
-                  position: 'relative',
-                  padding: '24px 20px',
-                }}
-              >
-                {/* ── 1. 금메달 랭킹 배지 (Top Left Overlapping) ── */}
-                <div style={{
-                  position: 'absolute', top: '-14px', left: '-14px', zIndex: 10,
-                  width: '56px', height: '56px', borderRadius: '50%',
-                  background: accent.bg, border: `2.5px dashed ${accent.border}`,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  transform: 'rotate(-10deg)',
-                }}>
-                  <span style={{ fontSize: '10px', fontWeight: 900, color: accent.rank, lineHeight: 1 }}>RANK</span>
-                  <span style={{ fontSize: '24px', fontWeight: 900, color: accent.rank, lineHeight: 1 }}>{rank}</span>
-                </div>
-
-                {/* ── 2. 매치 점수 스탬프 (Top Right) ── */}
-                <div style={{
-                  position: 'absolute', top: '20px', right: '20px', zIndex: 5,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  width: '68px', height: '68px', borderRadius: '50%',
-                  border: `3.5px double ${accent.border}`,
-                  color: accent.rank,
-                  transform: 'rotate(15deg)',
-                  opacity: 0.85,
-                }}>
-                  <span style={{ fontSize: '19px', fontWeight: 900, lineHeight: 1 }}>{matchPct}%</span>
-                  <span style={{ fontSize: '12px', fontWeight: 800 }}>일치</span>
-                </div>
-
-                {/* ── 3. 가로 배치 레이아웃 (Image Left, Details Right) ── */}
-                <div className="result-card-layout">
-
-                  {/* 왼쪽: 큼직한 대표 이미지 (폴라로이드 프레임) */}
-                  <div className="result-card-image-wrapper">
-                    {repImg ? (
-                      <img
-                        src={repImg.image_src}
-                        alt={repImg.label || item.name}
-                        style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: '2px' }}
-                        onError={e => { e.target.style.display = 'none'; }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%', aspectRatio: '1/1', background: '#F5F0EA',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '40px', borderRadius: '2px'
-                      }}>🍽️</div>
-                    )}
-                  </div>
-
-                  {/* 오른쪽: 상세 정보 */}
-                  <div className="result-card-content">
-
-                    {/* 식당 이름 & 주소 */}
-                    <div className="result-card-header">
-                      <h3 style={{
-                        fontSize: '28px',
-                        fontWeight: 800,
-                        color: 'var(--text-dark)',
-                        marginBottom: '6px',
-                        lineHeight: 1.1,
-                        letterSpacing: '-0.5px'
-                      }}>
-                        {item.name}
-                      </h3>
-                      {item.address && (
-                        <p style={{ fontSize: '12px', color: 'var(--text-gray)' }}>📍 {item.address}</p>
-                      )}
-                    </div>
-
-                    {/* 특징 태그 (마스킹 테이프 스타일) */}
-                    {topAxes.length > 0 && (
-                      <div className="result-card-tags hide-scrollbar">
-                        {topAxes.slice(0, 3).map(r => {
-                          const c = axisContribs[r];
-                          const pct = typeof c === 'number' ? Math.round(c * 100) : null;
-                          return (
-                            <span key={r} style={{
-                              fontSize: '15px', background: '#F5F0EA', color: 'var(--text-dark)',
-                              padding: '4px 12px', borderRadius: '4px 12px 12px 4px', fontWeight: 700,
-                              borderLeft: '3px solid var(--primary-light)',
-                              boxShadow: '1px 2px 4px rgba(0,0,0,0.05)',
-                            }}>
-                              #{getLabel(r)}{pct != null ? <span style={{ color: 'var(--text-gray)', marginLeft: 4, fontSize: '13px' }}>{pct}%</span> : null}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* 반영 비율 (귀여운 스티커 스타일) */}
-                    <div className="result-card-ratios">
-                      <span style={{
-                        fontSize: '14px',
-                        background: '#EEF2FF', color: '#4338CA',
-                        padding: '3px 10px', borderRadius: '3px', fontWeight: 700,
-                        transform: 'rotate(-1.5deg)'
-                      }}>
-                        📝 텍스트 {textPct}%
-                      </span>
-                      {hasImageBasis && (
-                        <span style={{
-                          fontSize: '14px',
-                          background: '#FEF3C7', color: '#92400E',
-                          padding: '3px 10px', borderRadius: '3px', fontWeight: 700,
-                          transform: 'rotate(1.5deg)'
-                        }}>
-                          📸 이미지 {imgPct}%
-                        </span>
-                      )}
-                    </div>
-
-                    {/* AI 요약/디버그 이유 */}
-                    {item.debug_reason && (
-                      <div style={{
-                        marginTop: '16px', fontSize: '13px', color: 'var(--text-gray)',
-                        background: 'var(--bg-color)',
-                        padding: '8px 12px', borderRadius: '8px', border: '1px dashed var(--border-color)'
-                      }}>
-                        💡 {item.debug_reason}
-                      </div>
-                    )}
-
+          return (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.08 }}
+              className={`card result-card ${rank === 1 ? 'is-top' : ''}`}
+              style={{ animationDelay: `${idx * 0.08}s` }}
+            >
+              <div className="result-main">
+                {/* Photo */}
+                <div className="result-photo">
+                  {repImg ? (
+                    <img
+                      src={repImg.image_src}
+                      alt={repImg.label || item.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={e => { e.target.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '100%', height: '100%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 40, background: 'var(--bg-tint)',
+                    }}>🍽️</div>
+                  )}
+                  <div className="result-rank num">#{rank}</div>
+                  {/* 모바일 전용: 일치율 + Best Pick 오버레이 */}
+                  <div className="result-photo-overlay">
+                    <span className="result-photo-match num">{matchPct}%</span>
+                    {rank === 1 && <span className="result-photo-best">🏆</span>}
                   </div>
                 </div>
 
-                {/* Expand toggle (손글씨 적용) */}
-                <button
-                  onClick={() => toggle(idx)}
-                  style={{
-                    marginTop: '20px', background: 'transparent', border: 'none',
-                    color: 'var(--text-gray)', fontSize: '16px', fontWeight: 700,
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                    cursor: 'pointer', padding: 0,
-                    marginLeft: 'auto'
-                  }}
-                >
-                  자세히 보기 {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
+                {/* Info */}
+                <div className="result-info">
+                  <div className="result-info-top">
+                    <div className="result-match">
+                      <span className="result-match-num num">{matchPct}</span>
+                      <span className="result-match-pct">% 일치</span>
+                    </div>
+                    {rank === 1 && (
+                      <span className="result-best">🏆 Best Pick</span>
+                    )}
+                  </div>
 
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      key="expanded"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.25 }}
-                      style={{ overflow: 'hidden' }}
-                    >
-                      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                        {(matchData.length > 0 || Object.keys(axisContribs).length > 0) && (
-                          <div style={{ background: 'var(--bg-color)', borderRadius: '16px', padding: '16px 8px' }}>
-                            <div style={{ textAlign: 'center', fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>취향 밸런스 분석</div>
-                            {(() => {
-                              const selectedAxisKeys = Object.keys(scores).filter(ax => (scores[ax] || 0) > 0);
-                              const radarLabelMap = {
-                                ...config.axis_label_map,
-                                ...AXIS_LABEL_MAP
-                              };
-                              // TasteStep의 로컬 매핑 로직 반영
-                              const AXIS_DISPLAY_LABELS = {
-                                커피: { 온도: '따뜻함' },
-                                김밥: { 밥의간과양: '밥의 간과 양' },
-                                버거: { 번식감: '빵 식감', 패티육즙: '패티 육즙' },
-                              };
-                              selectedAxisKeys.forEach(ax => {
-                                if (AXIS_DISPLAY_LABELS[keyword]?.[ax]) {
-                                  radarLabelMap[ax] = AXIS_DISPLAY_LABELS[keyword][ax];
-                                }
-                              });
+                  <h3 className="result-name display">{item.name}</h3>
 
-                              return (
-                                <RadarChartViz
-                                  data={axisScores}
-                                  axes={selectedAxisKeys}
-                                  labelMap={radarLabelMap}
-                                  minDomainMax={0.1}
-                                />
-                              );
-                            })()}
-                            <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-gray)', marginTop: '4px' }}>
-                              식당의 특징 점수와 취향 기여도를 종합한 그래프입니다.
-                            </div>
-                          </div>
-                        )}
+                  {item.address && (
+                    <div className="result-addr muted">
+                      <MapPin size={13} />
+                      <span>{item.address}</span>
+                    </div>
+                  )}
+
+                  {topAxes.length > 0 && (
+                    <div className="result-tags">
+                      {topAxes.slice(0, 3).map(r => {
+                        const c = axisContribs[r];
+                        const pct = typeof c === 'number' ? Math.round(c * 100) : null;
+                        return (
+                          <span key={r} className="result-tag">
+                            #{getLabel(r)}
+                            {pct != null && <span className="num"> {pct}%</span>}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Evidence ratio bar */}
+                  <div className="evbar">
+                    <div className="evbar-track">
+                      {textPct > 0 && (
+                        <span className="evbar-fill text" style={{ width: `${textPct}%` }} />
+                      )}
+                      {hasImageBasis && imgPct > 0 && (
+                        <span className="evbar-fill image" style={{ width: `${imgPct}%` }} />
+                      )}
+                    </div>
+                    <div className="evbar-legend">
+                      <span><span className="dot text" />텍스트 {textPct}%</span>
+                      {hasImageBasis && <span><span className="dot image" />이미지 {imgPct}%</span>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Expand toggle */}
+              <button className="result-expand" onClick={() => toggle(idx)}>
+                자세히 보기 {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+              </button>
+
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    key="detail"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    style={{ overflow: 'hidden' }}
+                    className="result-detail"
+                  >
+                    {/* Radar + Evidence */}
+                    {(Object.keys(axisScores).length > 0 || Object.keys(axisContribs).length > 0) && (
+                      <div className="result-detail-grid">
+                        <div className="result-radar">
+                          {(() => {
+                            const selectedAxisKeys = Object.keys(scores).filter(ax => (scores[ax] || 0) > 0);
+                            const radarLabelMap = { ...config.axis_label_map, ...AXIS_LABEL_MAP };
+                            return (
+                              <RadarChartViz
+                                data={axisScores}
+                                axes={selectedAxisKeys}
+                                labelMap={radarLabelMap}
+                                minDomainMax={0.1}
+                              />
+                            );
+                          })()}
+                        </div>
 
                         {evSentences && Object.keys(evSentences).length > 0 && (
                           <div>
-                            <div style={{ fontSize: '12px', fontWeight: 800, marginBottom: '8px' }}>축별 추천 근거</div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                              {Object.entries(evSentences).slice(0, 10).map(([ax, sents]) => (
-                                <div key={ax} style={{ fontSize: '12px', background: 'var(--bg-color)', borderRadius: '10px', padding: '8px 12px' }}>
-                                  <span style={{ fontWeight: 800, color: 'var(--btn-dark)' }}>#{getLabel(ax)}</span>{' '}
-                                  <span style={{ color: 'var(--text-gray)', fontStyle: 'italic' }}>"{(sents || [])[0]}"</span>
-                                </div>
-                              ))}
-                            </div>
+                            <span className="eyebrow" style={{ display: 'block', marginBottom: 12 }}>축별 추천 근거</span>
+                            {Object.entries(evSentences).slice(0, 6).map(([ax, sents]) => (
+                              <div key={ax} className="evidence-item">
+                                <span className="evidence-axis">#{getLabel(ax)}</span>
+                                <p className="evidence-sent muted">"{(sents || [])[0]}"</p>
+                              </div>
+                            ))}
                           </div>
                         )}
-
-                        {/* ── 계산 근거 (opt-in sub-toggle) ── */}
-                        {item.match_breakdown && (() => {
-                          const br = item.match_breakdown;
-                          const main = br.main || {};
-                          const ev = br.evidence_split || {};
-                          const txtPct = Math.round((ev.text_ratio || 0) * 100);
-                          const imgPct = Math.round((ev.image_ratio || 0) * 100);
-                          const isOpen = !!breakdownOpen[idx];
-                          return (
-                            <div style={{ marginTop: '4px' }}>
-                              <motion.button
-                                onClick={() => toggleBreakdown(idx)}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                style={{
-                                  width: '100%',
-                                  background: 'var(--bg-color)',
-                                  border: '1px dashed var(--border-color)',
-                                  borderRadius: '12px',
-                                  padding: '8px 14px',
-                                  fontSize: '12px',
-                                  fontWeight: 700,
-                                  color: 'var(--text-gray)',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                  fontFamily: 'inherit',
-                                }}
-                              >
-                                <span>🔍 계산 근거 (이 일치도가 어떻게 나왔는지)</span>
-                                {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                              </motion.button>
-                              <AnimatePresence initial={false}>
-                                {isOpen && (
-                                  <motion.div
-                                    key="br"
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    style={{ overflow: 'hidden' }}
-                                  >
-                                    <div style={{
-                                      marginTop: '8px',
-                                      background: 'var(--white)',
-                                      border: '1px solid var(--border-color)',
-                                      borderRadius: '12px',
-                                      padding: '16px',
-                                      fontSize: '12.5px',
-                                      lineHeight: 1.6,
-                                      color: 'var(--text-dark)',
-                                    }}>
-                                      {/* ─ 일치도 설명 + 계산식 한 줄 ─ */}
-                                      <div style={{ fontWeight: 800, marginBottom: '4px' }}>
-                                        일치도 {br.final_percent}%
-                                      </div>
-                                      <div style={{ color: 'var(--text-gray)', fontSize: '12px', marginBottom: '10px' }}>
-                                        고른 취향 축과 이 식당 리뷰가 얼마나 닮았는지(코사인 유사도)를 나타내요.
-                                      </div>
-                                      <div style={{ background: 'var(--bg-color)', borderRadius: '8px', padding: '10px 12px', marginBottom: '16px', fontSize: '12px', lineHeight: 1.9 }}>
-                                        <span>맛 취향 유사도 <strong>{Math.round((main.taste_cosine || 0) * 100)}%</strong></span>
-                                        {(main.meta_boost_amount || 0) > 0 && (
-                                          <span style={{ color: 'var(--text-gray)' }}>
-                                            {' '}＋ 부가 만족도 <strong>{Math.round(main.meta_boost_amount * 100)}%</strong>
-                                          </span>
-                                        )}
-                                        <span style={{ fontWeight: 700 }}>
-                                          {' '}→ 최종 <span style={{ color: 'var(--primary)' }}>{br.final_percent}%</span>
-                                        </span>
-                                        {(main.meta_boost_amount || 0) > 0 && (
-                                          <div style={{ color: 'var(--text-gray)', fontSize: '10px', marginTop: '5px', lineHeight: 1.5 }}>
-                                            * 맛 취향(감칠맛·담백함 등)이 주 판단 기준이고, 가성비·양많음·재주문의사 같은
-                                            부가 만족도는 5%만 가산해요.
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      {/* ─ 텍스트/이미지 기여 비중 (막대) ─ */}
-                                      <div style={{ fontWeight: 800, marginBottom: '8px' }}>점수 근거 비중</div>
-                                      <div style={{ display: 'flex', height: '30px', borderRadius: '8px', overflow: 'hidden', marginBottom: '6px', fontSize: '11px', fontWeight: 700 }}>
-                                        {txtPct > 0 && (
-                                          <div style={{ width: `${txtPct}%`, background: '#FCE7C8', color: '#92400E', display: 'flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }}>
-                                            📝 텍스트 {txtPct}%
-                                          </div>
-                                        )}
-                                        {imgPct > 0 && (
-                                          <div style={{ width: `${imgPct}%`, background: '#D6E4F5', color: '#1E40AF', display: 'flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }}>
-                                            📷 이미지 {imgPct}%
-                                          </div>
-                                        )}
-                                      </div>
-                                      <div style={{ color: 'var(--text-gray)', fontSize: '11px' }}>
-                                        리뷰 텍스트 분석과 음식 사진 분석이 각각 기여한 정도예요.
-                                        <div style={{ fontSize: '10px', marginTop: '5px', lineHeight: 1.5 }}>
-                                          * 비중 = 입력 비중 × 취향 정렬도 × 데이터 신뢰도
-                                          (텍스트=리뷰 수, 이미지=사진 커버리지) 로 산출해 정규화한 값이에요.
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          );
-                        })()}
-
-                        {/* ── 축별 추출 정확도 (작업 A, opt-in sub-toggle) ── */}
-                        {(() => {
-                          const isStatsOpen = !!statsOpen[idx];
-                          const isStatsLoading = !!statsLoading[idx];
-                          const data = statsCache[idx];
-                          return (
-                            <div style={{ marginTop: '4px' }}>
-                              <motion.button
-                                onClick={() => toggleStats(idx, item.name)}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                style={{
-                                  width: '100%',
-                                  background: 'var(--bg-color)',
-                                  border: '1px dashed var(--border-color)',
-                                  borderRadius: '12px',
-                                  padding: '8px 14px',
-                                  fontSize: '12px',
-                                  fontWeight: 700,
-                                  color: 'var(--text-gray)',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                  fontFamily: 'inherit',
-                                }}
-                              >
-                                <span>📊 축별 추출 정확도 (lex/BERT가 리뷰에서 얼마나 잡았나)</span>
-                                {isStatsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                              </motion.button>
-                              <AnimatePresence initial={false}>
-                                {isStatsOpen && (
-                                  <motion.div
-                                    key="stats"
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    style={{ overflow: 'hidden' }}
-                                  >
-                                    <div style={{
-                                      marginTop: '8px',
-                                      background: 'var(--white)',
-                                      border: '1px solid var(--border-color)',
-                                      borderRadius: '12px',
-                                      padding: '14px',
-                                      fontSize: '12px',
-                                      color: 'var(--text-dark)',
-                                    }}>
-                                      {isStatsLoading && (
-                                        <div style={{ color: 'var(--text-gray)' }}>불러오는 중...</div>
-                                      )}
-                                      {data && data.error && (
-                                        <div style={{ color: '#D94452' }}>에러: {data.error}</div>
-                                      )}
-                                      {data && !data.error && (() => {
-                                        // 사용자가 TasteStep에서 고른 축만 필터링
-                                        const userPickedAxes = new Set(
-                                          Object.keys(scores || {}).filter(ax => (scores[ax] || 0) > 0)
-                                        );
-                                        const allAxes = data.axes || [];
-                                        const pickedAxes = allAxes.filter(a => userPickedAxes.has(a.axis));
-                                        // 사용자 픽이 없으면 (예: 이미지만 고른 경우) top 5로 폴백
-                                        const displayAxes = pickedAxes.length > 0 ? pickedAxes : allAxes.slice(0, 5);
-                                        return (
-                                          <>
-                                            <div style={{ fontWeight: 800, marginBottom: '8px' }}>
-                                              이 식당 리뷰 {data.total_reviews}건에서 추출
-                                              <span style={{ fontWeight: 400, color: 'var(--text-gray)', fontSize: '11px', marginLeft: '6px' }}>
-                                                {pickedAxes.length > 0
-                                                  ? `(고른 ${displayAxes.length}축만 표시)`
-                                                  : `(취향 픽 없음 — top ${displayAxes.length}축 표시)`}
-                                              </span>
-                                            </div>
-                                            <div style={{ overflowX: 'auto' }}>
-                                              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                                                <thead>
-                                                  <tr style={{ background: 'var(--bg-color)' }}>
-                                                    <th style={{ textAlign: 'left',  padding: '6px 8px' }}>축</th>
-                                                    <th style={{ textAlign: 'right', padding: '6px 8px' }}>매칭 리뷰</th>
-                                                    <th style={{ textAlign: 'right', padding: '6px 8px' }}>매칭률</th>
-                                                    <th style={{ textAlign: 'right', padding: '6px 8px' }}>lex 점수</th>
-                                                    <th style={{ textAlign: 'right', padding: '6px 8px' }}>BERT 점수</th>
-                                                    <th style={{ textAlign: 'right', padding: '6px 8px' }}>근거 sentence</th>
-                                                  </tr>
-                                                </thead>
-                                                <tbody>
-                                                  {/* 근거 sentence = lex 근거(있으면) 또는 BERT 게이트통과 근거 수.
-                                                      둘 다 0인 stale 축(쫄깃함 등)만 숨김. */}
-                                                  {displayAxes
-                                                    .map(a => ({
-                                                      ...a,
-                                                      _evCount: (a.evidence_count || 0) > 0
-                                                        ? (a.evidence_count || 0)
-                                                        : (a.semantic_evidence_samples || []).length,
-                                                    }))
-                                                    .filter(a => a._evCount > 0)
-                                                    .map((a) => (
-                                                    <tr key={a.axis} style={{ borderTop: '1px solid var(--border-color)' }}>
-                                                      <td style={{ padding: '6px 8px', fontWeight: 700 }}>{a.label || a.axis}</td>
-                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
-                                                        {a.total_hits}
-                                                        <span style={{ color: 'var(--text-gray)', fontSize: '10px' }}>
-                                                          {' '}({a.positive_hits}+/{a.negative_hits}-)
-                                                        </span>
-                                                      </td>
-                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
-                                                        {(a.hit_rate * 100).toFixed(1)}%
-                                                      </td>
-                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
-                                                        {a.text_vector_score != null ? a.text_vector_score.toFixed(3) : '-'}
-                                                      </td>
-                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
-                                                        {a.semantic_vector_score != null ? a.semantic_vector_score.toFixed(3) : '-'}
-                                                      </td>
-                                                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{a._evCount}</td>
-                                                    </tr>
-                                                  ))}
-                                                </tbody>
-                                              </table>
-                                            </div>
-                                            {/* BERT가 추가로 찾은 의미 근거 — lex가 1건도 못 잡은 축만.
-                                                lex가 잡은 축은 메인 근거에 lex로 뜨므로 여기선 중복 제외 (노이즈 차단). */}
-                                            {(() => {
-                                              const withSemEv = displayAxes.filter(
-                                                a => (a.semantic_evidence_samples || []).length > 0
-                                                     && (a.total_hits || 0) === 0
-                                              );
-                                              if (withSemEv.length === 0) return null;
-                                              return (
-                                                <div style={{ marginTop: '12px', borderTop: '1px dashed var(--border-color)', paddingTop: '10px' }}>
-                                                  <div style={{ fontWeight: 800, marginBottom: '6px', fontSize: '11px' }}>
-                                                    🤖 BERT가 의미로 찾은 근거 (lex 키워드 없이 매칭)
-                                                  </div>
-                                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                                                    {withSemEv.map((a) => (
-                                                      <div key={a.axis} style={{ fontSize: '11px', background: 'var(--bg-color)', borderRadius: '8px', padding: '6px 10px' }}>
-                                                        <span style={{ fontWeight: 800, color: 'var(--btn-dark)' }}>#{a.label || a.axis}</span>{' '}
-                                                        <span style={{ color: 'var(--text-gray)', fontStyle: 'italic' }}>
-                                                          "{(a.semantic_evidence_samples || [])[0]}"
-                                                        </span>
-                                                      </div>
-                                                    ))}
-                                                  </div>
-                                                </div>
-                                              );
-                                            })()}
-                                            <div style={{ marginTop: '10px', fontSize: '10px', color: 'var(--text-gray)', lineHeight: 1.5 }}>
-                                              ※ 매칭 리뷰 = lex 키워드가 본문에 포함된 리뷰 수.
-                                              lex 점수 = Food_profiler 정규화 결과.
-                                              BERT 점수 = KoSBERT 의미 매칭 (둘 다 -1~1).
-                                              🤖 BERT 근거 = lex 키워드 없이 의미로 찾은 문장.
-                                            </div>
-                                          </>
-                                        );
-                                      })()}
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          );
-                        })()}
-
-                        <EvaluationCard />
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    )}
 
-                {/* Card footer — share + naver link side by side */}
-                <div style={{
-                  borderTop: '1px solid var(--border-color)',
-                  padding: '12px 18px',
-                  marginTop: '16px',
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                  gap: '8px',
-                  flexWrap: 'wrap',
-                }}>
-                  <ShareButton item={item} />
-                  {placeUrl && (
-                    <a
-                      href={placeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '6px',
-                        fontSize: '12px', fontWeight: 700, color: 'var(--text-dark)',
-                        background: 'var(--bg-color)', border: '1.5px solid var(--border-color)',
-                        borderRadius: '999px', padding: '7px 14px', textDecoration: 'none',
-                        lineHeight: 1,
-                      }}
-                    >
-                      {(item.naver_place_url || item.naver_url) ? '네이버 플레이스 보기' : '네이버에서 검색'} <ExternalLink size={12} />
-                    </a>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                    {/* Breakdown sub-toggle */}
+                    {item.match_breakdown && (() => {
+                      const br = item.match_breakdown;
+                      const main = br.main || {};
+                      const ev = br.evidence_split || {};
+                      const txtPct2 = Math.round((ev.text_ratio || 0) * 100);
+                      const imgPct2 = Math.round((ev.image_ratio || 0) * 100);
+                      const isOpen = !!breakdownOpen[idx];
+                      return (
+                        <div style={{ marginTop: 12 }}>
+                          <button className="subtoggle-btn" onClick={() => toggleBreakdown(idx)}>
+                            <span>🔍 계산 근거 (일치도 산출 방식)</span>
+                            {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          </button>
+                          <AnimatePresence initial={false}>
+                            {isOpen && (
+                              <motion.div
+                                key="br"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                                style={{ overflow: 'hidden' }}
+                              >
+                                <div style={{
+                                  marginTop: 8, background: 'var(--bg-tint)',
+                                  borderRadius: 'var(--radius-sm)', padding: '14px 16px',
+                                  fontSize: 12.5, lineHeight: 1.7,
+                                }}>
+                                  <div style={{ fontWeight: 800, marginBottom: 4 }}>일치도 {br.final_percent}%</div>
+                                  <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
+                                    선택한 취향 축과 이 식당 리뷰의 코사인 유사도입니다.
+                                  </div>
+                                  <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-xs)', padding: '8px 12px', marginBottom: 14, fontSize: 12, lineHeight: 1.9 }}>
+                                    맛 취향 유사도 <strong>{Math.round((main.taste_cosine || 0) * 100)}%</strong>
+                                    {(main.meta_boost_amount || 0) > 0 && (
+                                      <span className="muted"> ＋ 부가 만족도 <strong>{Math.round(main.meta_boost_amount * 100)}%</strong></span>
+                                    )}
+                                    <span style={{ fontWeight: 700 }}>
+                                      {' '}→ 최종 <span style={{ color: 'var(--accent)' }}>{br.final_percent}%</span>
+                                    </span>
+                                  </div>
+                                  {/* Evidence bar */}
+                                  <div style={{ fontWeight: 800, marginBottom: 8 }}>점수 근거 비중</div>
+                                  <div style={{ display: 'flex', height: 28, borderRadius: 'var(--radius-xs)', overflow: 'hidden', marginBottom: 6, fontSize: 11, fontWeight: 700 }}>
+                                    {txtPct2 > 0 && (
+                                      <div style={{ width: `${txtPct2}%`, background: 'color-mix(in oklab, var(--accent) 20%, transparent)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        📝 {txtPct2}%
+                                      </div>
+                                    )}
+                                    {imgPct2 > 0 && (
+                                      <div style={{ width: `${imgPct2}%`, background: 'color-mix(in oklab, var(--accent-2) 20%, transparent)', color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        📷 {imgPct2}%
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })()}
 
-        <div style={{ textAlign: 'center', paddingBottom: '40px' }}>
-          <motion.button
-            onClick={onRestart}
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              background: 'var(--btn-dark)', color: 'white', border: 'none',
-              borderRadius: '999px', padding: '14px 36px', fontSize: '15px',
-              fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-              boxShadow: '0 6px 24px rgba(0,0,0,0.20)',
-            }}
-          >
-            <RotateCcw size={16} /> 다시 테스트하기
-          </motion.button>
-        </div>
+                    {/* Stats sub-toggle */}
+                    {(() => {
+                      const isStatsOpen = !!statsOpen[idx];
+                      const isStatsLoading = !!statsLoading[idx];
+                      const data = statsCache[idx];
+                      return (
+                        <div style={{ marginTop: 8 }}>
+                          <button className="subtoggle-btn" onClick={() => toggleStats(idx, item.name)}>
+                            <span>📊 축별 추출 정확도</span>
+                            {isStatsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          </button>
+                          <AnimatePresence initial={false}>
+                            {isStatsOpen && (
+                              <motion.div
+                                key="stats"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                                style={{ overflow: 'hidden' }}
+                              >
+                                <div style={{
+                                  marginTop: 8, background: 'var(--surface)',
+                                  border: 'var(--bw) solid var(--line)',
+                                  borderRadius: 'var(--radius-sm)', padding: 14,
+                                  fontSize: 12,
+                                }}>
+                                  {isStatsLoading && <span className="muted">불러오는 중...</span>}
+                                  {data?.error && <span style={{ color: 'var(--c-tomato)' }}>에러: {data.error}</span>}
+                                  {data && !data.error && (() => {
+                                    const userPickedAxes = new Set(Object.keys(scores || {}).filter(ax => (scores[ax] || 0) > 0));
+                                    const allAxes = data.axes || [];
+                                    const pickedAxes = allAxes.filter(a => userPickedAxes.has(a.axis));
+                                    const displayAxes = pickedAxes.length > 0 ? pickedAxes : allAxes.slice(0, 5);
+                                    return (
+                                      <>
+                                        <div style={{ fontWeight: 800, marginBottom: 8 }}>
+                                          리뷰 {data.total_reviews}건에서 추출
+                                        </div>
+                                        <div style={{ overflowX: 'auto' }}>
+                                          <table className="stats-table">
+                                            <thead>
+                                              <tr>
+                                                <th>축</th>
+                                                <th style={{ textAlign: 'right' }}>매칭 리뷰</th>
+                                                <th style={{ textAlign: 'right' }}>매칭률</th>
+                                                <th style={{ textAlign: 'right' }}>lex</th>
+                                                <th style={{ textAlign: 'right' }}>BERT</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {displayAxes
+                                                .map(a => ({
+                                                  ...a,
+                                                  _ev: (a.evidence_count || 0) > 0
+                                                    ? a.evidence_count
+                                                    : (a.semantic_evidence_samples || []).length,
+                                                }))
+                                                .filter(a => a._ev > 0)
+                                                .map(a => (
+                                                  <tr key={a.axis}>
+                                                    <td style={{ fontWeight: 700 }}>{a.label || a.axis}</td>
+                                                    <td className="num" style={{ textAlign: 'right' }}>{a.total_hits}</td>
+                                                    <td className="num" style={{ textAlign: 'right' }}>{(a.hit_rate * 100).toFixed(1)}%</td>
+                                                    <td className="num" style={{ textAlign: 'right' }}>{a.text_vector_score != null ? a.text_vector_score.toFixed(3) : '-'}</td>
+                                                    <td className="num" style={{ textAlign: 'right' }}>{a.semantic_vector_score != null ? a.semantic_vector_score.toFixed(3) : '-'}</td>
+                                                  </tr>
+                                                ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      </>
+                                    );
+                                  })()}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })()}
+
+                    <EvaluationCard />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Footer */}
+              <div className="result-foot">
+                <ShareButton item={item} />
+                {placeUrl && (
+                  <a
+                    href={placeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-ghost result-naver"
+                  >
+                    {(item.naver_place_url || item.naver_url) ? '네이버 플레이스' : '네이버 검색'}
+                    <ExternalLink size={13} />
+                  </a>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+
+      {/* Restart */}
+      <div className="infer-restart">
+        <button className="btn btn-ghost btn-lg" onClick={onRestart}>
+          <RotateCcw size={16} /> 다시 테스트하기
+        </button>
+      </div>
+    </div>
   );
 };
 

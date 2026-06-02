@@ -1,65 +1,17 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { RotateCcw, ArrowRight, Sparkles } from 'lucide-react';
 import RadarChartViz from '../ui/RadarChartViz';
-import Button from '../ui/Button';
 
 const GROUP_PRIORITY = ['공통', '맛', '식감', '기타', '메타'];
 
-const CHIP_ROTATIONS = [-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6];
-const chipRotation = (axis) => {
-  let hash = 0;
-  for (let i = 0; i < axis.length; i++) hash += axis.charCodeAt(i);
-  return CHIP_ROTATIONS[hash % CHIP_ROTATIONS.length];
-};
-
-// ── Shared inline SVG decorations ──────────────────────────────
-const StarDoodle = ({ size = 16, style = {} }) => (
-  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" style={style}>
-    <path d="M10 1 L12 7.5 L19 7.5 L13.5 11.5 L15.5 18 L10 14 L4.5 18 L6.5 11.5 L1 7.5 L8 7.5 Z"
-      fill="#333" opacity="0.18" />
-  </svg>
-);
-
-const SparkDoodle = ({ style = {} }) => (
-  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style={style}>
-    <line x1="11" y1="1"  x2="11" y2="7"  stroke="#555" strokeWidth="2" strokeLinecap="round" opacity="0.22"/>
-    <line x1="11" y1="15" x2="11" y2="21" stroke="#555" strokeWidth="2" strokeLinecap="round" opacity="0.22"/>
-    <line x1="1"  y1="11" x2="7"  y2="11" stroke="#555" strokeWidth="2" strokeLinecap="round" opacity="0.22"/>
-    <line x1="15" y1="11" x2="21" y2="11" stroke="#555" strokeWidth="2" strokeLinecap="round" opacity="0.22"/>
-    <circle cx="11" cy="11" r="2.5" fill="#555" opacity="0.18"/>
-  </svg>
-);
-
-const WavyLine = ({ style = {} }) => (
-  <svg width="48" height="14" viewBox="0 0 48 14" fill="none" style={style}>
-    <path d="M2 7 C6 2 10 12 14 7 C18 2 22 12 26 7 C30 2 34 12 38 7 C42 2 46 12 50 7"
-      stroke="#888" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.3"/>
-  </svg>
-);
-
-const PlusDoodle = ({ style = {} }) => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={style}>
-    <line x1="10" y1="2" x2="10" y2="18" stroke="#555" strokeWidth="2" strokeLinecap="round" opacity="0.25"/>
-    <line x1="2"  y1="10" x2="18" y2="10" stroke="#555" strokeWidth="2" strokeLinecap="round" opacity="0.25"/>
-  </svg>
-);
-
-// '*특화'로 끝나는 그룹(예: 커피특화, 버거특화)은 GROUP_PRIORITY보다 항상 먼저 노출.
 const isSpecialtyGroup = (label) =>
   typeof label === 'string' && label.endsWith('특화');
 
-// 내부 key는 유지하고, 화면에 보이는 이름만 변경
 const AXIS_DISPLAY_LABELS = {
-  커피: {
-    온도: '따뜻함',
-  },
-  김밥: {
-    밥의간과양: '밥의 간과 양',
-  },
-  버거: {
-    번식감: '빵 식감',
-    패티육즙: '패티 육즙',
-  },
+  커피: { 온도: '따뜻함' },
+  김밥: { 밥의간과양: '밥의 간과 양' },
+  버거: { 번식감: '빵 식감', 패티육즙: '패티 육즙' },
 };
 
 const GROUP_DISPLAY_LABELS = {
@@ -69,15 +21,11 @@ const GROUP_DISPLAY_LABELS = {
 };
 
 const getAxisDisplayName = (keyword, axis, config) => {
-  if (config && config.axis_label_map && config.axis_label_map[axis]) {
-    return config.axis_label_map[axis];
-  }
+  if (config?.axis_label_map?.[axis]) return config.axis_label_map[axis];
   return AXIS_DISPLAY_LABELS?.[keyword]?.[axis] || axis;
 };
 
-const getGroupDisplayName = (groupLabel) => {
-  return GROUP_DISPLAY_LABELS[groupLabel] || groupLabel;
-};
+const getGroupDisplayName = (label) => GROUP_DISPLAY_LABELS[label] || label;
 
 const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext, onReset }) => {
   let { groups = {} } = config;
@@ -87,9 +35,6 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
     delete groups['국밥탕특화'];
   }
 
-  // 1) 특화 그룹 우선 (입력 순서 보존)
-  // 2) GROUP_PRIORITY 순서
-  // 3) 나머지
   const used = new Set();
   const groupOrder = [];
   Object.keys(groups).forEach(label => {
@@ -111,58 +56,28 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
     }
   });
 
-  // 음료/카페류처럼 공용 taste 그룹이 백엔드에서 빠진 경우 → 헤딩 "맛 취향" 대신 "취향"
   const hasGenericTaste = Boolean(groups['맛'] || groups['식감']);
   const headingSuffix = hasGenericTaste ? '맛 취향 탐색' : '취향 탐색';
 
-  // Radar chart: Show individual selected axes
   const selectedAxisKeys = Object.keys(scores).filter(ax => (scores[ax] || 0) > 0);
-  
-  const radarData = selectedAxisKeys.reduce((acc, ax) => {
-    acc[ax] = scores[ax] || 0;
-    return acc;
-  }, {});
-
+  const radarData = selectedAxisKeys.reduce((acc, ax) => { acc[ax] = scores[ax] || 0; return acc; }, {});
   const radarLabelMap = selectedAxisKeys.reduce((acc, ax) => {
     acc[ax] = getAxisDisplayName(keyword, ax, config);
     return acc;
   }, {});
-
   const selectedCount = Object.values(scores).filter(v => v > 0).length;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      style={{ position: 'relative', minHeight: '100vh' }}
-    >
-      {/* ── Scattered background doodles ── */}
-      <StarDoodle   style={{ position: 'absolute', top: '8%',   left:  '2%' }} />
-      <PlusDoodle   style={{ position: 'absolute', top: '20%',  left:  '1.5%' }} />
-      <WavyLine     style={{ position: 'absolute', top: '45%',  left:  '1%' }} />
-      <SparkDoodle  style={{ position: 'absolute', bottom: '18%', left: '2%' }} />
-      <StarDoodle size={12} style={{ position: 'absolute', top: '12%',  right: '2%' }} />
-      <PlusDoodle   style={{ position: 'absolute', top: '55%',  right: '1.5%' }} />
-      <WavyLine     style={{ position: 'absolute', bottom: '25%', right: '1%' }} />
-      <SparkDoodle  style={{ position: 'absolute', bottom: '10%', right: '2%' }} />
-
-      {/* ── Shared max-width wrapper (heading + grid aligned together) ── */}
-      <div style={{ maxWidth: '980px', margin: '0 auto', padding: '0 28px 60px' }}>
-
-        {/* ── Top-left asymmetric header ── */}
-        <div style={{ padding: '24px 0 16px', textAlign: 'left' }}>
-          <h2 style={{
-            fontSize: 'clamp(28px, 4vw, 46px)',
-            fontWeight: 900,
-            letterSpacing: '-1.5px',
-            lineHeight: 1.1,
-            color: 'var(--text-dark)',
-            marginBottom: '10px',
-          }}>
-            <span style={{ color: 'var(--primary)' }}>{keyword}</span>{' '}
-            <span style={{ color: 'var(--text-gray)', fontWeight: 500 }}>{headingSuffix}</span>
+    <div className="step-enter">
+      {/* Header */}
+      <div className="taste-head">
+        <div>
+          <span className="eyebrow">Step 1</span>
+          <h2 className="taste-title display">
+            <span className="taste-kw">{keyword}</span>{' '}
+            <span className="muted" style={{ fontWeight: 500 }}>{headingSuffix}</span>
           </h2>
-          <p className="hide-on-mobile" style={{ fontSize: '15px', color: 'var(--text-gray)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <p className="taste-desc muted">
             끌리는 단어를 자유롭게 선택해주세요
             <AnimatePresence>
               {selectedCount > 0 && (
@@ -171,209 +86,121 @@ const TasteStep = ({ keyword, config, scores, onChipClick, onScoreChange, onNext
                   initial={{ opacity: 0, scale: 0.7 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.7 }}
-                  style={{
-                    background: 'var(--primary)', color: 'white',
-                    fontSize: '12px', fontWeight: 800,
-                    padding: '2px 10px', borderRadius: '999px',
-                  }}
+                  className="badge-count"
+                  style={{ marginLeft: 12 }}
                 >
-                  {selectedCount}개 선택됨
+                  <Sparkles size={13} /> {selectedCount}개 선택됨
                 </motion.span>
               )}
             </AnimatePresence>
           </p>
         </div>
+      </div>
 
-        {/* ── Two-column layout ── */}
-        <div className="responsive-grid mobile-pad">
-          {/* Left: chip groups with airy dividers */}
-          <div>
-            {groupOrder.map((group, gIdx) => {
-              const isLast = gIdx === groupOrder.length - 1;
-              return (
-                <div
-                  key={group.label}
-                  style={{
-                    borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.07)',
-                    padding: '16px 0',
-                  }}
-                >
-                  <h3 style={{
-                    fontSize: '18px',
-                    fontWeight: 800,
-                    marginBottom: '18px',
-                    color: 'var(--text-gray)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    {getGroupDisplayName(group.label)}
-                  </h3>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {group.axes.map(axis => {
-                      const score = scores[axis];
-                      const isSelected = score !== 0;
-                      return (
-                        <motion.div
-                          key={axis}
-                          whileHover={{ y: isSelected ? 0 : -2, rotate: 0 }}
-                          whileTap={{ scale: 0.94 }}
-                          onClick={() => onChipClick(axis)}
-                          style={{
-                            rotate: chipRotation(axis),
-                            display: 'flex', alignItems: 'center',
-                            height: '42px', boxSizing: 'border-box',
-                            padding: isSelected ? '0 8px 0 16px' : '0 18px',
-                            borderRadius: '999px',
-                            fontSize: '15px', fontWeight: 700,
-                            // ── Claymorphism jelly sticker ──
-                            backgroundColor: isSelected
-                              ? 'var(--primary-light)'
-                              : '#F5F0EA',
-                            color: isSelected ? 'var(--primary)' : 'var(--text-dark)',
-                            border: isSelected
-                              ? '1.5px solid rgba(255,126,103,0.5)'
-                              : '1.5px solid rgba(255,255,255,0.85)',
-                            boxShadow: isSelected
-                              ? '0 0 0 4px rgba(255,126,103,0.12), 0 4px 14px rgba(255,126,103,0.22), inset 0 1px 0 rgba(255,255,255,0.8)'
-                              : '0 3px 10px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(0,0,0,0.03)',
-                            cursor: 'pointer', whiteSpace: 'nowrap',
-                            transition: 'background 0.18s, color 0.18s, box-shadow 0.22s, border 0.18s',
-                          }}
-                        >
-                          <span>{getAxisDisplayName(keyword, axis, config)}</span>
-
-                          {isSelected && (
-                            <div
-                              style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 10 }}
-                              onClick={e => e.stopPropagation()}
-                            >
-                              <div style={{
-                                background: 'rgba(255,126,103,0.12)',
-                                borderRadius: '999px', padding: '3px 6px',
-                                display: 'flex', alignItems: 'center', gap: '4px',
-                                whiteSpace: 'nowrap', flexWrap: 'nowrap'
-                              }}>
-                                  <button
-                                    onClick={() => {
-                                      const val = (parseInt(score) || 0) - 1;
-                                      onScoreChange(axis, val <= 0 ? 0 : val);
-                                    }}
-                                    style={{
-                                      width: '22px', height: '22px', borderRadius: '50%',
-                                      background: 'white', color: 'var(--primary)',
-                                      fontSize: '15px', fontWeight: 900, border: 'none',
-                                      cursor: 'pointer', display: 'flex', alignItems: 'center',
-                                      justifyContent: 'center', flexShrink: 0,
-                                      boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                                    }}
-                                  >−</button>
-                                  <input
-                                    type="number"
-                                    value={score}
-                                    autoFocus={score === 1}
-                                    onChange={e => onScoreChange(axis, e.target.value)}
-                                    onBlur={e => {
-                                      const val = parseInt(e.target.value);
-                                      if (isNaN(val) || val < 1) onScoreChange(axis, 1);
-                                      else if (val > 10) onScoreChange(axis, 10);
-                                    }}
-                                    style={{
-                                      width: '28px', textAlign: 'center', fontSize: '13px', fontWeight: 900,
-                                      background: 'transparent', border: 'none', color: 'var(--primary)',
-                                      appearance: 'none', MozAppearance: 'textfield', padding: 0, outline: 'none',
-                                    }}
-                                  />
-                                  <button
-                                    onClick={() => onScoreChange(axis, (parseInt(score) || 0) + 1)}
-                                    disabled={(parseInt(score) || 0) >= 10}
-                                    style={{
-                                      width: '22px', height: '22px', borderRadius: '50%',
-                                      background: 'white', color: 'var(--primary)',
-                                      fontSize: '15px', fontWeight: 900, border: 'none',
-                                      cursor: 'pointer', display: 'flex', alignItems: 'center',
-                                      justifyContent: 'center', flexShrink: 0,
-                                      opacity: (parseInt(score) || 0) >= 10 ? 0.4 : 1,
-                                      boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                                    }}
-                                  >+</button>
-                                </div>
-                            </div>
-                          )}
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+      {/* Two-column body */}
+      <div className="taste-body">
+        {/* Left: chip groups */}
+        <div>
+          {groupOrder.map((group, gIdx) => {
+            const isLast = gIdx === groupOrder.length - 1;
+            return (
+              <div
+                key={group.label}
+                className="taste-group"
+                style={{ borderBottom: isLast ? 'none' : 'var(--bw) solid var(--line)', padding: '20px 0 28px' }}
+              >
+                <div className="taste-group-label">
+                  <span>{getGroupDisplayName(group.label)}</span>
                 </div>
-              );
-            })}
-          </div>
+                <div className="taste-chips">
+                  {group.axes.map(axis => {
+                    const score = scores[axis];
+                    const isSelected = score !== undefined && score !== 0;
+                    return (
+                      <div
+                        key={axis}
+                        className={`taste-chip ${isSelected ? 'on' : ''}`}
+                      >
+                        <button
+                          className="taste-chip-main"
+                          onClick={() => onChipClick(axis)}
+                        >
+                          {getAxisDisplayName(keyword, axis, config)}
+                        </button>
+                        {isSelected && (
+                          <div
+                            className="taste-stepper"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <button
+                              onClick={() => {
+                                const val = (parseInt(score) || 0) - 1;
+                                onScoreChange(axis, val <= 0 ? 0 : val);
+                              }}
+                            >−</button>
+                            <input
+                              type="number"
+                              className="num"
+                              value={score}
+                              onChange={e => onScoreChange(axis, e.target.value)}
+                              onBlur={e => {
+                                const val = parseInt(e.target.value);
+                                if (isNaN(val) || val < 1) onScoreChange(axis, 1);
+                                else if (val > 10) onScoreChange(axis, 10);
+                              }}
+                            />
+                            <button
+                              onClick={() => onScoreChange(axis, (parseInt(score) || 0) + 1)}
+                              disabled={(parseInt(score) || 0) >= 10}
+                            >+</button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-          {/* Right: sticky radar panel */}
-          <div className="radar-container-mobile-wrapper">
-            <div style={{
-              background: 'rgba(255,255,255,0.95)',
-              borderRadius: '24px',
-              padding: '26px',
-              position: 'sticky',
-              top: '24px',
-              boxShadow: '0 6px 28px rgba(0,0,0,0.08)',
-              border: '1px solid rgba(0,0,0,0.06)',
-              width: '100%',
-              maxWidth: '380px',
-            }}>
-            <h3 style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.4px', marginBottom: '2px', color: 'var(--text-dark)' }}>
-              나의 취향 프로필
-            </h3>
-            <p style={{ fontSize: '14px', color: 'var(--text-gray)', marginBottom: '12px' }}>
-              선택할수록 그래프가 변합니다.
-            </p>
+        {/* Right: sticky radar panel */}
+        <div className="taste-panel">
+          <div className="card taste-radar-card">
+            <div className="taste-radar-head">
+              <span className="eyebrow">나의 취향 프로필</span>
+              {selectedCount > 0 && (
+                <span className="taste-radar-count num">{selectedCount}</span>
+              )}
+            </div>
 
-            <div style={{
-              background: 'white',
-              padding: '10px 10px 32px',
-              borderRadius: '3px',
-              boxShadow: '0 6px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)',
-              transform: 'rotate(-0.8deg)',
-              margin: '0 0 4px',
-            }}>
+            {selectedCount === 0 ? (
+              <div className="taste-radar-empty">
+                <div className="taste-radar-ghost">
+                  <Sparkles size={28} />
+                </div>
+                <p className="muted">취향 키워드를 선택하면<br />그래프가 나타나요</p>
+              </div>
+            ) : (
               <RadarChartViz
                 data={radarData}
                 axes={selectedAxisKeys}
                 labelMap={radarLabelMap}
               />
-              <p style={{
-                fontSize: '15px',
-                fontWeight: 700,
-                color: 'var(--text-gray)',
-                textAlign: 'center',
-                marginTop: '8px',
-              }}>나의 맛 조각들</p>
-            </div>
+            )}
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-              <Button variant="outline" onClick={onReset} style={{ flex: 1, padding: '12px', fontSize: '14px' }}>
-                초기화
-              </Button>
-              <motion.button
-                onClick={onNext}
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                style={{
-                  flex: 2,
-                  background: 'var(--btn-dark)', color: 'white', border: 'none',
-                  borderRadius: '999px', padding: '12px 20px',
-                  fontSize: '15px', fontWeight: 700, cursor: 'pointer',
-                  fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(0,0,0,0.20)',
-                }}
-              >
-                다음 단계 →
-              </motion.button>
+            <div className="taste-actions">
+              <button className="btn btn-ghost" onClick={onReset} style={{ flex: 1 }}>
+                <RotateCcw size={15} /> 초기화
+              </button>
+              <button className="btn btn-primary" onClick={onNext} style={{ flex: 2 }}>
+                다음 단계 <ArrowRight size={16} />
+              </button>
             </div>
-          </div>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
