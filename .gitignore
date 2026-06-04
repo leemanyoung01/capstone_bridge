@@ -53,6 +53,7 @@ debug_food_profile_*.json
 debug_multimodal_*.json
 debug_recommendation_*.json
 naver_reviews.csv
+naver_reviews_*.csv
 images/
 backUp/
 
@@ -70,6 +71,8 @@ _cleanup_*.py
 _db_status.py
 _eval_summary.py
 _preview_scenarios.py
+# scripts/ 내 로컬 진단·시뮬레이션 스크립트
+scripts/_*.py
 
 # ── Test / coverage ──────────────────────────────────
 .coverage
