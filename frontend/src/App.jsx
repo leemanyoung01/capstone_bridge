@@ -154,7 +154,14 @@ function App() {
     try {
       const res = await fetch(`/api/representative_images?keyword=${encodeURIComponent(currentKeyword)}`);
       const data = await res.json();
-      setRepImages(filterImagesByKeyword(data.images || [], currentKeyword));
+      const cleaned = filterImagesByKeyword(data.images || [], currentKeyword);
+      // 갤러리에서 숨길 (키워드, 축/라벨) 조합 — 예: 샐러드의 '토핑풍부'
+      const EXCLUDED = [{ keyword: '샐러드', meta: '토핑풍부' }];
+      const filtered = cleaned.filter(img => {
+        const metaStr = `${img.axis || ''} ${img.label || ''} ${img.axis_label || ''}`;
+        return !EXCLUDED.some(e => currentKeyword === e.keyword && metaStr.includes(e.meta));
+      });
+      setRepImages(filtered);
       setSelectedImageIdx([]);
     } catch {
       setRepImages([]);
