@@ -4,16 +4,14 @@ import { Share2, Link2, Check } from 'lucide-react';
 
 const TOAST_MS = 2200;
 
-// Build a per-card share URL — no hardcoded host so this works on
-// localhost, preview deploys, and prod alike. The current SPA path is
-// preserved so the link resolves to the running app; downstream code can
-// read `?restaurant=` to render a recipient view.
-const buildShareUrl = (item) => {
-  const url = new URL(window.location.origin);
-  url.pathname = window.location.pathname;
-  if (item?.name) url.searchParams.set('restaurant', item.name);
-  return url.toString();
-};
+// 공유할 주소 = 식당의 네이버 플레이스(없으면 네이버 검색) 링크를 그대로 보냄.
+// 앱 상태를 인코딩하지 않으므로 받는 사람은 바로 그 가게 페이지로 이동.
+const buildShareUrl = (item) =>
+  item?.naver_place_url ||
+  item?.place_url ||
+  item?.naver_url ||
+  item?.fallback_search_url ||
+  window.location.href; // 최후 폴백: 현재 페이지
 
 const ShareButton = ({ item }) => {
   const [toast, setToast] = useState(null); // 'copied' | 'error' | null
