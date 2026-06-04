@@ -128,7 +128,7 @@ const itemsForCategory = (catId) =>
   MENU_ITEMS.filter(m => m.categories.includes(catId)).map(m => m.name);
 
 const HomeStep = ({ availableKeywords, defaultKeyword, onStart, heroImages = [] }) => {
-  const [query, setQuery] = useState(defaultKeyword || '');
+  const [query, setQuery] = useState('');
   const [activeCat, setActiveCat] = useState(CATEGORIES[0].id);
 
   // DB 이미지가 있으면 사용, 없으면 fallback(로딩 전 임의 사진 + 준비중)
