@@ -23,6 +23,9 @@ RUN pip install -r requirements-server.txt
 
 COPY app.py db.py s3_uploader.py ./
 COPY stand/ ./stand/
+COPY app.py db.py s3_uploader.py ./
+COPY stand/ ./stand/
+COPY eval/evaluation_results.json ./eval/evaluation_results.json
 COPY --from=frontend /fe/dist ./frontend/dist
 
 ENV PORT=5000 \
