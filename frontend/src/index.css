@@ -50,6 +50,26 @@
   --gutter:   clamp(16px, 4vw, 40px);
 }
 
+/* ============================================================
+   구형 브라우저 폴백 (LG 스탠바이미 등 oklch 미지원 webOS 브라우저)
+   - 최신 브라우저는 oklch를 지원하므로 이 블록에 진입하지 않음 → 기존 색 그대로
+   - 옛날 브라우저에서만 진입 → oklch 팔레트를 동일 색의 hex로 대체
+   - 색 변수가 무효화돼 .btn-primary 배경(=var(--accent))이 사라지던 문제 해결
+   ============================================================ */
+@supports not (color: oklch(0 0 0)) {
+  :root {
+    --c-tomato:   #EC4E2B;
+    --c-tomato-d: #CC361E;
+    --c-mustard:  #FFB26C;
+    --c-terra:    #EB635C;
+    --c-paprika:  #C52D1F;
+    --good:       #429C5A;
+    /* color-mix를 쓰던 그림자 → 단색 rgba 폴백 (구형은 color-mix도 미지원) */
+    --shadow:    0 14px 32px -16px rgba(236, 78, 43, .30), 0 4px 12px -8px var(--shade);
+    --shadow-sm: 0 8px 18px -10px rgba(236, 78, 43, .26), 0 2px 6px -4px var(--shade);
+  }
+}
+
 /* ---------- base ---------- */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
